@@ -1,2 +1,720 @@
-<h1>Bolsa de Trabajo UCBA</h1>
-<a routerLink="/perfil">Iniciar sesión</a>
+<!-- HERO SECTION -->
+<section class="home-hero">
+  <div class="hero-gradient"></div>
+  <div class="hero-container">
+  
+
+    <div class="hero-content-wrapper">
+      <div class="hero-text">
+          <div class="hero-badge">
+      <span class="material-icons-outlined badge-icon">school</span>
+      UNIVERSIDAD DE LA CIUDAD DE BUENOS AIRES
+    </div>
+        <h1 class="hero-title">
+          Bienvenido a la Plataforma de bolsa de trabajo de la Universidad de la Ciudad de Buenos Aires
+        </h1>
+
+        <div class="hero-ctas">
+          <button class="btn-cta btn-cta-outline" (click)="scrollToTab('desarrolladores')">
+            Soy Desarrollador
+          </button>
+          <button class="btn-cta btn-cta-outline" (click)="scrollToTab('empresas')">
+            Soy Empresa
+          </button>
+        </div>
+      </div>
+
+      <div class="hero-image">
+        <img src="assets/logo-ifts11.jpg" alt="Logo oficial IFTS N°11" class="hero-img">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECCION Universidad -->
+<div class="instituto-section">
+  <div class="instituto-logo">IFTS<br>N°11</div>
+  <div class="instituto-text">
+    <h3>Una herramienta de Udela Ciudad</h3>
+    
+  </div>
+  <button class="instituto-btn" (click)="irAlSitioOficial()">Sitio oficial →</button>
+</div>
+
+<!-- TABS SECTION -->
+<section class="tabs-section">
+  <div class="tabs-container">
+    <div class="tabs-header">
+      <button class="tab-button" [class.active]="activeTab === 'desarrolladores'"
+        (click)="setActiveTab('desarrolladores')">
+        Para Desarrolladores
+      </button>
+      <button class="tab-button" [class.active]="activeTab === 'empresas'" (click)="setActiveTab('empresas')">
+        Para empresas
+      </button>
+    </div>
+
+    <!-- DESARROLLADORES TAB -->
+    <div class="tab-content" [class.active]="activeTab === 'desarrolladores'">
+
+      <!-- SECCIÓN: CONOCÉ la universidad -->
+      <div class="inst-infografia">
+
+        <!-- Decorativo: patrón de puntos verdes  -->
+        <div class="inst-deco-dots" aria-hidden="true">
+          <svg width="88" height="88" viewBox="0 0 88 88" fill="none">
+            <circle cx="8" cy="8" r="3" fill="var(--accent-primary)" opacity="0.35" />
+            <circle cx="30" cy="8" r="3" fill="var(--accent-primary)" opacity="0.35" />
+            <circle cx="52" cy="8" r="3" fill="var(--accent-primary)" opacity="0.35" />
+            <circle cx="74" cy="8" r="3" fill="var(--accent-primary)" opacity="0.35" />
+            <circle cx="8" cy="30" r="3" fill="var(--accent-primary)" opacity="0.35" />
+            <circle cx="30" cy="30" r="3" fill="var(--accent-primary)" opacity="0.35" />
+            <circle cx="52" cy="30" r="3" fill="var(--accent-primary)" opacity="0.35" />
+            <circle cx="74" cy="30" r="3" fill="var(--accent-primary)" opacity="0.35" />
+            <circle cx="8" cy="52" r="3" fill="var(--accent-primary)" opacity="0.35" />
+            <circle cx="30" cy="52" r="3" fill="var(--accent-primary)" opacity="0.35" />
+            <circle cx="52" cy="52" r="3" fill="var(--accent-primary)" opacity="0.35" />
+            <circle cx="74" cy="52" r="3" fill="var(--accent-primary)" opacity="0.35" />
+            <circle cx="8" cy="74" r="3" fill="var(--accent-primary)" opacity="0.35" />
+            <circle cx="30" cy="74" r="3" fill="var(--accent-primary)" opacity="0.35" />
+            <circle cx="52" cy="74" r="3" fill="var(--accent-primary)" opacity="0.35" />
+            <circle cx="74" cy="74" r="3" fill="var(--accent-primary)" opacity="0.35" />
+          </svg>
+        </div>
+
+        <!-- Decorativo: TILDE (esquina inferior derecha) -->
+        <div class="inst-deco-check" aria-hidden="true">
+          <span class="material-icons-outlined">check</span>
+        </div>
+
+        <!-- "Conocé más" -->
+        <div class="inst-badge">
+          <span class="material-icons-outlined">account_balance</span>
+          Conocé más
+        </div>
+
+        <!-- Encabezado: título -->
+        <div class="inst-header">
+          <h2 class="inst-titulo">
+            Conocé la <span class="inst-titulo-verde">Universidad</span>
+          </h2>
+        </div>
+
+        <!-- Fila de 5 tarjetas de la universidad -->
+        <div class="inst-cards-row">
+
+          <!-- Tarjeta 1: Carreras -->
+          <div class="inst-card-nueva">
+            <div class="inst-card-icon-wrap">
+              <span class="material-icons-outlined">menu_book</span>
+            </div>
+            <h3 class="inst-card-titulo">Carreras</h3>
+            <div class="inst-card-linea"></div>
+            <p class="inst-card-desc">Conocé nuestras carreras  disponibles.</p>
+            <a href="https://www.udelaciudad.edu.ar/escuelas/" target="_blank" class="inst-card-btn">
+              Ver carreras →
+            </a>
+          </div>
+
+          <!-- Tarjeta 2: Internacionalizacion -->
+          <div class="inst-card-nueva">
+            <div class="inst-card-icon-wrap">
+              <span class="material-icons-outlined">school</span>
+            </div>
+            <h3 class="inst-card-titulo">Internacionalización</h3>
+            <div class="inst-card-linea"></div>
+            <p class="inst-card-desc">Explorá convenios y acuerdos institucionales.</p>
+            <a href="https://www.udelaciudad.edu.ar/internacionalizacion/" target="_blank" class="inst-card-btn">
+              Ver Internacionalización →
+            </a>
+          </div>
+
+          <!-- Tarjeta 3: Becas -->
+          <div class="inst-card-nueva">
+            <div class="inst-card-icon-wrap">
+              <span class="material-icons-outlined">calendar_month</span>
+            </div>
+            <h3 class="inst-card-titulo">Becas</h3>
+            <div class="inst-card-linea"></div>
+            <p class="inst-card-desc">Enterate de las becas disponibles y requisitos.</p>
+            <a href="https://ifts11.edu.ar/becas/" target="_blank" class="inst-card-btn">
+              Ver becas →
+            </a>
+          </div>
+
+          <!-- Tarjeta 4: Novedades -->
+          <div class="inst-card-nueva">
+            <div class="inst-card-icon-wrap">
+              <span class="material-icons-outlined">article</span>
+            </div>
+            <h3 class="inst-card-titulo">Novedades</h3>
+            <div class="inst-card-linea"></div>
+            <p class="inst-card-desc">Leé las últimas noticias y actualizaciones.</p>
+            <a href="https://www.udelaciudad.edu.ar/novedades/" target="_blank" class="inst-card-btn">
+              Ver novedades →
+            </a>
+          </div>
+
+          <!-- Tarjeta 5: Contacto -->
+          <div class="inst-card-nueva">
+            <div class="inst-card-icon-wrap">
+              <span class="material-icons-outlined">mail</span>
+            </div>
+            <h3 class="inst-card-titulo">Contacto</h3>
+            <div class="inst-card-linea"></div>
+            <p class="inst-card-desc">Comunicate con la Universidad y nuestras áreas.</p>
+            <a href="" target="_blank" class="inst-card-btn">
+              Ir a contacto →
+            </a>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- OPORTUNIDADES -->
+      <div class="content-section">
+        <h2 class="section-title">Últimas ofertas laborales</h2>
+        <div class="cards-grid cards-grid-4">
+          <div class="job-card">
+            <div class="job-header">
+              <h3 class="job-title">Desarrollador Frontend</h3>
+              <p class="job-company">TechCorp S.A.</p>
+            </div>
+            <div class="job-badges">
+              <span class="tags-home">React</span>
+              <span class="tags-modality">Remoto</span>
+              <span class="tags-seniority">Jr</span>
+            </div>
+          </div>
+
+          <div class="job-card">
+            <div class="job-header">
+              <h3 class="job-title">Analista de Datos</h3>
+              <p class="job-company">DataHub Argentina</p>
+            </div>
+            <div class="job-badges">
+              <span class="tags-home">Python</span>
+              <span class="tags-modality">Híbrido</span>
+              <span class="tags-seniority">Jr</span>
+            </div>
+          </div>
+
+          <div class="job-card">
+            <div class="job-header">
+              <h3 class="job-title">Dev Mobile</h3>
+              <p class="job-company">AppStudio</p>
+            </div>
+            <div class="job-badges">
+              <span class="tags-home">Flutter</span>
+              <span class="tags-modality">Remoto</span>
+              <span class="tags-seniority">Semi-Sr</span>
+            </div>
+          </div>
+
+          <div class="job-card">
+            <div class="job-header">
+              <h3 class="job-title">Backend Developer</h3>
+              <p class="job-company">CloudNet</p>
+            </div>
+            <div class="job-badges">
+              <span class="tags-home">Node.js</span>
+              <span class="tags-modality">Presencial</span>
+              <span class="tags-seniority">Jr</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECURSOS -->
+      <div class="content-section">
+        <h2 class="section-title">Prepará para tu primer empleo IT</h2>
+        <div class="cards-grid cards-grid-3">
+          <div class="resource-card">
+            <div class="resource-icon">
+              <span class="material-icons-outlined">description</span>
+            </div>
+            <h3 class="resource-title">Cómo hacer un buen CV</h3>
+            <ul class="resource-list">
+              <li>Usá una sola página y formato limpio</li>
+              <li>Incluí proyectos con links a GitHub</li>
+              <li>Destacá tecnologías con experiencia real</li>
+            </ul>
+          </div>
+
+          <div class="resource-card">
+            <div class="resource-icon">
+              <span class="material-icons-outlined">forum</span>
+            </div>
+            <h3 class="resource-title">Preguntas en entrevistas</h3>
+            <ul class="resource-list">
+              <li>Las preguntas más frecuentes para perfiles junior</li>
+              <li>¿Cuál fue tu proyecto más desafiante?</li>
+              <li>¿Cómo manejás los errores y bugs?</li>
+            </ul>
+          </div>
+
+          <div class="resource-card">
+            <div class="resource-icon">
+              <span class="material-icons-outlined">code</span>
+            </div>
+            <h3 class="resource-title">Tu portfolio en GitHub</h3>
+            <ul class="resource-list">
+              <li>Mostrá tu trabajo con proyectos bien documentados</li>
+              <li>README claro con descripción y demo</li>
+              <li>Al menos 3 proyectos terminados</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMUNIDAD -->
+      <div class="content-section">
+        <h2 class="section-title">Egresados de la Universidad de la Ciudad de Buenos Aires</h2>
+        <div class="cards-grid cards-grid-3">
+          <div class="community-card">
+            <div class="community-avatar">MA</div>
+            <h3 class="community-name">Matías A.</h3>
+            <p class="community-role">Desarrollo de Software</p>
+            <p class="community-desc">"App de gestión mayorista con integración a Firestore en tiempo real."</p>
+          </div>
+
+          <div class="community-card">
+            <div class="community-avatar">AR</div>
+            <h3 class="community-name">Ariel R.</h3>
+            <p class="community-role">Análisis de Sistemas</p>
+            <p class="community-desc">"App de gestión contable aplicando principios de Clean Architecture."</p>
+          </div>
+
+          <div class="community-card">
+            <div class="community-avatar">CE</div>
+            <h3 class="community-name">Celeste E.</h3>
+            <p class="community-role">Desarrollo de Software</p>
+            <p class="community-desc">"Backend HunTech: servicios REST y documentación de endpoints."</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PREGUNTAS FRECUENTES -->
+      <div class="content-section">
+        <h2 class="section-title">Preguntas frecuentes</h2>
+        <div class="faq-container">
+          <div class="faq-item">
+            <button class="faq-header" (click)="toggleFaq(0)">
+              <span class="faq-number">1</span>
+              <span class="faq-question">¿Cuánto tiempo lleva conseguir el primer empleo IT?</span>
+              <span class="material-icons-outlined faq-icon" [class.open]="openFaq === 0">expand_more</span>
+            </button>
+            <div class="faq-content" [class.open]="openFaq === 0">
+              <p>ni idea, hay que averiguar</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-header" (click)="toggleFaq(1)">
+              <span class="faq-number">2</span>
+              <span class="faq-question">¿Necesito el título terminado para aplicar?</span>
+              <span class="material-icons-outlined faq-icon" [class.open]="openFaq === 1">expand_more</span>
+            </button>
+            <div class="faq-content" [class.open]="openFaq === 1">
+              <p>No. Muchas empresas contratan alumnos avanzados. Lo más importante es demostrar habilidades con
+                proyectos reales.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <button class="faq-header" (click)="toggleFaq(2)">
+              <span class="faq-number">3</span>
+              <span class="faq-question">¿Qué tecnologías tienen más demanda?</span>
+              <span class="material-icons-outlined faq-icon" [class.open]="openFaq === 2">expand_more</span>
+            </button>
+            <div class="faq-content" [class.open]="openFaq === 2">
+              <p>ni idea, hay que averiguar o cambiar la pregunta.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- EMPRESAS -->
+    <div class="tab-content" [class.active]="activeTab === 'empresas'">
+
+      <!-- INFOGRAFÍA: ¿CÓMO FUNCIONA PARA EMPRESAS? -->
+      <div class="inst-infografia">
+
+        <!-- Ícono decorativO (arriba izquierda) -->
+        <div class="infografia-deco-building" aria-hidden="true">
+          <span class="material-icons-outlined">domain</span>
+        </div>
+
+        <!-- Patrón de puntos (arriba derecha) -->
+        <div class="infografia-deco-dots" aria-hidden="true">
+          <svg width="80" height="80" viewBox="0 0 80 80" fill="none">
+            <circle cx="8" cy="8" r="3" fill="#31ad1c" opacity="0.4" />
+            <circle cx="28" cy="8" r="3" fill="#31ad1c" opacity="0.4" />
+            <circle cx="48" cy="8" r="3" fill="#31ad1c" opacity="0.4" />
+            <circle cx="68" cy="8" r="3" fill="#31ad1c" opacity="0.4" />
+            <circle cx="8" cy="28" r="3" fill="#31ad1c" opacity="0.4" />
+            <circle cx="28" cy="28" r="3" fill="#31ad1c" opacity="0.4" />
+            <circle cx="48" cy="28" r="3" fill="#31ad1c" opacity="0.4" />
+            <circle cx="68" cy="28" r="3" fill="#31ad1c" opacity="0.4" />
+            <circle cx="8" cy="48" r="3" fill="#31ad1c" opacity="0.4" />
+            <circle cx="28" cy="48" r="3" fill="#31ad1c" opacity="0.4" />
+            <circle cx="48" cy="48" r="3" fill="#31ad1c" opacity="0.4" />
+            <circle cx="68" cy="48" r="3" fill="#31ad1c" opacity="0.4" />
+            <circle cx="8" cy="68" r="3" fill="#31ad1c" opacity="0.4" />
+            <circle cx="28" cy="68" r="3" fill="#31ad1c" opacity="0.4" />
+            <circle cx="48" cy="68" r="3" fill="#31ad1c" opacity="0.4" />
+            <circle cx="68" cy="68" r="3" fill="#31ad1c" opacity="0.4" />
+          </svg>
+        </div>
+
+        <!-- Círculo con tilde  -->
+        <div class="inst-deco-check" aria-hidden="true">
+          <span class="material-icons-outlined">check_circle</span>
+        </div>
+
+        <!-- Badge "Para Empresas" -->
+        <div class="infografia-badge">
+          <span class="material-icons-outlined">check_circle</span>
+          Para Empresas
+        </div>
+
+        <!-- Título principal -->
+        <div class="infografia-header">
+          <h2 class="inst-titulo">
+            ¿Cómo funciona para <span class="inst-titulo-verde">empresas</span>?
+          </h2>
+          <p class="infografia-subtitulo">
+            Un proceso simple, rápido y efectivo para conectar con el talento del
+            <strong>UDELA ciudad</strong>.
+          </p>
+        </div>
+
+        <!-- Fila de 4 tarjetas con flechas -->
+        <div class="infografia-steps-row">
+
+          <!-- TARJETA 1 -->
+          <div class="infografia-card">
+            <span class="infografia-card-number">1</span>
+            <div class="infografia-card-icon-wrap">
+              <span class="material-icons-outlined">person_add</span>
+            </div>
+            <h3 class="infografia-card-title">Registrá tu empresa</h3>
+            <div class="infografia-card-line"></div>
+            <p class="infografia-card-desc">Creá tu cuenta en minutos y empezá a publicar ofertas.</p>
+          </div>
+
+          <!-- Flecha 1→2 -->
+          <div class="infografia-arrow-group" aria-hidden="true">
+            <span class="infografia-dots-left">· · ·</span>
+            <div class="infografia-arrow-circle">
+              <span class="material-icons-outlined">arrow_forward</span>
+            </div>
+            <span class="infografia-dots-right">· · ·</span>
+          </div>
+
+          <!-- TARJETA 2 -->
+          <div class="infografia-card">
+            <span class="infografia-card-number">2</span>
+            <div class="infografia-card-icon-wrap">
+              <span class="material-icons-outlined">assignment</span>
+            </div>
+            <h3 class="infografia-card-title">Publicá una oferta</h3>
+            <div class="infografia-card-line"></div>
+            <p class="infografia-card-desc">Describí el puesto y tecnologías requeridas.</p>
+          </div>
+
+          <!-- Flecha 2→3 -->
+          <div class="infografia-arrow-group" aria-hidden="true">
+            <span class="infografia-dots-left">· · ·</span>
+            <div class="infografia-arrow-circle">
+              <span class="material-icons-outlined">arrow_forward</span>
+            </div>
+            <span class="infografia-dots-right">· · ·</span>
+          </div>
+
+          <!-- TARJETA 3 -->
+          <div class="infografia-card">
+            <span class="infografia-card-number">3</span>
+            <div class="infografia-card-icon-wrap">
+              <span class="material-icons-outlined">group</span>
+            </div>
+            <h3 class="infografia-card-title">Recibí postulantes</h3>
+            <div class="infografia-card-line"></div>
+            <p class="infografia-card-desc">Alumnos de U de la Ciudad se postulan directamente.</p>
+          </div>
+
+          <!-- Flecha 3→4 -->
+          <div class="infografia-arrow-group" aria-hidden="true">
+            <span class="infografia-dots-left">· · ·</span>
+            <div class="infografia-arrow-circle">
+              <span class="material-icons-outlined">arrow_forward</span>
+            </div>
+            <span class="infografia-dots-right">· · ·</span>
+          </div>
+
+          <!-- TARJETA 4 -->
+          <div class="infografia-card">
+            <span class="infografia-card-number">4</span>
+            <div class="infografia-card-icon-wrap">
+              <span class="material-icons-outlined">work</span>
+            </div>
+            <h3 class="infografia-card-title">Contratá talento</h3>
+            <div class="infografia-card-line"></div>
+            <p class="infografia-card-desc">Elegí el candidato ideal y coordiná la entrevista.</p>
+          </div>
+
+        </div>
+
+        <!-- frase para empresas -->
+        <div class="infografia-pill">
+          <span class="material-icons-outlined infografia-pill-icon">shield</span>
+          <span>
+            Rápido, seguro y 100% enfocado en conectar tu empresa con el
+            <strong class="infografia-pill-verde">mejor talento</strong>.
+          </span>
+        </div>
+
+      </div>
+
+      <!-- BENEFICIOS: ¿Por qué publicar en Huntech? -->
+      <div class="beneficios-coverflow-section">
+
+        <div class="beneficios-header-left">
+          <span class="beneficios-label">
+            <span class="material-icons-outlined">auto_awesome</span>
+            Beneficios
+          </span>
+          <h2 class="beneficios-titulo">
+            ¿Por qué publicar en <span class="beneficios-titulo-verde">Huntech</span>?
+          </h2>
+          <p class="beneficios-subtitulo">
+            Todo lo que tu empresa necesita para encontrar el talento correcto.
+          </p>
+        </div>
+
+        <!-- GRID: carrusel izquierda + lista derecha -->
+        <div class="beneficios-grid">
+
+          <!-- Columna izquierda: carrusel -->
+          <div class="beneficios-col-left">
+            <div class="coverflow-container">
+              <div class="coverflow-track">
+                <div class="cf-card" *ngFor="let perk of perks; let i = index" [class.active]="i === currentIndex"
+                  [class.prev]="i === currentIndex - 1" [class.next]="i === currentIndex + 1"
+                  [class.hidden]="i < currentIndex - 1 || i > currentIndex + 1">
+                  <div class="cf-card-content">
+                    <div class="cf-icon" [ngClass]="perk.iconClass">
+                      <span class="material-icons-outlined">{{ perk.icon }}</span>
+                    </div>
+                    <h3>{{ perk.title }}</h3>
+                    <p>{{ perk.desc }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Navegación -->
+            <div class="cf-controls">
+              <div class="cf-pill-nav">
+                <button class="cf-pill-btn" (click)="prevSlide()" [disabled]="currentIndex === 0">‹</button>
+                <span class="cf-pill-counter">{{ currentIndex + 1 }} / {{ perks.length }}</span>
+                <button class="cf-pill-btn" (click)="nextSlide()"
+                  [disabled]="currentIndex >= perks.length - 1">›</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna derecha: checklist -->
+          <div class="beneficios-col-right">
+
+            <div class="bene-list-item">
+              <div class="bene-bar"></div>
+              <div class="bene-text">
+                <strong>Conectate con el futuro del tech argentino</strong>
+                <span>Estudiantes formados con tecnologías actuales del mercado.</span>
+              </div>
+            </div>
+
+            <div class="bene-divider"></div>
+
+            <div class="bene-list-item">
+              <div class="bene-bar"></div>
+              <div class="bene-text">
+                <strong>Sin intermediarios</strong>
+                <span>Hablás directo con los postulantes, sin agencias ni comisiones.</span>
+              </div>
+            </div>
+
+            <div class="bene-divider"></div>
+
+            <div class="bene-list-item">
+              <div class="bene-bar"></div>
+              <div class="bene-text">
+                <strong>Talento con hambre de experiencia</strong>
+                <span>Perfiles motivados, listos para aprender y aportar desde el día uno.</span>
+              </div>
+            </div>
+
+            <div class="bene-divider"></div>
+
+            <div class="bene-list-item">
+              <div class="bene-bar"></div>
+              <div class="bene-text">
+                <strong>Proceso transparente</strong>
+                <span>Sabés exactamente quién se postuló, cuándo y con qué perfil.</span>
+              </div>
+            </div>
+
+            <div class="bene-divider"></div>
+
+            <div class="bene-list-item">
+              <div class="bene-bar"></div>
+              <div class="bene-text">
+                <strong>Impacto real en la comunidad</strong>
+                <span>Cada contratación ayuda a un estudiante a dar su primer paso profesional.</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- seccion: buscando el talento ideal? -->
+      <div class="match-hero-section">
+        <div class="match-hero-container">
+          <!-- Columna Izquierda -->
+          <div class="match-col-left">
+            <div class="match-text-card">
+              <h2>
+                ¿Buscando el talento
+                <br>
+                <span class="match-highlight">ideal?</span>
+              </h2>
+              <p>
+                Publicá tu oferta y recibí postulantes tech
+                verificados de la Universidad, sin filtros infinitos ni perder tiempo.
+              </p>
+            </div>
+          </div>
+
+          <!-- Columna Derecha -->
+          <div class="match-col-right">
+            <div class="match-ui-stack">
+              <!-- Tarjeta de atras -->
+              <div class="match-ui-card backend-card"></div>
+
+              <!-- Tarjeta principal -->
+              <div class="match-ui-card frontend-card">
+
+                <!-- Badge flotante amarillo -->
+                <div class="match-badge-yellow">
+                  Nuevos postulantes <span class="badge-number">3</span>
+                </div>
+
+                <div class="match-ui-header">
+                  <div class="match-logo-box">
+                    <span class="material-icons-outlined">business</span>
+                  </div>
+                  <div class="match-title-box">
+                    <h3>Desarrollador Full Stack</h3>
+                    <span class="match-company">Tech</span>
+                  </div>
+                </div>
+
+                <div class="match-chips">
+                  <span class="tags-home">React</span>
+                  <span class="tags-home">Node.js</span>
+                  <span class="tags-home">Remoto</span>
+                  <span class="tags-home">Junior</span>
+                  <span class="tags-home">U de la Ciudad</span>
+                </div>
+
+                <div class="match-actions">
+                  <button class="m-btn-primary">Contactar </button>
+                  <button class="m-btn-secondary">→ Omitir</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TALENTO DISPONIBLE -->
+      <div class="content-section">
+        <h2 class="section-title">Conocé algunos perfiles</h2>
+        <div class="cards-grid cards-grid-3">
+          <div class="profile-card">
+            <div class="profile-avatar">MA</div>
+            <h3 class="profile-name">Matías A.</h3>
+            <p class="profile-role">Desarrollo de Software</p>
+            <div class="profile-techs">
+              <span class="tags-home">React</span>
+              <span class="tags-home">Node.js</span>
+              <span class="tags-home">Firebase</span>
+            </div>
+            <p class="profile-availability">
+              <span class="availability-dot"></span>
+              Disponible inmediato
+            </p>
+            <button class="btn-view-profile">Ver perfil</button>
+          </div>
+
+          <div class="profile-card">
+            <div class="profile-avatar">CE</div>
+            <h3 class="profile-name">Celeste E.</h3>
+            <p class="profile-role">Desarrollo de Software</p>
+            <div class="profile-techs">
+              <span class="tags-home">Python</span>
+              <span class="tags-home">Django</span>
+              <span class="tags-home">REST</span>
+            </div>
+            <p class="profile-availability">
+              <span class="availability-dot"></span>
+              Disponible inmediato
+            </p>
+            <button class="btn-view-profile">Ver perfil</button>
+          </div>
+
+          <div class="profile-card">
+            <div class="profile-avatar">AR</div>
+            <h3 class="profile-name">Ariel R.</h3>
+            <p class="profile-role">Análisis de Sistemas</p>
+            <div class="profile-techs">
+              <span class="tags-home">Java</span>
+              <span class="tags-home">Spring</span>
+              <span class="tags-home">SQL</span>
+            </div>
+            <p class="profile-availability">
+              <span class="availability-dot available"></span>
+              Disponible part-time
+            </p>
+            <button class="btn-view-profile">Ver perfil</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="footer-cta-wrapper">
+  <div class="ft-cta-grid">
+    <div class="ft-cta-card">
+      <h3>¿Listo para postularte?</h3>
+      <p>Explorá las ofertas disponibles y dá el primer paso en tu carrera IT.</p>
+      <button class="btn-cta btn-cta-solid" (click)="irAlPerfil()">Completá tu perfil</button>
+    </div>
+    <div class="ft-cta-card">
+      <h3>¿Buscás talento IT?</h3>
+      <p>Registrá tu empresa y publicá tu primera oferta gratis hoy.</p>
+     <button class="btn-cta btn-cta-solid" (click)="irAContratos()">Registrar empresa</button>
+    </div>
+  </div>
+
+
+  <div class="ft-bottom">
+    <p>© 2026 Universidad de la Ciudad de Buenos Aires · Desarrollado por y para estudiantes</p>
+  </div>
+</section>

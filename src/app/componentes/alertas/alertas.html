@@ -1,0 +1,39 @@
+<div class="alert-stack" aria-live="polite" aria-atomic="true">
+  @for (alert of alerts; track alert.id) {
+     @if (alert.type === 'confirm') {
+        <div class="confirm-overlay">
+        <div class="confirm-card alert-box confirm-style">
+            <div class="alert-icon" aria-hidden="true">?</div>
+            <div class="alert-content">
+            <strong>{{ alert.title }}</strong>
+            <span>{{ alert.message }}</span>
+            <div class="confirm-actions">
+                <button class="btn-cancel-confirm" (click)="cancel(alert)">Cancelar</button>
+                <button class="btn-accept-confirm" (click)="accept(alert)">Aceptar</button>
+            </div>
+            </div>
+        </div>
+        </div>
+  
+    } @else {
+        <div class="alert-box" [class]="alert.type">
+        <div class="alert-icon" aria-hidden="true">
+            @switch (alert.type) {
+            @case ('success') { ✓ }
+            @case ('error') { ! }
+            @case ('warning') { ⚠ }
+            @case ('info') { i }
+            }
+        </div>
+
+        <div class="alert-content">
+            <span>{{ alert.message }}</span>
+        </div>
+
+        <button type="button" class="close-btn" (click)="remove(alert.id)" aria-label="Cerrar">
+            ×
+        </button>
+        </div>
+    }
+  }
+</div>

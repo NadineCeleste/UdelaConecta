@@ -1,0 +1,42 @@
+
+
+
+  <div class="proyecto-header">
+   
+  </div>
+
+  <div class="proyecto-seccion">
+    <h2 class="proyecto-titulo">Mi Proyecto</h2>
+
+    <button class="btn btn-edit" [routerLink]="['/formcreateproyect', proyecto?.email_gerente]">
+      ✏️
+    </button>
+
+
+    <div class="proyecto-info">
+      @if (proyecto?.nombre) {<p>Nombre: {{proyecto?.nombre}} </p>}
+      @if (proyecto?.description) {<p>Descripcion: {{proyecto?.description}} </p>} @else {
+      <p>Descripción: <span style="font-style: italic"> Agrega una descripción de tu proyecto!</span></p>
+      }
+      @if (proyecto?.info_link) {<p>Info Link: {{proyecto?.info_link}} </p>} @else {
+      <p>Info Link: <span style="font-style: italic">Agrega una URL de tu proyecto!</span></p>
+      }
+      @if (proyecto?.buscando_devs && proyecto?.buscando_devs == true) {<p>Actualmente Buscando Contratar</p>}
+      <!-- @if (proyecto?.email_gerente) {<p>email_gerente: {{proyecto?.email_gerente}} </p>} -->
+    </div>
+
+    <button class="btn btn-edit" [routerLink]="['/formcreatecontract', proyecto?.id]">
+    Contrata desarrolladores!
+    </button>
+
+    
+  </div>
+
+  @if (!this.proyecto) {
+<div class="proyecto-header">
+  <p class="proyecto-p">✨ Aquí verás tus proyectos cuando los agregues ✨</p>
+</div>
+<a class="btn btn-add" routerLink="/formcreateproyect" routerLinkActive="active">
+      Agregar Proyecto
+    </a>
+  }

@@ -1,0 +1,213 @@
+<main class="contrato-main">
+  @if (contrato) {
+
+  <!-- ── Hero Seccion ── -->
+  <div class="detail-hero" [ngClass]="{
+    'hero-pendiente': !contrato.esta_ocupado && (email ? postulacionesNormalizadas.includes(email) : false),
+    'hero-asignado': contrato.esta_ocupado
+  }">
+    <div class="hero-content">
+      <div class="header-badges">
+        @if (contrato.esta_ocupado) {
+        <span class="status-badge asignado">Asignado</span>
+        } @else if (email && postulacionesNormalizadas.includes(email)) {
+        <span class="status-badge pendiente">Pendiente</span>
+        } @else {
+        <span class="status-badge disponible">Disponible</span>
+        }
+        @if (contrato.tipo) {
+        <span class="tipo-badge">{{ contrato.tipo }}</span>
+        }
+      </div>
+      <h2>{{ contrato.titulo }}</h2>
+      <p class="hero-subtitle">{{ contrato.descripcion }}</p>
+    </div>
+    <div class="hero-visual" aria-hidden="true">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+    </div>
+  </div>
+
+  <!-- ── Card del contrato ── -->
+  <div class="contrato-card" [ngClass]="{
+    'asignado': contrato.esta_ocupado,
+    'asignado-dev': contrato.esta_ocupado && rol === 'desarrollador',
+    'pendiente': !contrato.esta_ocupado && (email ? postulacionesNormalizadas.includes(email) : false)
+  }">
+
+    <!-- Descripcion -->
+    <div class="description-section">
+      <div class="section-label">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="21" y1="6" x2="3" y2="6" />
+          <line x1="15" y1="12" x2="3" y2="12" />
+          <line x1="17" y1="18" x2="3" y2="18" />
+        </svg>
+        <span>Descripción del Puesto</span>
+      </div>
+      <p class="contrato-descripcion">{{ contrato.descripcion }}</p>
+    </div>
+
+    <!-- Dates -->
+    @if (contrato.start_date || contrato.end_date) {
+    <div class="meta-section">
+      @if (contrato.start_date) {
+      <div class="meta-item">
+        <div class="meta-icon-wrapper">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="3" ry="3" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+          </svg>
+        </div>
+        <div class="meta-text">
+          <span class="label">Fecha de inicio</span>
+          <span class="value">{{ contrato.start_date }}</span>
+        </div>
+      </div>
+      }
+      @if (contrato.end_date) {
+      <div class="meta-item">
+        <div class="meta-icon-wrapper">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="3" ry="3" />
+            <line x1="16" y1="2" x2="16" y2="6" />
+            <line x1="8" y1="2" x2="8" y2="6" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+            <line x1="9" y1="15" x2="15" y2="15" />
+          </svg>
+        </div>
+        <div class="meta-text">
+          <span class="label">Fecha de fin</span>
+          <span class="value">{{ contrato.end_date }}</span>
+        </div>
+      </div>
+      }
+    </div>
+    }
+
+    <!-- Gerente: lista de postulantes -->
+    @if (rol === "gerente") {
+    <div class="postulaciones-container">
+      <h4 class="section-title">Postulaciones Recibidas ({{ postulacionesNormalizadas.length }})</h4>
+      <div class="postulaciones-list">
+        @if (!contrato.esta_ocupado) {
+        @for (postulante of postulacionesNormalizadas; track $index) {
+        <button class="postulacion-btn" [ngClass]="{
+              'seleccionado': contrato.pasante_email === postulante,
+              'no-seleccionado': contrato.pasante_email && contrato.pasante_email !== postulante
+            }" (click)="abrirModal(postulante)">
+          <span class="avatar-placeholder">{{ postulante.charAt(0).toUpperCase() }}</span>
+          {{ postulante }}
+        </button>
+        }
+        } @else {
+        @for (postulante of postulacionesNormalizadas; track $index) {
+        <button class="postulacion-btn disabled" [ngClass]="{
+              'seleccionado': contrato.pasante_email === postulante,
+              'no-seleccionado': contrato.pasante_email && contrato.pasante_email !== postulante
+            }" disabled>
+          <span class="avatar-placeholder">{{ postulante.charAt(0).toUpperCase() }}</span>
+          {{ postulante }}
+        </button>
+        }
+        }
+        @if (postulacionesNormalizadas.length === 0) {
+        <p class="no-postulaciones">Aún no hay postulaciones para este contrato.</p>
+        }
+      </div>
+    </div>
+    }
+
+    <!-- Asignado alerta -->
+    @if (rol !== 'gerente' && email && contrato.esta_ocupado) {
+    <div class="alert-box"><em>Este contrato ya ha sido asignado.</em></div>
+    }
+  </div>
+
+  <!-- ── CTA Card (Desarrollador) ── -->
+  @if (rol !== 'gerente' && email && !contrato.esta_ocupado) {
+  <div class="cta-card">
+    <div class="cta-left">
+      <div class="cta-icon-circle">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13" />
+          <polygon points="22 2 15 22 11 13 2 9 22 2" />
+        </svg>
+      </div>
+      <div class="cta-text">
+        <h4>¿Listo para dar el siguiente paso?</h4>
+        <p>Enviá tu postulación y comenzá tu próxima gran oportunidad.</p>
+      </div>
+    </div>
+    <div class="cta-actions">
+      @if (email ? (contrato.postulaciones?.includes(email) ?? false) : false) {
+      <button class="btn-add" disabled>¡Ya te postulaste!</button>
+      } @else {
+      <button class="btn-add" type="button" (click)="postularse(contrato, email!)">
+        Postularme Ahora
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12" />
+          <polyline points="12 5 19 12 12 19" />
+        </svg>
+      </button>
+      }
+    </div>
+    <div class="cta-illustration" aria-hidden="true">
+      <svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <rect x="15" y="35" width="90" height="58" rx="8" fill="rgba(255,255,255,0.18)" />
+        <rect x="15" y="35" width="90" height="58" rx="8" stroke="rgba(255,255,255,0.3)" stroke-width="2" />
+        <rect x="38" y="20" width="44" height="20" rx="6" fill="rgba(255,255,255,0.25)" stroke="rgba(255,255,255,0.4)"
+          stroke-width="2" />
+        <rect x="28" y="55" width="64" height="8" rx="4" fill="rgba(255,255,255,0.3)" />
+        <rect x="28" y="70" width="40" height="6" rx="3" fill="rgba(255,255,255,0.2)" />
+        <circle cx="93" cy="72" r="10" fill="rgba(255,255,255,0.15)" stroke="rgba(255,255,255,0.3)"
+          stroke-width="1.5" />
+        <polyline points="88,72 92,76 99,68" stroke="rgba(255,255,255,0.7)" stroke-width="2.5" stroke-linecap="round"
+          stroke-linejoin="round" />
+      </svg>
+    </div>
+  </div>
+  }
+
+  }
+  @else {
+  <div class="empty-state">
+    <div class="empty-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" width="52" height="52" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+        <polyline points="14 2 14 8 20 8" />
+        <line x1="16" y1="13" x2="8" y2="13" />
+        <line x1="16" y1="17" x2="8" y2="17" />
+        <polyline points="10 9 9 9 8 9" />
+      </svg>
+    </div>
+    <p>Seleccioná un contrato para ver sus detalles</p>
+  </div>
+  }
+
+  <!-- ── Modal ── -->
+  @if (modalVisible) {
+  <div class="modal-backdrop">
+    <div class="modal">
+      <div class="modal-icon">⚠️</div>
+      <h3>¿Asignar contrato?</h3>
+      <p class="modal-text">Estás por asignar este contrato a <strong>{{ emailSeleccionado }}</strong>. Esta acción no
+        se puede deshacer fácilmente.</p>
+      <div class="modal-actions">
+        <button class="btn" (click)="verPerfilPostulante()">Ver perfil del candidato</button>
+        <button class="btn-add" (click)="asignarPostulante()">Confirmar asignación</button>
+        <button class="btn-delete" (click)="cerrarModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
+  }
+</main>

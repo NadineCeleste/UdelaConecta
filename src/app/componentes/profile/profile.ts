@@ -14,8 +14,8 @@ import { PortfolioComponent } from '../portfolio-component/portfolio-component';
   selector: 'app-profile',
   standalone: true,
   imports: [ReactiveFormsModule, CommonModule, FormsModule, RouterModule, PortfolioComponent],
-  templateUrl: './profile.component.html',
-  styleUrl: './profile.component.css'
+  templateUrl: './profile.html',
+  styleUrl: './profile.css'
 })
 export class ProfileComponent implements OnInit {
   private fb = inject(FormBuilder);

@@ -6,7 +6,7 @@ import { Users } from './servicios/users';
 import { distinctUntilChanged, filter, lastValueFrom, Observable, skip, Subscription, take, tap } from 'rxjs';
 import { LoadingService } from './servicios/loading-service';
 import { Spinner } from "./componentes/spinner/spinner";
-import { AuthService } from './servicios/AuthService';
+//import { AuthService } from './servicios/AuthService';
 import { FormsModule } from '@angular/forms';
 import { Usuario } from './models/users/usuario';
 import { Alertas } from './componentes/alertas/alertas';
@@ -329,4 +329,4 @@ export class App {
     }
   }
 
-}
+} 

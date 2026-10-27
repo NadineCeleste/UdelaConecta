@@ -1,0 +1,147 @@
+<div class="container">
+    <form #miFormulario="ngForm" (ngSubmit)="enviar(miFormulario)" class="offer-form">
+
+        <!-- HEADER -->
+        <div class="form-header">
+            <div class="header-left">
+                <div class="header-icon-circle">
+                    <span class="material-icons-outlined">business_center</span>
+                </div>
+                <div class="header-text-group">
+                    <h2>Creá una nueva oferta</h2>
+                    <div class="header-sub-group">
+                        <span class="badge-publicar">PUBLICAR</span>
+                        <span class="description-text">
+                            Completá los siguientes campos para publicar una oferta de empleo.
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <button type="button" class="btn-cancelar" (click)="cancelar()">
+                <span class="material-icons-outlined">close</span> Cancelar
+            </button>
+        </div>
+
+        <!-- TIPO DE DESARROLLADOR -->
+        <div class="form-group mb-4">
+            <label for="tipo" class="form-label">Tipo de Desarrollador <span class="text-danger">*</span></label>
+            <div class="input-with-icon">
+                <span class="material-icons-outlined input-icon">person</span>
+                <input type="text" class="form-control" id="tipo" name="tipo"
+                    placeholder="ej. 'Pasantía', 'Contrato', etc" [(ngModel)]="contrato.tipo" required minlength="3"
+                    maxlength="30" #tipo="ngModel" [ngClass]="{
+                    'is-invalid': tipo.invalid && tipo.touched,
+                    'is-valid': tipo.valid && tipo.touched}" autocomplete="off">
+            </div>
+            @if (tipo.errors?.['required'] && (tipo.touched || miFormulario.submitted)) {
+            <div class="text-danger">Tipo requerido</div>
+            }
+            @if (tipo.errors?.['minlength'] && (tipo.touched || miFormulario.submitted)) {
+            <div class="text-danger">Mínimo tres caracteres</div>
+            }
+            @if (tipo.errors?.['maxlength'] && (tipo.touched || miFormulario.submitted)) {
+            <div class="text-danger">Máximo treinta caracteres</div>
+            }
+        </div>
+
+        <!-- TÍTULO O RESUMEN DE LA OFERTA -->
+        <div class="form-group mb-4">
+            <label for="titulo" class="form-label">Título o resumen de la oferta <span
+                    class="text-danger">*</span></label>
+            <div class="input-with-icon">
+                <span class="material-icons-outlined input-icon">description</span>
+                <input type="text" class="form-control" id="titulo" name="titulo"
+                    placeholder="ej. 'Backend Jr. para equipo de BI'" [(ngModel)]="contrato.titulo" required
+                    minlength="3" maxlength="60" #titulo="ngModel" [ngClass]="{
+                    'is-invalid': titulo.invalid && titulo.touched,
+                    'is-valid': titulo.valid && titulo.touched}" autocomplete="off">
+            </div>
+            @if (titulo.errors?.['required'] && (titulo.touched || miFormulario.submitted)) {
+            <div class="text-danger">Título requerido</div>
+            }
+            @if (titulo.errors?.['minlength'] && (titulo.touched || miFormulario.submitted)) {
+            <div class="text-danger">Mínimo tres caracteres</div>
+            }
+        </div>
+
+        <!-- MODALIDAD DEL TRABAJO -->
+        <div class="form-group mb-4">
+            <label for="modalidad" class="form-label">Modalidad del trabajo <span class="text-danger">*</span></label>
+            <div class="input-with-icon">
+                <span class="material-icons-outlined input-icon">work</span>
+                <select class="form-select form-control" id="modalidad" name="modalidad"
+                    [(ngModel)]="contrato.modalidad" required #modalidad="ngModel" [ngClass]="
+                    {
+                    'is-invalid': modalidad.invalid && (modalidad.touched || miFormulario.submitted),
+                    'is-valid': modalidad.valid && modalidad.touched}
+                    " autocomplete="off">
+                    <option value="" disabled selected>Seleccione una opción</option>
+                    <option value="remoto">Remoto</option>
+                    <option value="presencial">Presencial</option>
+                    <option value="hibrido">Híbrido</option>
+                </select>
+                <span class="material-icons-outlined select-arrow">expand_more</span>
+            </div>
+            @if (modalidad.errors?.['required'] && (modalidad.touched || miFormulario.submitted)) {
+            <div class="text-danger">Modalidad requerida</div>
+            }
+        </div>
+
+        <!-- SENIORITY DESEADO -->
+        <div class="form-group mb-4">
+            <label class="form-label d-block">Seniority (selecciona una o varias) <span
+                    class="text-danger">*</span></label>
+            <div class="contenedor-seniority">
+                @for (opcion of ['Trainee', 'Junior', 'Semisenior', 'Indistinto']; track opcion) {
+                <input type="checkbox" class="btn-check" [id]="opcion" [checked]="estaSeleccionado(opcion)"
+                    (change)="toggleSeniority(opcion)" autocomplete="off">
+                <label class="btn-seniority-card" [for]="opcion">
+                    @if (opcion === 'Trainee') {
+                    <span class="material-icons-outlined card-icon">rocket_launch</span>
+                    } @else if (opcion === 'Junior') {
+                    <span class="material-icons-outlined card-icon">person</span>
+                    } @else if (opcion === 'Semisenior') {
+                    <span class="material-icons-outlined card-icon">trending_up</span>
+                    } @else if (opcion === 'Indistinto') {
+                    <span class="material-icons-outlined card-icon">drag_handle</span>
+                    }
+                    <span class="card-text">{{ opcion }}</span>
+                </label>
+                }
+            </div>
+            <!-- Validación Visual -->
+            @if (contrato.seniority_deseado?.length === 0 && miFormulario.submitted) {
+            <div class="text-danger small mt-1">Debe seleccionar al menos una opción.</div>
+            }
+        </div>
+
+        <!-- DESCRIPCIÓN COMPLETA DEL CONTRATO -->
+        <div class="form-group mb-4">
+            <label for="descripcion" class="form-label">Descripción completa del Contrato <span
+                    class="text-danger">*</span></label>
+            <div class="input-with-icon textarea-container">
+                <span class="material-icons-outlined input-icon">description</span>
+                <textarea class="form-control text-area-control" id="descripcion" name="descripcion" rows="4"
+                    placeholder="Hasta 400 caracteres" [(ngModel)]="contrato.descripcion" required minlength="30"
+                    maxlength="400" #descripcion="ngModel" [ngClass]="{
+                    'is-invalid': descripcion.invalid && descripcion.touched,
+                    'is-valid': descripcion.valid && descripcion.touched}" autocomplete="off"></textarea>
+                <div class="char-counter">{{ contrato.descripcion?.length || 0 }}/400</div>
+            </div>
+            @if (descripcion.errors?.['required'] && (descripcion.touched || miFormulario.submitted)) {
+            <div class="text-danger">Descripción requerida</div>
+            }
+            @if (descripcion.errors?.['minlength'] && (descripcion.touched || miFormulario.submitted)) {
+            <div class="text-danger">Mínimo 30 caracteres</div>
+            }
+        </div>
+
+        <!-- ENVIAR BUTTON -->
+        <div class="form-actions mt-5">
+            <button type="submit" class="btn-submit-green">
+                <span class="material-icons-outlined btn-icon">send</span> Enviar
+            </button>
+        </div>
+
+    </form>
+</div>

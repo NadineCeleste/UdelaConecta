@@ -1,0 +1,177 @@
+<div class="contratos-split-layout">
+  <!-- Panel izquierdo: lista scrolleable de contratos -->
+  <aside class="contratos-list-panel">
+    <!-- Área scrolleable -->
+    <div class="contratos-scroll-area">
+      <div class="search-box">
+        <input type="text" class="search-input" placeholder="Buscar por título..." [(ngModel)]="busqueda" (input)="filtrarContratos()" />
+      </div>
+
+      <!-- Filtros -->
+      <div class="filtros-bar">
+        <select class="filtro-select" [(ngModel)]="filtroModalidad" (change)="filtrarContratos()">
+          <option value="">Modalidad</option>
+          <option value="remoto">Remoto</option>
+          <option value="presencial">Presencial</option>
+          <option value="hibrido">Híbrido</option>
+        </select>
+
+        <select class="filtro-select" [(ngModel)]="filtroSeniority" (change)="filtrarContratos()">
+          <option value="">Seniority</option>
+          <option value="Trainee">Trainee</option>
+          <option value="Junior">Junior</option>
+          <option value="Semisenior">Semisenior</option>
+          <option value="Senior">Senior</option>
+        </select>
+
+        @if (filtroModalidad || filtroSeniority) {
+          <button class="filtro-clear" (click)="limpiarFiltros()">✕</button>
+        }
+      </div>
+
+      <!-- Contratos disponibles -->
+      @for (card of contratosDisponibles; track card.id) {
+      <div class="contrato-card-item" [ngClass]="{'active': contratoAMostrarDetail?.id === card.id}" (click)="setContratoAMostrar(card)">
+        <div class="card-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
+            <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+          </svg>
+        </div>
+        <div class="card-content">
+          <div class="card-item-header">
+            <h3 class="card-item-titulo">{{ card.titulo }}</h3>
+            <span class="badge badge-disponible">Disponible</span>
+          </div>
+          <p class="card-item-descripcion">{{ card.descripcion }}</p>
+          <div class="card-item-meta">
+            @if (card.modalidad) {
+            <span class="meta-tag tag-modalidad">{{ card.modalidad }}</span>
+            }
+            @if (card.seniority_deseado && card.seniority_deseado.length) {
+            <span class="meta-tag tag-seniority">{{ card.seniority_deseado.join(', ') }}</span>
+            }
+            @if (card.start_date) {
+            <span class="meta-tag">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              {{ card.start_date }}
+            </span>
+            }
+            @if (card.end_date) {
+            <span class="meta-tag">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+              {{ card.end_date }}
+            </span>
+            }
+          </div>
+        </div>
+      </div>
+      }
+
+      @if (contratosDisponibles.length === 0 && contratosPendientes.length === 0 && contratosAsignados.length === 0) {
+      <div class="no-results">Lo sentimos =( <br> Parece que no hay contratos disponibles.</div>
+      }
+    </div>
+
+    <!-- Drawer fijo inferior: Pendientes + Asignados -->
+    @if (contratosPendientes.length > 0 || contratosAsignados.length > 0) {
+    <div class="drawer-bottom" [ngClass]="{'drawer-open': drawerAbierto}">
+      <button class="drawer-toggle" (click)="drawerAbierto = !drawerAbierto">
+        <span class="drawer-toggle-label">
+          {{ rolActual === 'gerente' ? 'Mis ofertas' : 'Mis postulaciones' }}
+          @if (contratosPendientes.length > 0) {
+          <span class="drawer-count pendiente-count">{{ contratosPendientes.length }} pend.</span>
+          }
+          @if (contratosAsignados.length > 0) {
+          <span class="drawer-count asignado-count">{{ contratosAsignados.length }} asig.</span>
+          }
+        </span>
+        <span class="drawer-chevron">{{ drawerAbierto ? '▼' : '▲' }}</span>
+      </button>
+
+      <div class="drawer-content">
+        @if (contratosPendientes.length > 0) {
+        <div class="section-divider"><span>Pendientes</span></div>
+        @for (card of contratosPendientes; track card.id) {
+        <div class="contrato-card-item pendiente" [ngClass]="{'active': contratoAMostrarDetail?.id === card.id, 'pendiente-dev': rolActual === 'desarrollador'}" (click)="setContratoAMostrar(card)">
+          <div class="card-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            </svg>
+          </div>
+          <div class="card-content">
+            <div class="card-item-header">
+              <h3 class="card-item-titulo">{{ card.titulo }}</h3>
+              <span class="badge badge-pendiente">Pendiente</span>
+            </div>
+            <p class="card-item-descripcion">{{ card.descripcion }}</p>
+            <div class="card-item-meta">
+              @if (card.modalidad) {
+              <span class="meta-tag tag-modalidad">{{ card.modalidad }}</span>
+              }
+              @if (card.seniority_deseado && card.seniority_deseado.length) {
+              <span class="meta-tag tag-seniority">{{ card.seniority_deseado.join(', ') }}</span>
+              }
+              @if (card.start_date) {
+              <span class="meta-tag"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> {{ card.start_date }}</span>
+              }
+              @if (card.end_date) {
+              <span class="meta-tag"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="9" y1="15" x2="15" y2="15"/></svg> {{ card.end_date }}</span>
+              }
+            </div>
+          </div>
+        </div>
+        }
+        }
+
+        @if (contratosAsignados.length > 0) {
+        <div class="section-divider"><span>Asignados</span></div>
+        @for (card of contratosAsignados; track card.id) {
+        <div class="contrato-card-item asignado" [ngClass]="{'active': contratoAMostrarDetail?.id === card.id, 'asignado-dev': rolActual === 'desarrollador'}" (click)="setContratoAMostrar(card)">
+          <div class="card-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          </div>
+          <div class="card-content">
+            <div class="card-item-header">
+              <h3 class="card-item-titulo">{{ card.titulo }}</h3>
+              <span class="badge badge-asignado">Asignado</span>
+            </div>
+            <p class="card-item-descripcion">{{ card.descripcion }}</p>
+            @if (card.pasante_email) {
+            <p class="card-item-pasante">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              {{ card.pasante_email }}
+            </p>
+            }
+            <div class="card-item-meta">
+              @if (card.modalidad) {
+              <span class="meta-tag tag-modalidad">{{ card.modalidad }}</span>
+              }
+              @if (card.seniority_deseado && card.seniority_deseado.length) {
+              <span class="meta-tag tag-seniority">{{ card.seniority_deseado.join(', ') }}</span>
+              }
+            </div>
+          </div>
+        </div>
+        }
+        }
+      </div>
+    </div>
+    }
+  </aside>
+
+  <!-- Panel derecho: detalle del contrato seleccionado -->
+  <section class="contrato-detail-panel">
+    @if (mostrandoContratoDetail && contratoAMostrarDetail) {
+    <app-contrato-detail [contrato]="contratoAMostrarDetail!" [email]="perfil.email" [rol]="rolActual" (contratoAssigned)="onContratoAssigned($event)"/>
+    } @else {
+    <div class="detail-placeholder">
+      <div class="placeholder-icon">📋</div>
+      <h3>Seleccioná un contrato</h3>
+      <p>Elegí un contrato de la lista para ver sus detalles</p>
+    </div>
+    }
+  </section>
+</div>

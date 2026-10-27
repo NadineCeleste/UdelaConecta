@@ -1,0 +1,153 @@
+<main>
+  <nav class="navbar" [class.mobile-active]="menuActive">
+    <div class="navbar-left">
+      @if (user$ | async) {
+      <a class="btn-halo btn-back" (click)="goBack()">
+        <span class="material-icons-outlined">arrow_back</span>
+      </a>
+      }
+      <div class="logo-container-desktop">
+        <a class="logo" routerLink="/">
+          <div class="logo-with-pulse">
+            <span class="logo-text">Udela Conecta</span>
+            <span class="status-pulse"></span>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <hr class="header-divider" />
+
+    <div class="menu-toggle" (click)="toggleMenu()">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </div>
+
+    <ul class="nav-links" [class.active]="menuActive">
+
+      <!-- BOTÓN CERRAR MENÚ -->
+      <!-- <li class="nav-close">
+        <button class="material-icons-outlined btn-menu-close" type="button" (click)="closeMenu()"
+          aria-label="Cerrar menú">&times;</button>
+      </li> -->
+      <li class="nav-welcome-item">
+          <span *ngIf="rolActual === 'gerente'" class="badge-rol badge-gerente">
+            <p>GERENTE</p>
+          </span>
+
+          <span *ngIf="rolActual === 'desarrollador'" class="badge-rol badge-dev">
+            <p>DESARROLLADOR</p>
+          </span>
+        </li>
+
+      <li class="nav-close">
+        <button class="btn-menu-close" type="button" (click)="closeMenu()" aria-label="Cerrar menú">
+          <span class="material-icons-outlined">close</span>
+        </button>
+      </li>
+
+      <!-- LINKS PARA USUARIOS LOGUEADOS -->
+      <ng-container *ngIf="user$ | async; else guestLinks">
+
+        <li class="nav-item-with-dropdown" *ngIf="rolActual === 'desarrollador'">
+          <a class="btn-halo" routerLink="/contratos" routerLinkActive="active" (click)="closeMenu()">
+            <span class="material-icons-outlined">search</span>
+            Buscar Empleo
+          </a>
+        </li>
+
+        <li class="nav-item-with-dropdown" *ngIf="rolActual === 'gerente'">
+          <a class="btn-halo" routerLink="/contratos" routerLinkActive="active" (click)="closeMenu()">
+            <span class="material-icons-outlined">search</span>
+            Ver mis contratos
+          </a>
+        </li>
+
+        <li class="nav-item" *ngIf="isgests">
+          <a class="btn-halo" routerLink="/dashboard" routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">
+            Admin Dashboard
+          </a>
+        </li>
+
+        <li class="nav-item" *ngIf="isgests">
+          <a class="btn-halo" routerLink="/whitelist-email" routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">
+            <span class="material-icons-outlined">mark_email_read</span>
+            Whitelist
+          </a>
+        </li>
+
+        <li class="nav-item">
+          <a class="btn-halo" routerLink="/profile" routerLinkActive="active"
+            [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">
+            Perfil
+          </a>
+        </li>
+
+        <!-- ICONOS PARA USUARIOS LOGUEADOS -->
+        <li class="nav-icons-row">
+        
+          <button class="btn-theme-toggle-nav" (click)="toggleModoOscuro()"
+            [title]="isModoOscuro ? 'Activar modo claro' : 'Activar modo oscuro'">
+            <span class="material-icons-outlined">{{ isModoOscuro ? 'light_mode' : 'dark_mode' }}</span>
+          </button>
+        </li>
+
+        <!-- DROPDOWN CUENTA -->
+        <li class="nav-item-with-dropdown">
+          <button class="btn-account">
+            <span class="material-icons-outlined">account_circle</span>
+            <span class="material-icons-outlined arrow">expand_more</span>
+          </button>
+          <ul class="dropdown-menu account-dropdown">
+            <li>
+              <a (click)="navigateTo('configuracion')">
+                <span class="material-icons-outlined">settings</span>
+                Configuración
+              </a>
+            </li>
+            <li>
+              <a (click)="navigateTo('ayuda')">
+                <span class="material-icons-outlined">help_outline</span>
+                Ayuda
+              </a>
+            </li>
+            <li class="divider"></li>
+            <li>
+              <a class="cerrar-sesion" (click)="logout()">
+                <span class="material-icons-outlined">logout</span>
+                Cerrar sesión
+              </a>
+            </li>
+          </ul>
+        </li>
+
+      </ng-container>
+
+      <!-- LINKS PARA GUESTS (NO LOGUEADOS) -->
+      <ng-template #guestLinks>
+
+        <!-- BOTONES LOGIN Y REGISTRO uno al lado del otro -->
+        <li class="guest-btns-row">
+          <button class="btn-login-nav" (click)="onLogin.emit(); closeMenu()">Iniciar Sesión</button>
+          <button class="btn-registro-nav" (click)="onRegister.emit(); closeMenu()">Registrate</button>
+        </li>
+
+        <!-- ICONOS PARA GUESTS uno al lado del otro -->
+        <li class="nav-icons-row">
+  
+          <button class="btn-theme-toggle-nav" (click)="toggleModoOscuro()"
+            [title]="isModoOscuro ? 'Activar modo claro' : 'Activar modo oscuro'">
+            <span class="material-icons-outlined">{{ isModoOscuro ? 'light_mode' : 'dark_mode' }}</span>
+          </button>
+        </li>
+
+      </ng-template>
+
+    </ul>
+  </nav>
+
+
+</main>
