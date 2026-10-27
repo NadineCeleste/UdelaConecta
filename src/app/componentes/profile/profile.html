@@ -1,0 +1,604 @@
+<div class="dashboard-wrapper" *ngIf="perfil">
+
+  <aside class="sidebar">
+
+    <ng-container *ngIf="rolActual === 'gerente'">
+      <div class="card">
+        <h3 class="sidebar-title">Mi estatus</h3>
+        <p class="sidebar-text">¿Está tu empresa actualmente buscando desarrolladores?</p>
+        <div class="status-selector">
+          <span class="dot"
+            [style.background]="perfil.proyecto.buscando_devs === false || perfil.proyecto.buscando_devs === 'false' || perfil.proyecto.buscando_devs == 0 ? '#ec1313' : '#34d399'"
+            [style.color]="perfil.proyecto.buscando_devs === false || perfil.proyecto.buscando_devs === 'false' || perfil.proyecto.buscando_devs == 0 ? 'rgba(248, 113, 113, 0.3)' : 'rgba(52, 211, 153, 0.3)'">
+          </span>
+          <select *ngIf="isOwnProfile" class="clean-select" [(ngModel)]="perfil.proyecto.buscando_devs"
+            (change)="handleUpdate()">
+            <option [ngValue]="false">No por el momento</option>
+            <option [ngValue]="true">Sí, buscando</option>
+          </select>
+        </div>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="rolActual === 'desarrollador'">
+      <div class="card">
+        <h3 class="sidebar-title">{{ isOwnProfile ? 'Mi estatus' : 'Estatus del desarrollador' }}</h3>
+        <p class="sidebar-text" *ngIf="isOwnProfile">¿Estás actualmente buscando trabajo?</p>
+        <div class="status-selector">
+          <span class="dot"
+            [style.background]="perfil.is_disponible === false || perfil.is_disponible === 'false' || perfil.is_disponible == 0 ? '#ec1313' : '#34d399'"
+            [style.color]="perfil.is_disponible === false || perfil.is_disponible === 'false' || perfil.is_disponible == 0 ? 'rgba(248, 113, 113, 0.3)' : 'rgba(52, 211, 153, 0.3)'">
+          </span>
+          <select *ngIf="isOwnProfile" class="clean-select" [(ngModel)]="perfil.is_disponible"
+            (change)="handleUpdate()">
+            <option [ngValue]="false">No por el momento</option>
+            <option [ngValue]="true">Sí, buscando</option>
+          </select>
+          <span *ngIf="!isOwnProfile">{{ (perfil.is_disponible === true || perfil.is_disponible === 'true' ||
+            perfil.is_disponible == 1) ? 'Buscando trabajo' : 'No disponible' }}</span>
+        </div>
+      </div>
+    </ng-container>
+
+    <nav class="card menu-card">
+      <ul class="nav-list">
+        <li (click)="cambiarSeccion('info')" [class.active]="seccionActiva === 'info'">
+          {{ rolActual === 'gerente' ? 'Datos de Perfil' : 'Información personal' }}
+        </li>
+        <ng-container *ngIf="rolActual === 'desarrollador'">
+          <li (click)="cambiarSeccion('portfolio')" [class.active]="seccionActiva === 'portfolio'">
+            Portfolio
+          </li>
+          <li (click)="cambiarSeccion('habilidades')" [class.active]="seccionActiva === 'habilidades'">
+            Habilidades
+          </li>
+          <li (click)="cambiarSeccion('idiomas')" [class.active]="seccionActiva === 'idiomas'">
+            Idiomas
+          </li>
+        </ng-container>
+
+
+        <li *ngIf="rolActual === 'gerente'" (click)="cambiarSeccion('ofertas')"
+          [class.active]="seccionActiva === 'ofertas'">
+          Mis ofertas
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <div [ngSwitch]="seccionActiva">
+
+      <ng-container *ngSwitchCase="'info'">
+        <div class="info-section">
+
+          <div class="card profile-card">
+            <div class="profile-hero-visual" aria-hidden="true">
+              <div class="ph-blob ph-blob-1"></div>
+              <div class="ph-blob ph-blob-2"></div>
+              <div class="ph-blob ph-blob-3"></div>
+            </div>
+
+            <div class="profile-top">
+              <div class="user-meta">
+                <div class="avatar">
+                  <span class="material-icons-outlined" style="font-size: 30px;">{{ rolActual === 'gerente' ? 'business'
+                    : 'person' }}</span>
+                </div>
+                <div class="user-names">
+                  <h3 class="user-h3">
+                    {{ rolActual === 'gerente' ? (perfil.proyecto.nombre || 'Nombre de la empresa...') : (perfil.nombre
+                    + ' ' + perfil.apellido) }}
+                    <span class="badge-new" *ngIf="isProfileEmpty">Casi terminado</span>
+                    <span class="verificado-badge" *ngIf="rolActual === 'desarrollador' && perfil.verificado" title="Perfil verificado">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
+                      </svg>
+                      <span class="verificado-text">Verificado</span>
+                    </span>
+                  </h3>
+                  <p class="role-tag">{{ rolActual | titlecase }}</p>
+                </div>
+              </div>
+              <button *ngIf="isOwnProfile" class="btn-edit-blue" (click)="toggleEdit()">
+                <span class="material-icons-outlined" style="font-size: 16px;">{{ isEditing ? 'close' : 'edit' }}</span>
+                {{ isEditing ? 'Cancelar' : 'Editar perfil' }}
+              </button>
+            </div>
+
+            <hr class="line-divider">
+
+            <div *ngIf="!isEditing" class="data-grid">
+              <div class="data-item"><span class="material-icons-outlined data-icon">email</span> {{ perfil.email }}
+              </div>
+              <div class="data-item"><span class="material-icons-outlined data-icon">smartphone</span> {{
+                perfil.telefono || 'Vacío' }}</div>
+
+              <ng-container *ngIf="rolActual === 'desarrollador'">
+                <div class="data-item"><span class="material-icons-outlined data-icon">calendar_month</span> {{
+                  perfil.fecha_nacimiento || 'Vacío' }}</div>
+                <div class="data-item"><span class="material-icons-outlined data-icon">work_outline</span> {{
+                  perfil.posicion || 'Vacío' }}</div>
+                @if (perfil.genero != 'X') {
+                <div class="data-item"><span class="material-icons-outlined data-icon"> {{perfil.genero == 'F' ?
+                    'female' : perfil.genero == 'M' ? 'male' : 'agender' }}</span> {{
+                  perfil.genero || 'Vacío' }}</div>
+                }
+                <div class="data-item" *ngIf="perfil.descripcion" style="display: flex; gap: 8px; margin-top: 10px;">
+                  <span class="material-icons-outlined data-icon">description</span>
+                  {{ perfil.descripcion }}
+                </div>
+              </ng-container>
+
+              <ng-container *ngIf="rolActual === 'gerente'">
+                <div class="data-item"><span class="material-icons-outlined data-icon">link</span> {{
+                  perfil.proyecto.info_link
+                  || 'Web no definida' }}</div>
+                <div class="data-item"><span class="material-icons-outlined data-icon">person_outline</span> {{
+                  perfil.nombre }} {{ perfil.apellido }} (Contacto)</div>
+              </ng-container>
+              <ng-container *ngIf="rolActual === 'gerente'">
+                <div class="data-item-full" *ngIf="perfil.proyecto.description" style="display: flex; gap: 8px;"><span
+                    class="material-icons-outlined data-icon">description</span> {{ perfil.proyecto.description }}</div>
+              </ng-container>
+            </div>
+
+            <form *ngIf="isEditing" (submit)="handleUpdate()" class="form-container">
+              <div *ngIf="rolActual === 'gerente'" class="form-grid">
+                <div class="input-group">
+                  <label>Nombre de la Empresa</label>
+                  <input type="text" [(ngModel)]="perfil.proyecto.nombre" name="empresa_nombre" class="custom-input"
+                    maxlength="20">
+                </div>
+                <div class="input-group">
+                  <label>Sitio Web (URL)</label>
+                  <input type="url" [(ngModel)]="perfil.proyecto.info_link" name="web_empresa" class="custom-input">
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="input-group">
+                  <label>{{ rolActual === 'gerente' ? 'Nombre del Responsable' : 'Nombre' }}</label>
+                  <input type="text" [(ngModel)]="perfil.nombre" name="nombre" class="custom-input" maxlength="15"
+                    pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+" title="Por favor, ingresa solo letras y espacios." (keypress)="permitirSoloLetras($event)"  >
+                </div>
+                <div class="input-group">
+                  <label>Apellido</label>
+                  <input type="text" [(ngModel)]="perfil.apellido" name="apellido" class="custom-input" maxlength="15"
+                    pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+" title="Por favor, ingresa solo letras y espacios." (keypress)="permitirSoloLetras($event)">
+                </div>
+              </div>
+
+              <div class="form-grid">
+                <div class="input-container">
+                  <label class="field-label required-field">Correo electrónico</label>
+                  <!-- Dejo todas las validaciones por si un día lo usamos pero agrego readonly xq no debería haber un caso en el que se cambia el email -->
+                  <input type="email" readonly [(ngModel)]="perfil.email" name="email" class="custom-input"
+                    placeholder="ejemplo@correo.com" required pattern="[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,4}$"
+                    #emailInput="ngModel">
+                  <div *ngIf="emailInput.invalid && (emailInput.dirty || emailInput.touched)" class="error-message">
+                    Por favor, ingresa un correo válido.
+                  </div>
+                </div>
+                <div class="input-container">
+                  <label class="field-label">Teléfono</label>
+                  <input type="number   " [(ngModel)]="perfil.telefono" name="telefono" class="custom-input"
+                    pattern="[0-9]*" inputmode="numeric" maxlength="10" placeholder="Ej: 1123456789"
+                    (keypress)="soloNumeros($event)">
+                </div>
+
+                <div class="form-group-full" *ngIf="rolActual === 'gerente'">
+                  <label class="label-pro" style="display: flex; align-items: center; gap: 4px;"><span
+                      class="material-icons-outlined" style="font-size: 16px;">description</span> Descripcion
+                    de la empresa</label>
+                  <textarea [(ngModel)]="perfil.proyecto.description" name="description" class="textarea-grande"
+                    placeholder="Misión y visión de {{perfil.proyecto.nombre}}" rows="8" maxlength="500">
+                    </textarea>
+                  <div class="char-counter">
+                    {{ perfil.proyecto.descripcion?.length || 0 }} / 500 caracteres
+                  </div>
+                </div>
+              </div>
+
+              <ng-container *ngIf="rolActual === 'desarrollador'">
+                <div class="gender-section">
+                  <label class="field-label">Género</label>
+                  <div class="gender-options">
+                    <label class="radio-item"><input type="radio" name="genero" value="F"
+                        [(ngModel)]="perfil.genero"><span>F</span></label>
+                    <label class="radio-item"><input type="radio" name="genero" value="M"
+                        [(ngModel)]="perfil.genero"><span>M</span></label>
+                    <label class="radio-item"><input type="radio" name="genero" value="X"
+                        [(ngModel)]="perfil.genero"><span>X</span></label>
+                  </div>
+                </div>
+                <div class="form-grid">
+                  <div class="input-group">
+                    <label>Fecha de nacimiento</label>
+                    <input type="date" [(ngModel)]="perfil.fecha_nacimiento" name="fecha_nacimiento" class="custom-input" [max]="maxDate" [min]="minDate">
+                  </div>
+                  <div class="input-group">
+                    <label>Puesto Actual</label>
+                    <input type="text" [(ngModel)]="perfil.posicion" name="posicion" class="custom-input" pattern="[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+">
+                  </div>
+                  <div class="form-group-full">
+                    <label class="label-pro" style="display: flex; align-items: center; gap: 4px;"><span
+                        class="material-icons-outlined" style="font-size: 16px;">description</span> Descripcion
+                      Personal</label>
+                    <textarea [(ngModel)]="perfil.descripcion" name="descripcion" class="textarea-grande"
+                      placeholder="Contanos tu historia profesional..." rows="8" maxlength="500">
+                    </textarea>
+                    <div class="char-counter">
+                      {{ perfil.descripcion?.length || 0 }} / 500 caracteres
+                    </div>
+                  </div>
+                </div>
+              </ng-container>
+
+              <button type="submit" [disabled]="loading" class="btn-save">Guardar Perfil</button>
+            </form>
+          </div>
+          <div class="card resume-upload-card" *ngIf="rolActual === 'desarrollador' && !isEditing && isOwnProfile">
+            <div class="upload-header">
+              <h3 class="upload-title" style="display: flex; align-items: center; gap: 8px;">
+                <span class="material-icons-outlined">auto_awesome</span> Aumenta tus oportunidades subiendo tu
+                currículum
+              </h3>
+            </div>
+            <p class="upload-subtitle">Tu currículum nos ayuda a llenar tu perfil automáticamente.</p>
+
+            <div class="features-grid">
+              <div class="feature-item">
+                <div class="circle-icon"><span class="material-icons-outlined">people</span></div>
+                <p>Incrementá tu visibilidad</p>
+              </div>
+              <div class="feature-item">
+                <div class="circle-icon"><span class="material-icons-outlined">work</span></div>
+                <p>Destacá tus logros y experiencia</p>
+              </div>
+              <div class="feature-item">
+                <div class="circle-icon"><span class="material-icons-outlined">celebration</span></div>
+                <p>Solicitá empleos más rápido</p>
+              </div>
+            </div>
+
+            <input type="file" #fileInputCV (change)="onCVSelected($event)" accept=".pdf,.doc,.docx"
+              style="display: none;">
+
+            <button class="btn-upload" (click)="fileInputCV.click()">
+              Subí tu curriculum
+            </button>
+
+            <div *ngIf="archivoCV" class="selected-file">
+              <span class="file-info" style="display: flex; align-items: center; gap: 8px;"><span
+                  class="material-icons-outlined" style="font-size: 18px;">description</span> {{ archivoCV.name
+                }}</span>
+              <button (click)="borrarArchivo('cv')" class="btn-remove">Eliminar</button>
+            </div>
+          </div>
+
+        </div>
+      </ng-container>
+
+      <ng-container *ngSwitchCase="'portfolio'">
+        <app-portfolio-component [emailDesarrollador]="perfil.email"></app-portfolio-component>
+      </ng-container>
+
+      <!-- SECCIÓN DE HABILIDADES -->
+      <section class="profile-card-section" *ngSwitchCase="'habilidades'">
+        <h2 class="sr-only">Gestionar habilidades</h2>
+
+        <div class="languages-header">
+          <div class="languages-title-wrapper">
+            <h3 class="languages-main-title">Habilidades</h3>
+            <span class="material-icons-outlined languages-icon">bolt</span>
+          </div>
+          <button *ngIf="!isEditing && isOwnProfile && perfil?.habilidades?.length > 0" class="languages-edit-btn"
+            aria-label="Editar habilidades" (click)="toggleEdit()">
+            Editar
+          </button>
+        </div>
+
+        <p class="languages-description">Añade tus conocimientos para que los reclutadores te encuentren.</p>
+
+        <hr class="languages-divider">
+
+        <ng-container *ngIf="perfil?.habilidades?.length === 0 && !isEditing">
+          <div class="languages-decoration-container" aria-hidden="true">
+            <div class="languages-decoration-container" aria-hidden="true">
+              <div style="
+    width: 80px; height: 80px; border-radius: 50%;
+    background: color-mix(in srgb, var(--accent-primary) 10%, var(--card-bg));
+    display: flex; align-items: center; justify-content: center;">
+                <span class="material-icons-outlined" style="font-size: 36px; color: var(--accent-primary);">
+                  school
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="languages-cta-container">
+            <button *ngIf="isOwnProfile" class="btn-add-languages" (click)="toggleEdit()">
+              <span class="plus-circle">+</span>
+              <span>Añadir habilidades</span>
+            </button>
+          </div>
+        </ng-container>
+
+        <div *ngIf="isEditing" class="languages-form-wrapper">
+          <div class="languages-form">
+            <div class="form-row-two-cols">
+              <div class="form-field">
+                <label for="hab-input">Habilidad</label>
+                <input id="hab-input" type="text" [(ngModel)]="nuevaHabilidad.nombre" name="habNombre"
+                  class="custom-input" placeholder="Ej: JavaScript">
+              </div>
+              <div class="form-field">
+                <label for="hab-nivel">Nivel</label>
+                <select id="hab-nivel" [(ngModel)]="nuevaHabilidad.nivel" name="habNivel" class="custom-input">
+                  <option value="principiante">Principiante</option>
+                  <option value="intermedio">Intermedio</option>
+                  <option value="avanzado">Avanzado</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-actions-row">
+              <button class="btn-form-save" [disabled]="loading"
+                (click)="guardarHabilidad(); handleUpdate()">Guardar</button>
+              <button type="button" class="btn-form-cancel" [disabled]="loading"
+                (click)="toggleEdit()">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="perfil?.habilidades?.length > 0" class="languages-list-wrapper">
+          <div class="languages-list">
+            <div *ngFor="let hab of perfil.habilidades; let i = index; let last = last" class="language-item"
+              [class.last-item]="last">
+              <div class="language-content">
+                <span class="language-name">{{ hab.nombre }}</span>
+                <span class="language-level-badge">{{ hab.nivel }}</span>
+              </div>
+              <button *ngIf="isOwnProfile" class="btn-remove-language" (click)="eliminarHabilidad(i); handleUpdate()"
+                [attr.aria-label]="'Eliminar ' + hab.nombre">✕</button>
+            </div>
+          </div>
+          <button *ngIf="isOwnProfile" class="btn-add-another-language" (click)="toggleEdit()">
+            <span class="plus-icon">+</span> Añadir otra habilidad
+          </button>
+        </div>
+      </section>
+
+      <!-- SECCIÓN DE IDIOMAS -->
+      <section class="profile-card-section" *ngSwitchCase="'idiomas'">
+        <h2 class="sr-only">Gestionar idiomas - Añade los idiomas que dominas para expandir tus oportunidades
+          profesionales</h2>
+
+        <!-- ENCABEZADO -->
+        <div class="languages-header">
+          <div class="languages-title-wrapper">
+            <span class="material-icons-outlined languages-icon">public</span>
+            <h3 class="languages-main-title">Idiomas</h3>
+          </div>
+          <button *ngIf="!isEditing && isOwnProfile && perfil?.idiomas?.length > 0"
+            class="btn-edit-ghost languages-edit-btn" aria-label="Editar idiomas" (click)="toggleEdit()">
+            Editar
+          </button>
+        </div>
+
+        <!-- DESCRIPCIÓN -->
+        <p class="languages-description">Añade los idiomas que dominas para expandir tus oportunidades profesionales.
+        </p>
+
+        <!-- DIVISOR -->
+        <hr class="languages-divider">
+
+        <!-- ESTADO VACÍO: sin idiomas ni formulario -->
+        <ng-container *ngIf="perfil?.idiomas?.length === 0 && !isEditing">
+          <!-- Ilustración decorativa -->
+          <div class="languages-decoration-container" aria-hidden="true">
+            <svg class="languages-decoration-svg" viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
+
+              <g class="bubble-large">
+                <path
+                  d="M 10 20 Q 10 10 20 10 L 70 10 Q 80 10 80 20 L 80 60 Q 80 70 70 70 L 30 70 L 20 85 L 25 70 L 20 70 Q 10 70 10 60 Z"
+                  fill="none" stroke="#A5D6A7" stroke-width="2" />
+                <text x="40" y="45" font-size="28" font-weight="bold" fill="#A5D6A7" text-anchor="middle"
+                  dominant-baseline="middle">A</text>
+              </g>
+              <!-- Burbuja pequeña -->
+              <g class="bubble-small">
+                <circle cx="90" cy="35" r="18" fill="none" stroke="#A5D6A7" stroke-width="2" />
+                <text x="90" y="40" font-size="18" font-weight="bold" fill="#A5D6A7" text-anchor="middle"
+                  dominant-baseline="middle">文</text>
+              </g>
+            </svg>
+          </div>
+
+          <!-- Botón añadir idiomas -->
+          <div class="languages-cta-container">
+            <button *ngIf="isOwnProfile" class="btn-add-languages" (click)="toggleEdit()">
+              <span class="plus-circle">+</span>
+              <span>Añadir idiomas</span>
+            </button>
+          </div>
+        </ng-container>
+
+        <!-- FORMULARIO: cuando isEditing es true -->
+        <div *ngIf="isEditing" class="languages-form-wrapper">
+          <div class="languages-form">
+            <div class="form-row-two-cols">
+              <div class="form-field">
+                <label for="idioma-input">Idioma</label>
+                <input id="idioma-input" type="text" [(ngModel)]="nuevoIdioma.nombre" name="idiomaNombre"
+                  class="custom-input" placeholder="Ej: Inglés, Alemán...">
+              </div>
+              <div class="form-field">
+                <label for="nivel-select">Nivel de fluidez</label>
+                <select id="nivel-select" [(ngModel)]="nuevoIdioma.nivel" name="idiomaNivel" class="custom-input">
+                  <option value="A1 - Principiante">A1 - Principiante</option>
+                  <option value="A2 - Básico">A2 - Básico</option>
+                  <option value="B1 - Intermedio">B1 - Intermedio</option>
+                  <option value="B2 - Intermedio Alto">B2 - Intermedio Alto</option>
+                  <option value="C1 - Avanzado">C1 - Avanzado</option>
+                  <option value="C2 - Nativo / Bilingüe">C2 - Nativo / Bilingüe</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-actions-row">
+              <button class="btn-form-save" [disabled]="loading" (click)="guardarIdioma(); handleUpdate()">
+                Guardar
+              </button>
+              <button type="button" class="btn-form-cancel" [disabled]="loading" (click)="toggleEdit()">
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ESTADO CON IDIOMAS CARGADOS -->
+        <div *ngIf="perfil?.idiomas?.length > 0" class="languages-list-wrapper">
+          <div class="languages-list">
+            <div *ngFor="let idioma of perfil.idiomas; let i = index; let last = last" class="language-item"
+              [class.last-item]="last">
+              <div class="language-content">
+                <span class="language-name">{{ idioma.nombre }}</span>
+                <span class="language-level-badge">{{ formatLanguageLevel(idioma.nivel) }}</span>
+              </div>
+              <button *ngIf="isOwnProfile" class="btn-remove-language" (click)="eliminarIdioma(i); handleUpdate()"
+                [attr.aria-label]="'Eliminar ' + idioma.nombre">
+                ✕
+              </button>
+            </div>
+          </div>
+
+          <!-- Botón para añadir otro idioma -->
+          <button *ngIf="isOwnProfile" class="btn-add-another-language" (click)="toggleEdit()">
+            <span class="plus-icon">+</span>
+            Añadir otro idioma
+          </button>
+        </div>
+      </section>
+
+      <section class="card section-container" *ngSwitchCase="'empresa'">
+        <h2 class="section-title" style="display: flex; align-items: center; gap: 10px;">Datos Detallados de la Empresa
+          <span class="material-icons-outlined">business</span>
+        </h2>
+      </section>
+
+      <section class="card section-container section-style" *ngSwitchCase="'ofertas'">
+        <!-- HEADER -->
+        <div class="ofertas-header">
+          <div class="header-left">
+            <div class="header-icon-circle">
+              <span class="material-icons-outlined">rocket_launch</span>
+            </div>
+            <div class="header-text-group">
+              <div class="title-with-icon">
+                <h2 class="section-title">Mis Ofertas Activas</h2>
+              </div>
+              <p class="section-subtitle">Gestioná y monitoreá todas las ofertas que tenés publicadas.</p>
+            </div>
+          </div>
+          <button class="btn-add-oferta" [routerLink]="['/formcreatecontract', perfil.proyecto]">
+            <span class="material-icons-outlined">add</span> Nueva Oferta
+          </button>
+        </div>
+
+        <!-- BODY -->
+        @if (ofertas.length > 0) {
+        <div class="ofertas-list">
+          @for (oferta of ofertas; track oferta.id) {
+          <div class="ofertas-card">
+            <div class="oferta-card-header">
+              <div class="header-icon-circle-small">
+                <span class="material-icons-outlined">business_center</span>
+              </div>
+              <div class="oferta-title-group">
+                <h3>{{ oferta.titulo }}</h3>
+                <p class="oferta-desc-text">{{ oferta.descripcion }}</p>
+              </div>
+              <div class="oferta-header-meta">
+                <span class="publish-date">Publicada el {{ formatearFecha(oferta.start_date) }}</span>
+                <button class="btn-options-delete" (click)="eliminarOferta(oferta)" title="Eliminar oferta">
+                  <span class="material-icons-outlined">more_vert</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- modalidad, tipo, estado -->
+            <div class="oferta-pills-row">
+              <span class="pill-badge pill-type" *ngIf="oferta.tipo">
+                <span class="material-icons-outlined">person</span>
+                {{ oferta.tipo }}
+              </span>
+              <span class="pill-badge pill-modality" *ngIf="oferta.modalidad">
+                <span class="material-icons-outlined">work</span>
+                {{ oferta.modalidad }}
+              </span>
+              <span class="pill-badge pill-status">
+                <span class="status-dot"></span>
+                Activa
+              </span>
+            </div>
+
+            <hr class="card-inner-divider">
+
+            <!-- SKILLS / SENIORITY -->
+            <div class="oferta-skills-badges">
+              @if (oferta.seniority_deseado && oferta.seniority_deseado.length > 0) {
+              @for (seniority of oferta.seniority_deseado; track seniority) {
+              <span class="skill-badge">
+                <span class="material-icons-outlined">code</span>
+                {{ seniority }}
+              </span>
+              }
+              }
+            </div>
+
+            <!-- CARD FOOTER -->
+            <div class="oferta-card-footer" [routerLink]="['/contratos']" [queryParams]="{ id: oferta.id }">
+              <span class="material-icons-outlined footer-chart-icon"
+                style="color: #10b981; font-size: 18px !important; margin-right: 4px;">analytics</span>
+              <span>Ver detalles</span>
+              <span class="material-icons-outlined">chevron_right</span>
+            </div>
+          </div>
+          }
+        </div>
+        } @else {
+        <!-- sin ofertas -->
+        <div class="ofertas-empty-state">
+          <div class="empty-icon-container">
+            <div class="empty-icon-circle">
+              <span class="material-icons-outlined empty-inbox-icon">archive</span>
+            </div>
+            <span class="sparkle sparkle-1">+</span>
+            <span class="sparkle sparkle-2">+</span>
+            <span class="sparkle sparkle-3">+</span>
+            <span class="dot dot-1"></span>
+            <span class="dot dot-2"></span>
+          </div>
+
+          <h3 class="empty-title">No tenés ofertas activas</h3>
+          <p class="empty-subtitle">Cuando publiques una oferta, aparecerá aca para que puedas gestionarla y recibir
+            postulaciones.</p>
+
+          <button class="btn-create-first" [routerLink]="['/formcreatecontract', perfil.proyecto]">
+            <span class="material-icons-outlined">add_circle_outline</span> Crear mi primera oferta
+          </button>
+        </div>
+        }
+
+        <!-- FOOTER BANNER -->
+        <div class="ofertas-footer-banner">
+          <div class="banner-left">
+            <span class="material-icons-outlined banner-info-icon">info</span>
+            <p class="banner-text">Las ofertas activas son visibles para miles de talentos en busca de nuevas
+              oportunidades.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
