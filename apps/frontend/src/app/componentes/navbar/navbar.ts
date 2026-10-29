@@ -75,7 +75,7 @@ export class Navbar {
   perfil: any = null;
   rolActual: string = '';
 
-  isDropdownDesarrolladorOpen = false;
+  isDropdownEstudianteOpen = false;
   isDropdownGerenteOpen = false;
   isModoOscuro = false;
 
@@ -163,8 +163,8 @@ export class Navbar {
     window.history.back();
   }
 
-  toggleDropdownDesarrollador() {
-    this.isDropdownDesarrolladorOpen = !this.isDropdownDesarrolladorOpen;
+  toggleDropdownEstudiante() {
+    this.isDropdownEstudianteOpen = !this.isDropdownEstudianteOpen;
   }
 
   toggleDropdownGerente() {

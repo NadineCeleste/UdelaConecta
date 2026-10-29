@@ -15,8 +15,8 @@
         </h1>
 
         <div class="hero-ctas">
-          <button class="btn-cta btn-cta-outline" (click)="scrollToTab('desarrolladores')">
-            Soy Desarrollador
+          <button class="btn-cta btn-cta-outline" (click)="scrollToTab('estudiantes')">
+            Soy estudiante / graduado
           </button>
           <button class="btn-cta btn-cta-outline" (click)="scrollToTab('empresas')">
             Soy Empresa
@@ -45,17 +45,17 @@
 <section class="tabs-section">
   <div class="tabs-container">
     <div class="tabs-header">
-      <button class="tab-button" [class.active]="activeTab === 'desarrolladores'"
-        (click)="setActiveTab('desarrolladores')">
-        Para Desarrolladores
+      <button class="tab-button" [class.active]="activeTab === 'estudiantes'"
+        (click)="setActiveTab('estudiantes')">
+        Para estudiantes y graduados
       </button>
       <button class="tab-button" [class.active]="activeTab === 'empresas'" (click)="setActiveTab('empresas')">
         Para empresas
       </button>
     </div>
 
-    <!-- DESARROLLADORES TAB -->
-    <div class="tab-content" [class.active]="activeTab === 'desarrolladores'">
+    <!-- ESTUDIANTES TAB -->
+    <div class="tab-content" [class.active]="activeTab === 'estudiantes'">
 
       <!-- SECCIÓN: CONOCÉ la universidad -->
       <div class="inst-infografia">

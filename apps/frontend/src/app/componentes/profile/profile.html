@@ -16,7 +16,7 @@
     <ng-container *ngIf="rolActual === 'gerente' && perfil.proyecto">
       <div class="card">
         <h3 class="sidebar-title">Mi estatus</h3>
-        <p class="sidebar-text">¿Está tu empresa actualmente buscando desarrolladores?</p>
+        <p class="sidebar-text">¿Está tu empresa actualmente buscando estudiantes o graduados?</p>
         <div class="status-selector">
           <span class="dot"
             [style.background]="perfil.proyecto.buscando_devs === false || perfil.proyecto.buscando_devs === 'false' || perfil.proyecto.buscando_devs == 0 ? '#ec1313' : '#34d399'"
@@ -31,9 +31,9 @@
       </div>
     </ng-container>
 
-    <ng-container *ngIf="rolActual === 'desarrollador'">
+    <ng-container *ngIf="rolActual === 'estudiante'">
       <div class="card">
-        <h3 class="sidebar-title">{{ isOwnProfile ? 'Mi estatus' : 'Estatus del desarrollador' }}</h3>
+        <h3 class="sidebar-title">{{ isOwnProfile ? 'Mi estatus' : 'Estatus del estudiante' }}</h3>
         <p class="sidebar-text" *ngIf="isOwnProfile">¿Estás actualmente buscando trabajo?</p>
         <div class="status-selector">
           <span class="dot"
@@ -56,7 +56,7 @@
         <li (click)="cambiarSeccion('info')" [class.active]="seccionActiva === 'info'">
           {{ rolActual === 'gerente' ? 'Datos de Perfil' : 'Información personal' }}
         </li>
-        <ng-container *ngIf="rolActual === 'desarrollador'">
+        <ng-container *ngIf="rolActual === 'estudiante'">
           <li (click)="cambiarSeccion('portfolio')" [class.active]="seccionActiva === 'portfolio'">
             Portfolio
           </li>
@@ -101,7 +101,7 @@
                     {{ rolActual === 'gerente' ? (perfil.proyecto?.nombre || 'Nombre de la empresa...') : (perfil.nombre
                     + ' ' + perfil.apellido) }}
                     <span class="badge-new" *ngIf="isProfileEmpty">Casi terminado</span>
-                    <span class="verificado-badge" *ngIf="rolActual === 'desarrollador' && perfil.verificado" title="Perfil verificado">
+                    <span class="verificado-badge" *ngIf="rolActual === 'estudiante' && perfil.verificado" title="Perfil verificado">
                       <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z"/>
                       </svg>
@@ -125,7 +125,7 @@
               <div class="data-item"><span class="material-icons-outlined data-icon">smartphone</span> {{
                 perfil.telefono || 'Vacío' }}</div>
 
-              <ng-container *ngIf="rolActual === 'desarrollador'">
+              <ng-container *ngIf="rolActual === 'estudiante'">
                 <div class="data-item"><span class="material-icons-outlined data-icon">calendar_month</span> {{
                   perfil.fecha_nacimiento || 'Vacío' }}</div>
                 <div class="data-item"><span class="material-icons-outlined data-icon">work_outline</span> {{
@@ -211,7 +211,7 @@
                 </div>
               </div>
 
-              <ng-container *ngIf="rolActual === 'desarrollador'">
+              <ng-container *ngIf="rolActual === 'estudiante'">
                 <div class="gender-section">
                   <label class="field-label">Género</label>
                   <div class="gender-options">
@@ -249,7 +249,7 @@
               <button type="submit" [disabled]="loading" class="btn-save">Guardar Perfil</button>
             </form>
           </div>
-          <div class="card resume-upload-card" *ngIf="rolActual === 'desarrollador' && !isEditing && isOwnProfile">
+          <div class="card resume-upload-card" *ngIf="rolActual === 'estudiante' && !isEditing && isOwnProfile">
             <div class="upload-header">
               <h3 class="upload-title" style="display: flex; align-items: center; gap: 8px;">
                 <span class="material-icons-outlined">auto_awesome</span> Aumenta tus oportunidades subiendo tu

@@ -61,7 +61,7 @@ export class Users {
 
 
   createUserByRole(email: string, role: string): Observable<any> {
-    // role vendrá como 'desarrollador', 'gerente' o 'institucion'
+    // role vendrá como 'estudiante', 'gerente' o 'institucion'
     const url = `${this.USERSURL}${role}`;
     const body = { email: email };
 
@@ -71,7 +71,7 @@ export class Users {
   updateUserByRole(role: string, email: string, userData: any): Observable<any> {
     // 1.a) Mapea roles a endpoints
     const roleEndpoints: { [key: string]: string } = {
-      'desarrollador': 'desarrollador',
+      'estudiante': 'estudiante',
       'gerente': 'gerente',
       'institucion_educativa': 'institucion_educativa'
     };
@@ -105,11 +105,11 @@ export class Users {
 
   // ########### OTROS MÉTODOS ###########
 
-  // Trae todos los desarrolladores
-  getAllDesarrolladores(): Observable<any> {
+  // Trae todos los estudiantes
+  getAllEstudiantes(): Observable<any> {
     const url = this.USERSURL;
-    const desarrolladores = this._httpClient.get<any>(url + "desarrolladores");
-    return desarrolladores
+    const estudiantes = this._httpClient.get<any>(url + "estudiantes");
+    return estudiantes
   }
 
 

@@ -1,6 +1,6 @@
 import { Usuario } from "./usuario";
 
-export class Desarrollador extends Usuario {
+export class Estudiante extends Usuario {
     //nombre: string;
     //apellido?: string;
     fecha_nacimiento?: string;

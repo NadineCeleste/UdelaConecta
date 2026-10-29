@@ -18,7 +18,7 @@ export class Home {
 
   user$: Observable<User | null>;
   loading = false;
-  activeTab: 'desarrolladores' | 'empresas' = 'desarrolladores';
+  activeTab: 'estudiantes' | 'empresas' = 'estudiantes';
   openFaq: number | null = null;
   rolActual: string | null = null;
 
@@ -67,12 +67,12 @@ ngOnInit(): void {
   ).subscribe();
 }
 
-  setActiveTab(tab: 'desarrolladores' | 'empresas'): void {
+  setActiveTab(tab: 'estudiantes' | 'empresas'): void {
     this.activeTab = tab;
     this.openFaq = null;
   }
 
-  scrollToTab(tab: 'desarrolladores' | 'empresas'): void {
+  scrollToTab(tab: 'estudiantes' | 'empresas'): void {
     this.setActiveTab(tab);
     setTimeout(() => {
       const element = document.querySelector('.tabs-section');
@@ -98,10 +98,10 @@ ngOnInit(): void {
   }
 }
 irAlPerfil(): void {
-  if (this.rolActual === 'desarrollador') {
+  if (this.rolActual === 'estudiante') {
     this.router.navigate(['/profile']);
   } else {
-    alert('Esta sección es exclusiva para desarrolladores. Registrate como desarrollador para acceder.');
+    alert('Esta sección es exclusiva para estudiantes y graduados. Registrate como estudiante / graduado para acceder.');
   }
 }
 

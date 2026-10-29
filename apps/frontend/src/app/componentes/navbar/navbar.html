@@ -36,8 +36,8 @@
             <p>GERENTE</p>
           </span>
 
-          <span *ngIf="rolActual === 'desarrollador'" class="badge-rol badge-dev">
-            <p>DESARROLLADOR</p>
+          <span *ngIf="rolActual === 'estudiante'" class="badge-rol badge-dev">
+            <p>ESTUDIANTE</p>
           </span>
         </li>
 
@@ -50,7 +50,7 @@
       <!-- LINKS PARA USUARIOS LOGUEADOS -->
       <ng-container *ngIf="user$ | async; else guestLinks">
 
-        <li class="nav-item-with-dropdown" *ngIf="rolActual === 'desarrollador'">
+        <li class="nav-item-with-dropdown" *ngIf="rolActual === 'estudiante'">
           <a class="btn-halo" routerLink="/contratos" routerLinkActive="active" (click)="closeMenu()">
             <span class="material-icons-outlined">search</span>
             Buscar Empleo

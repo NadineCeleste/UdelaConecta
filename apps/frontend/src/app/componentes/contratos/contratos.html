@@ -93,7 +93,7 @@
         @if (contratosPendientes.length > 0) {
         <div class="section-divider"><span>Pendientes</span></div>
         @for (card of contratosPendientes; track card.id) {
-        <div class="contrato-card-item pendiente" [ngClass]="{'active': contratoAMostrarDetail?.id === card.id, 'pendiente-dev': rolActual === 'desarrollador'}" (click)="setContratoAMostrar(card)">
+        <div class="contrato-card-item pendiente" [ngClass]="{'active': contratoAMostrarDetail?.id === card.id, 'pendiente-dev': rolActual === 'estudiante'}" (click)="setContratoAMostrar(card)">
           <div class="card-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
@@ -127,7 +127,7 @@
         @if (contratosAsignados.length > 0) {
         <div class="section-divider"><span>Asignados</span></div>
         @for (card of contratosAsignados; track card.id) {
-        <div class="contrato-card-item asignado" [ngClass]="{'active': contratoAMostrarDetail?.id === card.id, 'asignado-dev': rolActual === 'desarrollador'}" (click)="setContratoAMostrar(card)">
+        <div class="contrato-card-item asignado" [ngClass]="{'active': contratoAMostrarDetail?.id === card.id, 'asignado-dev': rolActual === 'estudiante'}" (click)="setContratoAMostrar(card)">
           <div class="card-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polyline points="20 6 9 17 4 12"/>

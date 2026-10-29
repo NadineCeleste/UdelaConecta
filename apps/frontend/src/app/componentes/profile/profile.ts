@@ -59,7 +59,7 @@ export class ProfileComponent implements OnInit {
   private contratoService = inject(ContratoService); // inyeccion servicio contrato
   private alertService = inject(AlertService); // inyeccion servicio alertas
 
-  isOwnProfile = true; // para saber si es el perfil gerente o desarrollador
+  isOwnProfile = true; // para saber si es el perfil gerente o estudiante
 
 
   async ngOnInit() {
@@ -78,11 +78,11 @@ export class ProfileComponent implements OnInit {
       if (emailDesdeUrl && emailDesdeUrl !== miEmail) {
         this.isOwnProfile = false;
 
-        // Buscar en qué tabla está ese usuario (desarrollador o gerente)
+        // Buscar en qué tabla está ese usuario (estudiante o gerente)
         const existe = await lastValueFrom(this.usersService.checkUserExists(emailDesdeUrl));
 
         if (existe.data.existe === 1) {
-          const tabla = existe.data.tabla; // 'desarrollador', 'gerente', etc.
+          const tabla = existe.data.tabla; // 'estudiante', 'gerente', etc.
 
           // Traer los datos de esa tabla
           const perfilAjeno = await lastValueFrom(
@@ -297,7 +297,7 @@ export class ProfileComponent implements OnInit {
     if (!this.rolActual) return this.alertService.error("No se detectó el rol del usuario");
 
 
-    if (this.rolActual == 'desarrollador') {
+    if (this.rolActual == 'estudiante') {
       //como en db posicion es puesto_actual lo voy a renombrar antes de enviar
       //las tablas y habilidades idioma son nombre_habilidad, nivel_habilidad, nombre_idioma, nivel_idiona
       const userDevPayload = {

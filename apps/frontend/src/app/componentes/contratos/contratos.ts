@@ -101,7 +101,7 @@ export class Contratos {
 
         //esto va a guardar el observable  al que nos vamos a suscribir
         let data;
-        if (this.rolActual === 'desarrollador') {
+        if (this.rolActual === 'estudiante') {
             data = this._apiService.getContratosLibres();
         } else {
             data = this._apiService.getContratosByEmailGerente(this.perfil.email);
@@ -195,13 +195,13 @@ export class Contratos {
 
             // contratos ocupados van a asignados
             if (c.esta_ocupado) {
-                // los desarrolladores solo ven asignados que les pertenecen
+                // los estudiantes solo ven asignados que les pertenecen
 
-                if (this.rolActual === 'desarrollador' && c.pasante_email !== this.perfil.email) {
-                    /*         if (this.rolActual === 'desarrollador' && c.pasante_email !== this.usuario.email) { */
+                if (this.rolActual === 'estudiante' && c.pasante_email !== this.perfil.email) {
+                    /*         if (this.rolActual === 'estudiante' && c.pasante_email !== this.usuario.email) { */
                     continue;
                 }
-                /* viejo método if (this.usuario?.rol === 'desarrollador' && c.pasante_email !== this.usuario.email) {
+                /* viejo método if (this.usuario?.rol === 'estudiante' && c.pasante_email !== this.usuario.email) {
                   continue;
                 } */
                 this.contratosAsignados.push(c);

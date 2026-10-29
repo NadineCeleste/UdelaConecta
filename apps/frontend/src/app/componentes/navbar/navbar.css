@@ -264,7 +264,7 @@ html, body {
     border-radius: 50px solid rgba(255, 152, 0, 0.2);
   }
 
-  /* Modificador específico para Desarrollador */
+  /* Modificador específico para Estudiante */
   & .badge-dev {
     background-color: #f59e0b;
     color: #ffffff;

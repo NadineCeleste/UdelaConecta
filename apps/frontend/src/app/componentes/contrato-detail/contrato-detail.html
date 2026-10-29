@@ -32,7 +32,7 @@
   <!-- ── Card del contrato ── -->
   <div class="contrato-card" [ngClass]="{
     'asignado': contrato.esta_ocupado,
-    'asignado-dev': contrato.esta_ocupado && rol === 'desarrollador',
+    'asignado-dev': contrato.esta_ocupado && rol === 'estudiante',
     'pendiente': !contrato.esta_ocupado && (email ? postulacionesNormalizadas.includes(email) : false)
   }">
 
@@ -130,7 +130,7 @@
     }
   </div>
 
-  <!-- ── CTA Card (Desarrollador) ── -->
+  <!-- ── CTA Card (Estudiante) ── -->
   @if (rol !== 'gerente' && email && !contrato.esta_ocupado) {
   <div class="cta-card">
     <div class="cta-left">
