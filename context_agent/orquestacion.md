@@ -180,10 +180,14 @@ El compose usa `${VAR:?mensaje}`: si falta una variable obligatoria, `docker com
 | Backup | `infra/vps/backup-db.sh [días]`: genera `pg_dump` comprimido y un `tar.gz` del volumen `storage` en `infra/vps/backups/` (fuera de git) y borra los de más de N días (por defecto 14). Para cron: `0 3 * * * /ruta/al/repo/infra/vps/backup-db.sh 14` |
 | Validar la configuración | `docker compose -f infra/vps/docker-compose.prod.yml --env-file infra/vps/.env.vps config --quiet` |
 
-## 5. Local vs. producción
+## 5. Local y producción
+
+Los dos usan Docker Compose, pero no son intercambiables: `npm start` y `local:*` solo levantan el entorno local; en el servidor se usan `vps:*` o `deploy.sh`.
 
 | | Local (`infra/local`) | VPS (`infra/vps`) |
 |---|---|---|
+| Compose | `docker-compose.yml` + `.env.local` | `docker-compose.prod.yml` + `.env.vps` |
+| Comandos | `npm start` (primer plano), `local:up/down/logs/ps` | `vps:up/down/logs` o `infra/vps/deploy.sh` (sin Node) |
 | Front | `nx serve` con hot-reload | Build de producción servido por nginx |
 | API base del front | `http://localhost:3000/api/` (`environment.ts`) | `/api/` (`environment.prod.ts`) |
 | Backend | 1 proceso, `--reload`, código montado | 4 workers, imagen inmutable, usuario no-root |
