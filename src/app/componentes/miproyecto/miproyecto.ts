@@ -5,7 +5,7 @@ import { Proyecto } from '../../models/proyectos';
 import { RouterModule } from '@angular/router';
 import { LoadingService } from '../../servicios/loading-service';
 import { Observable } from 'rxjs';
-//import { AuthService } from '../../servicios/AuthService';
+import { AuthService, User } from '../../servicios/AuthService';
 
 
 

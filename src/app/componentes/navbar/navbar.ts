@@ -1,7 +1,7 @@
 import { Component, inject, Output, EventEmitter } from '@angular/core';
 import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { CommonModule } from '@angular/common';
-//import { AuthService } from '../../servicios/AuthService';
+import { AuthService, User } from '../../servicios/AuthService';
 import { distinctUntilChanged, filter, Observable, tap } from 'rxjs';
 import { Users } from '../../servicios/users';
 import { environment } from '../../environments/environment';

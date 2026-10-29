@@ -3,7 +3,7 @@ import { RouterModule, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Users } from '../../servicios/users';
 import { Observable } from 'rxjs';
-//import { AuthService } from '../../servicios/AuthService';
+import { AuthService, User } from '../../servicios/AuthService';
 import { filter, tap } from 'rxjs/operators';
 @Component({
   selector: 'app-home',

@@ -6,7 +6,7 @@ import { Users } from '../../servicios/users';
 import { ProyectoService } from '../../servicios/miproyecto';
 import { ActivatedRoute, Router } from '@angular/router';
 import { filter, Observable, of, switchMap } from 'rxjs';
-import { AuthService } from '../../servicios/AuthService';
+import { AuthService, User } from '../../servicios/AuthService';
 import { AlertService } from '../../servicios/alertService';
 
 
