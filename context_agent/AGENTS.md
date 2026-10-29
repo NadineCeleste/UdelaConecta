@@ -4,9 +4,16 @@ Frontend en **Angular 20** (standalone components, rxjs, zone.js) de una bolsa d
 
 ## Documentación relacionada
 
-- [`context_front.md`](./context_front.md): contexto completo del frontend (componentes, servicios, modelos, API).
-- [`audit_front.md`](./audit_front.md): auditoría con hallazgos priorizados y plan de arreglo.
-- [`endpoint.md`](./endpoint.md): auditoría detallada de los endpoints (inventario, flujos, hallazgos E-xx y API propuesta).
+Leer según la tarea:
+
+| Archivo | Cuándo leerlo |
+|---|---|
+| [`context_front.md`](./context_front.md) | Contexto completo del frontend (componentes, servicios, modelos, API). Antes de tocar código |
+| [`audit_front.md`](./audit_front.md) | Auditoría general con hallazgos priorizados (S-, B-, Q-, P-, A-, T-, D-) y plan de arreglo. Antes de corregir un error o refactorizar |
+| [`endpoint.md`](./endpoint.md) | Auditoría detallada de los endpoints: inventario, flujos, hallazgos E-xx y API propuesta. Antes de tocar servicios HTTP o coordinar con el backend |
+| [`CLAUDE.md`](./CLAUDE.md) | Solo importa este archivo (`@AGENTS.md`) para Claude Code |
+| [`../README.md`](../README.md) | README del repo (vacío por ahora) |
+| [`../AGENTS.md`](../AGENTS.md), [`../CLAUDE.md`](../CLAUDE.md) | Puntos de entrada en la raíz: remiten a este archivo para que los agentes lo carguen al abrir el repo |
 
 ## Comandos
 
