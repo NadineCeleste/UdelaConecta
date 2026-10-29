@@ -762,7 +762,7 @@ h4,
   margin-bottom: 8px;
 }
 
-.ifts-banner-img {
+.hero-banner-img {
   width: 88px;
   height: 88px;
   border-radius: 50%;
@@ -774,8 +774,8 @@ h4,
 }
 
 /* === HOVER: Se agranda 25% + color === */
-.hero-intro:hover .ifts-banner-img,
-.ifts-banner-img:hover {
+.hero-intro:hover .hero-banner-img,
+.hero-banner-img:hover {
   transform: scale(1.1);
   filter: grayscale(0%) contrast(1) brightness(1);
   box-shadow:
@@ -1784,7 +1784,7 @@ button:disabled {
     overflow-x: hidden;
   }
 
-  .ifts-banner-img {
+  .hero-banner-img {
     width: 100px;
     height: 100px;
     filter: grayscale(100%) contrast(1.1) brightness(0.9);
@@ -1792,10 +1792,10 @@ button:disabled {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   }
 
-  .hero-intro:hover .ifts-banner-img,
-  .ifts-banner-img:hover,
-  .hero-intro:active .ifts-banner-img,
-  .ifts-banner-img:active {
+  .hero-intro:hover .hero-banner-img,
+  .hero-banner-img:hover,
+  .hero-intro:active .hero-banner-img,
+  .hero-banner-img:active {
     transform: none;
     filter: grayscale(100%) contrast(1.1) brightness(0.9);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);

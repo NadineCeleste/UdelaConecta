@@ -45,7 +45,7 @@ export class Navbar {
     },
     { label: 'HunTech', title: '¿Qué es HunTech?', body: 'Nuestro objetivo es acompañar a nuestros pares a dar sus primeros pasos dentro del mundo laboral IT.', bg: '#e8d4b9' },
     { label: 'Nosotros', title: '¿Quiénes Somos?', body: 'Detrás de HunTech hay un grupo de estudiantes de la Universidad de la Ciudad de Buenos Aires que decidió transformar una problemática común en una solución real. ', bg: '#e8d4b9' },
-    { label: 'Nuestro Instituto', title: 'Donde comenzó todo...', body: '', image: '/assets/ifts-navbar.jpg', bg: '#e8d4b9' },
+    { label: 'Nuestra Universidad', title: 'Donde comenzó todo...', body: 'Todo el equipo está formado por estudiantes de la Universidad de la Ciudad de Buenos Aires.', bg: '#e8d4b9' },
     { label: 'Nuestra Misión', body: ' Creamos este espacio de apoyo donde el conocimiento compartido de las aulas se transforma en una herramienta real de inserción laboral', bg: '#e8d4b9' },
     { label: 'Para Empresas', body: 'Publicá tus ofertas y encontrá conectá con estudiantes y futuros profesionales IT preparados para incorporarse al mundo laboral', bg: '#e8d4b9' },
     { label: 'Talentos', title: 'Crecé con nosotros', body: 'Completá tu perfil profesional, compartí tus conocimientos y preparate para nuevas oportunidades en el sector IT.', bg: '#e8d4b9' },
