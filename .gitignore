@@ -29,7 +29,7 @@ yarn-error.log
 .history/*
 
 # Miscellaneous
-/.angular/cache
+/.angular
 .sass-cache/
 /connect.lock
 /coverage
@@ -44,14 +44,23 @@ Thumbs.db
 
 # Monorepo Nx
 /.nx
-/dist
 
 # Backend (Python)
 __pycache__/
 *.pyc
 .pytest_cache/
 .venv/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 /apps/backend/storage/
+
+# Variables de entorno: solo se versionan la de desarrollo local y la plantilla de producción
+.env
+.env.*
+!/infra/local/.env.local
+!/infra/vps/.env.vps.example
 
 # Secretos y backups de producción
 /infra/vps/.env.vps
