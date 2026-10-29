@@ -1,0 +1,110 @@
+{
+  "name": "frontend",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "prefix": "app",
+  "sourceRoot": "apps/frontend/src",
+  "tags": [
+    "scope:frontend",
+    "type:app"
+  ],
+  "targets": {
+    "build": {
+      "executor": "@angular/build:application",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "options": {
+        "outputPath": "dist/apps/frontend",
+        "browser": "apps/frontend/src/main.ts",
+        "index": "apps/frontend/src/index.html",
+        "polyfills": [
+          "zone.js"
+        ],
+        "tsConfig": "apps/frontend/tsconfig.app.json",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/frontend/public"
+          }
+        ],
+        "styles": [
+          "apps/frontend/src/styles.css"
+        ]
+      },
+      "configurations": {
+        "production": {
+          "fileReplacements": [
+            {
+              "replace": "apps/frontend/src/app/environments/environment.ts",
+              "with": "apps/frontend/src/app/environments/environment.prod.ts"
+            }
+          ],
+          "budgets": [
+            {
+              "type": "initial",
+              "maximumWarning": "750kB",
+              "maximumError": "1.5MB"
+            },
+            {
+              "type": "anyComponentStyle",
+              "maximumWarning": "25kB",
+              "maximumError": "50kB"
+            }
+          ],
+          "outputHashing": "all",
+          "optimization": {
+            "scripts": true,
+            "styles": {
+              "minify": true,
+              "inlineCritical": true
+            },
+            "fonts": false
+          }
+        },
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "sourceMap": true
+        }
+      },
+      "defaultConfiguration": "production"
+    },
+    "serve": {
+      "executor": "@angular/build:dev-server",
+      "options": {
+        "host": "0.0.0.0",
+        "port": 4200,
+        "poll": 2000
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "frontend:build:production"
+        },
+        "development": {
+          "buildTarget": "frontend:build:development"
+        }
+      },
+      "defaultConfiguration": "development"
+    },
+    "test": {
+      "executor": "@angular/build:karma",
+      "options": {
+        "polyfills": [
+          "zone.js",
+          "zone.js/testing"
+        ],
+        "tsConfig": "apps/frontend/tsconfig.spec.json",
+        "assets": [
+          {
+            "glob": "**/*",
+            "input": "apps/frontend/public"
+          }
+        ],
+        "styles": [
+          "apps/frontend/src/styles.css"
+        ]
+      }
+    }
+  }
+}

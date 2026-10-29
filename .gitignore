@@ -41,3 +41,18 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# Monorepo Nx
+/.nx
+/dist
+
+# Backend (Python)
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+/apps/backend/storage/
+
+# Secretos y backups de producción
+/infra/vps/.env.vps
+/infra/vps/backups/

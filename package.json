@@ -1,12 +1,22 @@
 {
-  "name": "udela",
-  "version": "0.0.0",
+  "name": "udela-conecta",
+  "version": "1.0.0",
   "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "ng": "nx",
+    "start": "docker compose -f infra/local/docker-compose.yml --env-file infra/local/.env.local up --build",
+    "local:up": "docker compose -f infra/local/docker-compose.yml --env-file infra/local/.env.local up -d --build",
+    "local:down": "docker compose -f infra/local/docker-compose.yml --env-file infra/local/.env.local down",
+    "local:logs": "docker compose -f infra/local/docker-compose.yml --env-file infra/local/.env.local logs -f",
+    "local:ps": "docker compose -f infra/local/docker-compose.yml --env-file infra/local/.env.local ps",
+    "vps:up": "docker compose -f infra/vps/docker-compose.prod.yml --env-file infra/vps/.env.vps up -d --build",
+    "vps:down": "docker compose -f infra/vps/docker-compose.prod.yml --env-file infra/vps/.env.vps down",
+    "vps:logs": "docker compose -f infra/vps/docker-compose.prod.yml --env-file infra/vps/.env.vps logs -f",
+    "serve:front": "nx serve frontend",
+    "build": "nx build frontend --configuration=production",
+    "watch": "nx build frontend --watch --configuration=development",
+    "test": "nx run-many -t test -p frontend backend",
+    "test:front": "nx test frontend --watch=false --browsers=ChromeHeadless",
+    "test:back": "nx test backend"
   },
   "prettier": {
     "printWidth": 100,
@@ -36,6 +46,7 @@
     "@angular/build": "^20.3.5",
     "@angular/cli": "^20.3.5",
     "@angular/compiler-cli": "^20.3.0",
+    "@nx/angular": "^24.0.2",
     "@types/jasmine": "~5.1.0",
     "jasmine-core": "~5.9.0",
     "karma": "~6.4.0",
@@ -43,6 +54,7 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
+    "nx": "^24.0.2",
     "typescript": "~5.9.2"
   }
 }
