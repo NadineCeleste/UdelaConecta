@@ -4,7 +4,6 @@ import { CommonModule } from '@angular/common';
 import { AuthService, User } from '../../servicios/AuthService';
 import { distinctUntilChanged, filter, Observable, tap } from 'rxjs';
 import { Users } from '../../servicios/users';
-import { environment } from '../../environments/environment';
 
 interface BookPage {
   label?: string;
@@ -33,7 +32,6 @@ export class Navbar {
   isOnContratos = false;
   private _subs: any;
   activeFragment?: string | null = null;
-  private gests = [''];
 
   /* ---- MINI LIBRO 3D ---- */
   showBookModal = false;
@@ -87,7 +85,6 @@ export class Navbar {
   ) {
 
     this.user$ = this.authService.user$;
-    this.gests = environment.gests;
   }
 
   async ngOnInit(): Promise<void> {
@@ -123,13 +120,15 @@ export class Navbar {
         this.rolActual = data.rol || '';
       })
     ).subscribe({
-      next: (data) => {
-        if (this.gests.includes(data.email)) {
-          this.isgests = true;
+      error: (err) => {
+        console.error('Error during data initialization:', err);
+      }
+    });
 
-        } else {
-
-        }
+    // El flag de admin sale del backend, no de una lista de emails en el front
+    this.authService.user$.subscribe({
+      next: (user) => {
+        this.isgests = !!user?.is_admin;
       },
       error: (err) => {
         console.error('Error during data initialization:', err);

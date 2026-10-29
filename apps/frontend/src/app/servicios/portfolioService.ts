@@ -27,8 +27,14 @@ export class PortfolioService {
 
   constructor(private http: HttpClient) { }
 
+  // fetch no pasa por el interceptor de HttpClient: el token se agrega a mano
+  private authHeaders(): Record<string, string> {
+    const token = localStorage.getItem('auth_token');
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
+
   getPortfolioByEmail(email: string): Observable<{ message: string; data: Portfolio }> {
-    return this.http.get<{ message: string; data: Portfolio }>(`${this.apiUrl}portfolio/${email}`);
+    return this.http.get<{ message: string; data: Portfolio }>(`${this.apiUrl}portfolio/${encodeURIComponent(email)}`);
   }
 
   async existsPortfolio(email: string): Promise<boolean> {
@@ -49,7 +55,7 @@ export class PortfolioService {
       imagenes2: this.normalizeImagesArray(portfolioData.imagenes2),
       imagenes3: this.normalizeImagesArray(portfolioData.imagenes3)
     };
-    return this.http.post(`${this.apiUrl}createportfolio/${email}`, data);
+    return this.http.post(`${this.apiUrl}createportfolio/${encodeURIComponent(email)}`, data);
   }
 
   private normalizeImagesArray(images: string[] = []): string[] {
@@ -66,7 +72,7 @@ export class PortfolioService {
     const response = await fetch(uploadUrl, {
       method: 'PUT',
       body: file,
-      headers: { 'Content-Type': file.type }
+      headers: { 'Content-Type': file.type, ...this.authHeaders() }
     });
 
     if (!response.ok) {
@@ -76,7 +82,7 @@ export class PortfolioService {
   }
 
     deletePortfolio(email: string): Observable<any> {
-    return this.http.delete(`${this.apiUrl}deleteportfolio/${email}`);
+    return this.http.delete(`${this.apiUrl}deleteportfolio/${encodeURIComponent(email)}`);
   }
 
 
@@ -126,7 +132,8 @@ export class PortfolioService {
   async deleteImage(imageUrl: string): Promise<void> {
     try {
       const response = await fetch(imageUrl, {
-        method: 'DELETE'
+        method: 'DELETE',
+        headers: this.authHeaders()
       });
 
       if (!response.ok) {
@@ -145,7 +152,7 @@ export class PortfolioService {
         console.error("Faltan datos críticos. Email: ", email);
         throw new Error("No se puede actualizar sin email");
       }
-      const url = `${this.apiUrl}updateportfolio/${email}`;
+      const url = `${this.apiUrl}updateportfolio/${encodeURIComponent(email)}`;
       //console.log("URL: ", url)
       //console.log("data: ", portfolioData)
       return this.http.put<any>(url, portfolioData)

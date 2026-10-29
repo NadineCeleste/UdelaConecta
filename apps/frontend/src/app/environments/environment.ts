@@ -1,6 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: 'http://127.0.0.1:3000/api/',
-  bucketUrl: '',
-  gests: [] as string[]
+  apiUrl: 'http://localhost:3000/api/',
+  bucketUrl: 'http://localhost:3000/storage'
 };

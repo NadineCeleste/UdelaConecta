@@ -24,7 +24,7 @@ export class ProyectoService {
 
   getProyectoPorEmail(email:string): Observable<ProyectoResponse> {
     /* console.log('buscando proyecto de ',email) */
-    const res = this._httpClient.get<ProyectoResponse>(this._proyectosUrl + 'proyecto/' + email);
+    const res = this._httpClient.get<ProyectoResponse>(this._proyectosUrl + 'proyecto/' + encodeURIComponent(email));
     return res
   }
 
@@ -37,7 +37,7 @@ export class ProyectoService {
   editProyecto(proyecto: Proyecto): Observable<ProyectoResponse> {
     const req = proyecto;
     //console.log("proyecto: ",proyecto)
-    const res = this._httpClient.put<ProyectoResponse>(this._proyectosUrl+'proyecto/'+proyecto.email_gerente, proyecto)
+    const res = this._httpClient.put<ProyectoResponse>(this._proyectosUrl+'proyecto/' + encodeURIComponent(proyecto.email_gerente ?? ''), proyecto)
     return res
   }
 

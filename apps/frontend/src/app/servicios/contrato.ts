@@ -26,7 +26,7 @@ export class ContratoService {
 
   //trae los contratos por email gerente
   getContratosByEmailGerente(emailGerente:string): Observable<ContratoResponse> {
-    const res = this._httpClient.get<ContratoResponse>(`${this._contratosUrl}contratos/${emailGerente}`);
+    const res = this._httpClient.get<ContratoResponse>(`${this._contratosUrl}contratos/${encodeURIComponent(emailGerente)}`);
     return res
   }
 
@@ -38,26 +38,26 @@ export class ContratoService {
 
   updateContrato(contrato: Contrato): Observable<PostulacionResponse> {
     const req = contrato;
-    const res = this._httpClient.put<PostulacionResponse>(`${this._contratosUrl}contrato/${contrato.id}`, req)
+    const res = this._httpClient.put<PostulacionResponse>(`${this._contratosUrl}contrato/${encodeURIComponent(String(contrato.id))}`, req)
     return res
   }
   
   postularseAContrato(id:string, email:string): Observable<PostulacionResponse> {
     //console.log('intentando update de Postulacion id ',id.toString(), 'sumando la postulación de ',email )
-    const res = this._httpClient.put<PostulacionResponse>(this._contratosUrl + 'contrato/' + id, {"postulaciones" : email});
+    const res = this._httpClient.put<PostulacionResponse>(this._contratosUrl + 'contrato/' + encodeURIComponent(id), {"postulaciones" : email});
     return res
   }
 
   asignarPostulante(idContrato: string, email: string): Observable<ContratoResponse> {
     const body = { pasante_email: email };
     return this._httpClient.put<ContratoResponse>(
-      `${this._contratosUrl}contrato/asignar/${idContrato}`,
+      `${this._contratosUrl}contrato/asignar/${encodeURIComponent(idContrato)}`,
       body
     );
   }
 
   deleteContrato(id: string): Observable<any> {
-    return this._httpClient.delete(`${this._contratosUrl}contrato/${id}`);
+    return this._httpClient.delete(`${this._contratosUrl}contrato/${encodeURIComponent(id)}`);
   }
 
 }

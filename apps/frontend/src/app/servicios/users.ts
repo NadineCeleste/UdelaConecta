@@ -21,7 +21,7 @@ export class Users {
 
   // Método que llama a la API para consultar si hay algún usuario en alguna de las tres tablas de usuarios con determinado email
   checkUserExists(email: string): Observable<any> {
-    const url = `${this.USERSURL}usuario/${email}`;
+    const url = `${this.USERSURL}usuario/${encodeURIComponent(email)}`;
 
     return this._httpClient.get<any>(url).pipe(
       catchError((error) => {
@@ -54,7 +54,7 @@ export class Users {
 
   // Este es el método que realmente devuelve toda la data del usuario, para eso hay que saber la tabla en la que se encuentra (ver checkUserExists())
   getUsuarioByEmailAndTable(email: string, table: string): Observable<any> {
-    const url = this.USERSURL + `usuario/${email}/${table}`
+    const url = this.USERSURL + `usuario/${encodeURIComponent(email)}/${encodeURIComponent(table)}`
     const res = this._httpClient.get<any>(url);
     return res;
   }
@@ -89,7 +89,7 @@ export class Users {
       throw new Error("Rol no válido para actualización");
     }
 
-    const url = `${this.USERSURL}usuario/${email}`;
+    const url = `${this.USERSURL}usuario/${encodeURIComponent(email)}`;
     //console.log("URL: ", url)
     //console.log("data: ", userData)
     return this._httpClient.put<any>(url, userData).pipe(
