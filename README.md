@@ -203,7 +203,7 @@ Más detalles (variables de entorno, problemas frecuentes y cada servicio de los
 
 ## De dónde nace
 
-Detrás de HunTech hay un grupo de estudiantes de la Universidad de la Ciudad de Buenos Aires que decidió transformar una problemática común en una solución real, con un objetivo claro: **acompañar a nuestros pares a dar sus primeros pasos dentro del mundo laboral IT.**
+Detrás de UdelaConecta hay un grupo de estudiantes de la Universidad de la Ciudad de Buenos Aires que decidió transformar una problemática común en una solución real, con un objetivo claro: **acompañar a nuestros pares a dar sus primeros pasos dentro del mundo laboral IT.**
 
 ## Equipo
 
