@@ -1,4 +1,4 @@
-# HunTech · Udela Conecta
+# · Udela Conecta
 
 **La bolsa de trabajo IT de la Universidad de la Ciudad de Buenos Aires.** Una plataforma que conecta a estudiantes y graduados de la universidad con empresas que buscan talento para dar sus primeros pasos en el mundo laboral tecnológico.
 
@@ -41,7 +41,7 @@ HunTech es un espacio propio de la universidad donde **el conocimiento que se co
 
 También existe el perfil *Institución educativa*, pensado para que la universidad y sus institutos participen de la plataforma; por ahora no tiene funciones propias.
 
-## Por qué HunTech
+## Por qué UdelaConecta
 
 - **Un canal propio de la universidad:** el objetivo es que quienes se postulan sean alumnos y graduados de la Universidad de la Ciudad de Buenos Aires.
 - **Pensado para el primer empleo:** perfiles trainee y junior, sin competir contra el mercado entero.
