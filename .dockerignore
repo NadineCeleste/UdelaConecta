@@ -1,0 +1,14 @@
+**/node_modules
+**/__pycache__
+**/.pytest_cache
+**/.venv
+.git
+.nx
+.angular
+dist
+tmp
+out-tsc
+coverage
+apps/backend/storage
+infra/vps/.env.vps
+infra/vps/backups

@@ -1,0 +1,21 @@
+# Stage 1: build de Angular con Nx
+FROM node:24-alpine AS builder
+
+ENV NX_DAEMON=false \
+    NX_NO_CLOUD=true
+
+WORKDIR /workspace
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY nx.json tsconfig.base.json ./
+COPY apps/frontend ./apps/frontend
+RUN npx nx build frontend --configuration=production
+
+# Stage 2: archivos estáticos servidos por Nginx
+FROM nginx:stable-alpine AS runner
+
+COPY infra/vps/nginx.frontend.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /workspace/dist/apps/frontend/browser /usr/share/nginx/html
+
+EXPOSE 80

@@ -1,0 +1,16 @@
+FROM node:24-alpine
+
+ENV NX_DAEMON=false \
+    NX_NO_CLOUD=true \
+    NX_CACHE_DIRECTORY=/tmp/nx-cache
+
+WORKDIR /workspace
+RUN chown node:node /workspace
+USER node
+
+COPY --chown=node:node package.json package-lock.json ./
+RUN npm ci
+
+# El repo se monta como volumen en /workspace; node_modules queda en un volumen propio
+EXPOSE 4200
+CMD ["npx", "nx", "serve", "frontend", "--host", "0.0.0.0", "--port", "4200", "--poll", "2000"]

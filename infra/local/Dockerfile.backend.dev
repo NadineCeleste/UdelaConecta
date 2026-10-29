@@ -1,0 +1,20 @@
+FROM python:3.13-slim
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_CREATE=false
+
+RUN pip install "poetry>=2,<3"
+
+WORKDIR /app
+COPY apps/backend/pyproject.toml apps/backend/poetry.lock ./
+RUN poetry install --no-root
+
+COPY infra/local/entrypoint.backend.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh && mkdir -p /data/storage
+
+# El código se monta como volumen desde apps/backend (hot-reload)
+EXPOSE 3000
+CMD ["/usr/local/bin/entrypoint.sh"]

@@ -1,0 +1,20 @@
+# Con DOMAIN=:80 sirve HTTP plano; con un dominio real gestiona HTTPS (Let's Encrypt) automáticamente
+{$DOMAIN} {
+	encode zstd gzip
+
+	request_body {
+		max_size 6MB
+	}
+
+	handle /api/* {
+		reverse_proxy backend:3000
+	}
+
+	handle /storage/* {
+		reverse_proxy backend:3000
+	}
+
+	handle {
+		reverse_proxy frontend:80
+	}
+}

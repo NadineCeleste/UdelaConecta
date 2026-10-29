@@ -1,0 +1,87 @@
+# Producción en VPS (Caddy + Nginx + FastAPI + PostgreSQL):
+#   cp infra/vps/.env.vps.example infra/vps/.env.vps   # y completar
+#   npm run vps:up
+name: udela-vps
+
+x-backend-env: &backend-env
+  DATABASE_URL: ${DATABASE_URL:?Falta DATABASE_URL}
+  JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Falta JWT_SECRET_KEY}
+  STORAGE_DIR: ${STORAGE_DIR:-/data/storage}
+  PUBLIC_STORAGE_BASE_URL: ${PUBLIC_STORAGE_BASE_URL:-/storage}
+  CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
+  WEB_CONCURRENCY: ${WEB_CONCURRENCY:-4}
+  AUTO_SEED: ${AUTO_SEED:-false}
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: udela-vps-caddy
+    restart: unless-stopped
+    environment:
+      DOMAIN: ${DOMAIN:-:80}
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - udela_vps_net
+
+  frontend:
+    build:
+      context: ../..
+      dockerfile: infra/vps/Dockerfile.frontend
+    container_name: udela-vps-frontend
+    restart: unless-stopped
+    networks:
+      - udela_vps_net
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: infra/vps/Dockerfile.backend
+    container_name: udela-vps-backend
+    restart: unless-stopped
+    environment: *backend-env
+    volumes:
+      - storage:/data/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - udela_vps_net
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: udela-vps-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?Falta POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Falta POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?Falta POSTGRES_DB}
+    # Sin "ports": la base solo es accesible dentro de la red interna
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - udela_vps_net
+
+networks:
+  udela_vps_net:
+    driver: bridge
+
+volumes:
+  pgdata:
+  storage:
+  caddy_data:
+  caddy_config:

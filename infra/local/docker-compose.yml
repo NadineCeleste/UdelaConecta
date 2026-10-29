@@ -1,0 +1,69 @@
+# Desarrollo local 100% en Docker:
+#   Puertos del host configurables con POSTGRES_HOST_PORT, FRONTEND_PORT y ADMINER_PORT
+#   npm run local:up   (o: docker compose -f infra/local/docker-compose.yml --env-file infra/local/.env.local up -d --build)
+name: udela-local
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: udela-local-db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      # Solo desde la máquina local: la contraseña de desarrollo es conocida
+      - "127.0.0.1:${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ../..
+      dockerfile: infra/local/Dockerfile.backend.dev
+    container_name: udela-local-backend
+    env_file: .env.local
+    environment:
+      # El front corre en el puerto publicado de abajo: se habilita ese origen en CORS
+      CORS_ORIGINS: http://localhost:${FRONTEND_PORT:-4200},http://127.0.0.1:${FRONTEND_PORT:-4200}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ../../apps/backend:/app
+      - storage:/data/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ../..
+      dockerfile: infra/local/Dockerfile.frontend.dev
+    container_name: udela-local-frontend
+    ports:
+      - "${FRONTEND_PORT:-4200}:4200"
+    volumes:
+      - ../..:/workspace
+      - frontend_node_modules:/workspace/node_modules
+    depends_on:
+      - backend
+
+  adminer:
+    image: adminer:latest
+    container_name: udela-local-adminer
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    ports:
+      - "127.0.0.1:${ADMINER_PORT:-8080}:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:
+  storage:
+  frontend_node_modules:
