@@ -1,5 +1,25 @@
 # Auditoría de endpoints — Udela Conecta
 
+> **Monorepo (2026-10-29):** el frontend se movió a `apps/frontend/`. Toda ruta `src/...` de este documento ahora es `apps/frontend/src/...`; `angular.json` fue reemplazado por `apps/frontend/project.json` (Nx). El backend está en `apps/backend/`.
+
+> **Rol renombrado (2026-10-29):** `desarrollador` pasó a llamarse `estudiante` en todo el sistema: tabla, valor de `rol`, `POST estudiante` y `GET estudiantes` (antes `POST desarrollador` y `GET desarrolladores`), y en la UI se muestra "Estudiante / graduado". Este documento describe el estado anterior y conserva el nombre viejo.
+
+
+
+## Estado tras implementar el backend (2026-10-29)
+
+El backend vive en `apps/backend/` (FastAPI + PostgreSQL). Mantiene las 19 rutas del inventario con los mismos sobres de respuesta.
+
+| Hallazgo | Estado | Cómo |
+|---|---|---|
+| E-01, E-12 (escritura), E-17, E-23 | ✅ Resuelto | Token obligatorio en `/api/*` (salvo `/api/auth/*`); el dueño sale del token |
+| E-03 | ✅ Resuelto | `encodeURIComponent` en los servicios |
+| E-10 | ✅ Resuelto | `app.ts` distingue error de servidor de "no existe" |
+| E-11, E-24 | ✅ Resuelto | La API responde 404 explícito y el front solo trata el 404 como "no tiene" |
+| E-16 | ✅ Resuelto | Una sola llamada; postulación idempotente en el servidor (409 si ya está postulado u ocupado), con bloqueo de fila y solo para desarrolladores |
+| E-18, E-21 | ✅ Resuelto | `project_id` correcto; guardado de gerente con `Promise.all` |
+| E-26, E-27, E-28 | 🟡 Mitigado | `/storage` autenticado con dueño, solo PNG/JPG/GIF/WEBP verificados por contenido y servidos con `nosniff` + CSP `sandbox`; borrar o editar el portfolio limpia en el servidor las imágenes que ya no se usan |
+
 > Fecha: 2026-10-29 · Commit base: `3e29250` · Alcance: los 4 servicios HTTP de `src/app/servicios/` (`users.ts`, `contrato.ts`, `miproyecto.ts`, `portfolioService.ts`), sus modelos (`models/`) y todos los componentes que los llaman.
 > Relacionado: [`context_front.md`](./context_front.md) (contexto), [`audit_front.md`](./audit_front.md) (auditoría general del frontend).
 > Las referencias `archivo:línea` son relativas a `src/app/`.

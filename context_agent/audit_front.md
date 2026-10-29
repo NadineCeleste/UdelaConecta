@@ -1,5 +1,49 @@
 # Auditoría del frontend — Udela Conecta
 
+> **Monorepo (2026-10-29):** el frontend se movió a `apps/frontend/`. Toda ruta `src/...` de este documento ahora es `apps/frontend/src/...`; `angular.json` fue reemplazado por `apps/frontend/project.json` (Nx). El backend está en `apps/backend/`.
+
+> **Rol renombrado (2026-10-29):** `desarrollador` pasó a llamarse `estudiante` en todo el sistema: tabla, valor de `rol`, `POST estudiante` y `GET estudiantes` (antes `POST desarrollador` y `GET desarrolladores`), y en la UI se muestra "Estudiante / graduado". Este documento describe el estado anterior y conserva el nombre viejo.
+
+
+
+## Estado tras la migración a monorepo (2026-10-29)
+
+| Hallazgo | Estado | Cómo |
+|---|---|---|
+| S-01 | ✅ Resuelto | JWT propio (`/api/auth/*`) + `authInterceptor`; el backend exige token y valida dueño en cada escritura |
+| S-06 | 🟡 Mitigado | El backend rechaza las acciones de otro rol o de otro dueño; la UI todavía deja entrar por URL (falta `roleGuard`) |
+| S-02 | 🟡 Mitigado | El bucket se reemplazó por `/storage/portfolios/*` del backend: subir/borrar exige token y solo el dueño puede pisar o borrar |
+| S-03 | 🟡 Mitigado | El servidor acepta solo PNG/JPG/GIF/WEBP por extensión y firma del contenido, hasta 5 MB, y los sirve con `nosniff` + CSP `sandbox` (el front sigue sin validar antes de subir) |
+| S-04 | ✅ Resuelto | `encodeURIComponent` en los parámetros de path de los servicios |
+| S-07 | ✅ Resuelto | Se eliminó el mock; la sesión es `auth_user` + `auth_token` |
+| B-01 | ✅ Resuelto | `paramMap.get('project_id')` y botón "Nueva oferta" con `rutaNuevaOferta` (sin proyecto lleva a crear proyecto) |
+| B-03, B-04, B-06, B-07 | ✅ Resuelto | Ver diffs en `miproyecto.ts`, `profile.ts`, `app.ts` |
+| B-05 | ✅ Resuelto | Una sola llamada (`PUT contrato/:id` con `postulaciones`); el servidor deduplica, bloquea la fila, valida el email del token y deriva `tiene_postulaciones` |
+| P-01 | ✅ Resuelto | Budgets ajustados e inlining de fuentes desactivado; `nx build frontend` pasa (quedan avisos de CSS de más de 25 kB) |
+| Q-11 | ✅ Resuelto | `environment.prod.ts` con `fileReplacements` |
+| T-01 | ✅ Resuelto | Specs actualizados; `nx test frontend` pasa (8 tests) |
+
+### Hallazgos de la auditoría posterior a la migración (2026-10-29)
+
+| Hallazgo | Estado | Cómo |
+|---|---|---|
+| XSS persistente por `/storage` (un `.html`/`.svg` con `Content-Type: image/*` se servía como ejecutable en el mismo dominio) | ✅ Resuelto | Lista blanca de extensiones, verificación de *magic bytes*, tipo servido desde la lista blanca, `nosniff` y CSP `sandbox` |
+| El perfil de un gerente sin proyecto rompía el template (`perfil.proyecto.*`) | ✅ Resuelto | Bloques con `*ngIf="perfil.proyecto"` y tarjeta "Crear proyecto" |
+| Carrera en postulación y asignación (se perdían postulaciones simultáneas) | ✅ Resuelto | `SELECT ... FOR UPDATE` del contrato |
+| Gerentes o instituciones podían postularse | ✅ Resuelto | La postulación exige perfil de desarrollador |
+| Borrar el portfolio se trababa si fallaba el borrado de una imagen | ✅ Resuelto | El front solo llama a `deleteportfolio`; el servidor limpia las imágenes |
+| Producción arrancaba con el `JWT_SECRET_KEY` de ejemplo | ✅ Resuelto | Validación: mínimo 32 caracteres y sin `CAMBIAR` |
+| El backup no incluía las imágenes | ✅ Resuelto | `backup-db.sh` también archiva el volumen `storage` |
+| Nombres de archivo con `#`, `?`, `%` o acentos rompían la URL | ✅ Resuelto | Se reemplazan por `_` antes de subir |
+| Imágenes borradas antes del commit del portfolio | ✅ Resuelto | Commit explícito antes de tocar el disco |
+| Un 401 dejaba al usuario en la ruta protegida | ✅ Resuelto | El interceptor navega a `/` |
+| Spinner trabado si fallaba la carga del perfil | ✅ Resuelto | try/catch con alerta en `app.ts` |
+| Postgres y Adminer locales accesibles desde la red | ✅ Resuelto | Publicados solo en `127.0.0.1` |
+| Sin límite de intentos en `/api/auth/login` | ✅ Resuelto | 5 fallos seguidos bloquean la cuenta 15 min (429); migración `0002` |
+| `GET desarrolladores` expone teléfono y fecha de nacimiento a cualquier usuario logueado | ✅ Resuelto | `telefono` y `fecha_nacimiento` solo se devuelven al dueño del perfil; el contacto es por email |
+| `environment.gests` por email: cualquiera puede registrar `admin@...` | ✅ Resuelto | Se eliminó `environment.gests`; el flag sale de `auth_users.is_admin`, que solo se activa desde la base |
+| E-24 (cualquier error del portfolio se mostraba como "no tiene") | ✅ Resuelto | Solo el 404 es "no tiene"; otro error muestra "No se pudo cargar" con botón Reintentar |
+
 > Fecha: 2026-10-29 · Commit base: `2cc9f54` · Alcance: todo `src/`, configuración (`angular.json`, `tsconfig*`, `package.json`) y dependencias.
 > Contexto del proyecto: [`context_front.md`](./context_front.md).
 > Las referencias `archivo:línea` son relativas a `src/app/` salvo que se indique otra ruta.
@@ -158,8 +202,8 @@ El frontend tiene una **base visual amplia** (landing, perfil, portfolio, contra
 - **Recomendación:** construir la fecha local (`getFullYear`/`getMonth`/`getDate` con padding) o usar `formatDate(new Date(), 'yyyy-MM-dd', 'es-AR')`.
 
 ### B-12 🟡 Imágenes y links rotos
-- **Dónde:** `componentes/home/home.html:28` (`assets/logo-ifts11.jpg`), `componentes/navbar/navbar.ts:50` (`/assets/ifts-navbar.jpg`), `componentes/home/home.html:166` (`href=""` con `target="_blank"`).
-- **Qué pasa:** `public/` solo contiene `favicon.ico`. El link vacío abre una pestaña con la misma app.
+- **Dónde:** `componentes/home/home.html:166` (`href=""` con `target="_blank"`). *(Las dos imágenes inexistentes del hero y del libro del navbar se quitaron el 2026-10-29.)*
+- **Qué pasa:** El link vacío abre una pestaña con la misma app.
 - **Recomendación:** agregar los archivos en `public/assets/` y completar o quitar el link.
 
 ### B-13 🟡 `alert()` nativo en `Home`

@@ -1,5 +1,10 @@
 # Contexto del frontend — Udela Conecta
 
+> **Monorepo (2026-10-29):** el frontend se movió a `apps/frontend/`. Toda ruta `src/...` de este documento ahora es `apps/frontend/src/...`; `angular.json` fue reemplazado por `apps/frontend/project.json` (Nx). El backend está en `apps/backend/`.
+
+> **Rol renombrado (2026-10-29):** `desarrollador` pasó a llamarse `estudiante` en todo el sistema: tabla, valor de `rol`, `POST estudiante` y `GET estudiantes` (antes `POST desarrollador` y `GET desarrolladores`), y en la UI se muestra "Estudiante / graduado". Este documento describe el estado anterior y conserva el nombre viejo.
+
+
 > Documento de referencia para agentes de IA y desarrolladores. Describe **cómo está hecho hoy** el frontend, no cómo debería estar. Para problemas y mejoras, ver [`audit_front.md`](./audit_front.md).
 > Última revisión: 2026-10-29 · commit base `2cc9f54`.
 
@@ -9,7 +14,7 @@
 
 | | |
 |---|---|
-| **Qué es** | Bolsa de trabajo que conecta estudiantes y graduados IT de la Universidad de la Ciudad de Buenos Aires (IFTS N°11) con empresas. Marca visible: **HunTech** / **Udela Conecta**. |
+| **Qué es** | Bolsa de trabajo que conecta estudiantes y graduados IT de la Universidad de la Ciudad de Buenos Aires con empresas. Marca visible: **HunTech** / **Udela Conecta**. |
 | **Stack** | Angular **20.3** (standalone components, control flow `@if`/`@for` mezclado con `*ngIf`/`*ngFor`), RxJS 7.8, zone.js 0.15, TypeScript 5.9 en modo `strict`, `strictTemplates`. |
 | **Build** | `@angular/build:application` (esbuild + Vite dev server). |
 | **Tests** | Karma + Jasmine (hoy no compilan, ver auditoría). |
@@ -61,7 +66,7 @@ src/
     ├── servicios/              # servicios HTTP, estado, alertas, guard
     └── models/                 # clases de dominio (todas con campos opcionales)
 public/
-└── favicon.ico                 # único asset existente
+└── favicon-32x32.png, favicon-192x192.png, apple-touch-icon.png   # logo oficial de la universidad
 ```
 
 - **Todos los componentes son standalone.** No hay NgModules.
@@ -95,7 +100,7 @@ AuthService.userEmail$ ──► App.inicializarDatos()
 - **`authGuard`** (`servicios/guards/authGuard.ts`): `await authService.session` → si `data.session` existe deja pasar; si no, redirige a `/`.
 - **Navbar** redirige a `/home` cuando aparece un usuario y la URL es `/` o `/home`.
 - **Logout:** `App.logout()` (navega a `/`) y `Navbar.logout()` (`window.location.href = '/'`).
-- **`environment.gests`:** lista de emails "administradores". Si el usuario está en la lista, `Navbar.isgests = true` y aparecen los links `/dashboard` y `/whitelist-email` (rutas que **no existen**).
+- **Admin:** `Navbar.isgests` se activa con `user.is_admin`, que devuelve el backend (`auth_users.is_admin`, solo editable desde la base). Muestra los links `/dashboard` y `/whitelist-email` (rutas que **no existen**). `environment.gests` se eliminó.
 
 ### `AuthService` (mock) — interfaz que el resto del código espera
 
@@ -284,7 +289,7 @@ Base: `environment.apiUrl` = `http://127.0.0.1:3000/api/`. Sin headers de autent
 - **Fuentes:** `index.html` carga Crimson Text, Outfit e Inter; varios CSS hacen `@import` de Plus Jakarta Sans + Inter.
 - **Íconos:** Material Icons y Material Icons Outlined (`<span class="material-icons-outlined">nombre</span>`).
 - **CSS:** `app.css` (global por `ViewEncapsulation.None`), `styles.css` (global) y CSS por componente (algunos de 20–40 KB).
-- **Assets:** se sirven desde `public/` (hoy solo `favicon.ico`). El código referencia `assets/logo-ifts11.jpg` y `/assets/ifts-navbar.jpg`, que no existen.
+- **Assets:** se sirven desde `public/` (hoy solo los íconos del logo oficial de la universidad). El código ya no referencia imágenes inexistentes (se quitaron el logo del hero y la imagen del libro del navbar).
 - **Feedback al usuario:** siempre vía `AlertService` (excepto `Home`, que usa `alert()`).
 
 ---
