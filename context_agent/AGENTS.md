@@ -6,6 +6,7 @@ Frontend en **Angular 20** (standalone components, rxjs, zone.js) de una bolsa d
 
 - [`context_front.md`](./context_front.md): contexto completo del frontend (componentes, servicios, modelos, API).
 - [`audit_front.md`](./audit_front.md): auditoría con hallazgos priorizados y plan de arreglo.
+- [`endpoint.md`](./endpoint.md): auditoría detallada de los endpoints (inventario, flujos, hallazgos E-xx y API propuesta).
 
 ## Comandos
 
