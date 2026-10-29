@@ -41,8 +41,10 @@ export class PortfolioService {
     try {
       const res = await lastValueFrom(this.getPortfolioByEmail(email));
       return res.data && (res.data.id != null || res.data.titulo1 != null);
-    } catch {
-      return false;
+    } catch (error: any) {
+      // Solo el 404 significa "no tiene"; los demás errores se propagan (E-24)
+      if (error?.status === 404) return false;
+      throw error;
     }
   }
 
@@ -66,7 +68,8 @@ export class PortfolioService {
 
   //  imagen a S3 y devolver URL pública
   async uploadImage(file: File): Promise<string> {
-    const key = `portfolios/${Date.now()}_${file.name.replace(/\s/g, '_')}`;
+    // Solo caracteres seguros en la URL; el servidor exige extensión png/jpg/jpeg/gif/webp
+    const key = `portfolios/${Date.now()}_${file.name.replace(/[^A-Za-z0-9._-]/g, '_')}`;
     const uploadUrl = `${this.bucketUrl}/${key}`;
 
     const response = await fetch(uploadUrl, {
@@ -85,46 +88,6 @@ export class PortfolioService {
     return this.http.delete(`${this.apiUrl}deleteportfolio/${encodeURIComponent(email)}`);
   }
 
-
-  /**
-   * Barre los 9 casilleros de imágenes de un portfolio y elimina de S3 
-   * todas aquellas URLs que no estén vacías.
-   * @param portfolio Objeto completo de Portfolio a limpiar
-   */
-  async deleteAllImagesFromPortfolio(portfolio: any): Promise<void> {
-    const deletePromises: Promise<void>[] = [];
-
-    // Definimos las propiedades de tipo array que contienen las imágenes
-    const bloques: ('imagenes1' | 'imagenes2' | 'imagenes3')[] = ['imagenes1', 'imagenes2', 'imagenes3'];
-
-    for (const bloque of bloques) {
-      const arrayImagenes = portfolio[bloque];
-
-      if (arrayImagenes && Array.isArray(arrayImagenes)) {
-        for (const url of arrayImagenes) {
-          // Filtramos: Solo si tiene contenido y es un string válido iniciamos el borrado
-          if (url && url.trim() !== '') {
-            deletePromises.push(this.deleteImage(url));
-          }
-        }
-      }
-    }
-
-    if (deletePromises.length === 0) {
-      console.log('No había imágenes cargadas en el portfolio para eliminar.');
-      return;
-    }
-
-    try {
-      // Ejecuta todas las solicitudes DELETE en paralelo
-      await Promise.all(deletePromises);
-      console.log(`Se eliminaron con éxito las ${deletePromises.length} imágenes encontradas en S3.`);
-    } catch (error) {
-      console.error('Al menos una de las imágenes falló al eliminarse de S3:', error);
-      // Re-lanzamos para que el componente sepa que el borrado no fue 100% exitoso
-      throw error;
-    }
-  }
 
   /**
    * Elimina una única imagen de S3 mediante Fetch DELETE (Auxiliar)

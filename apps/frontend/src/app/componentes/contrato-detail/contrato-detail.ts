@@ -69,36 +69,17 @@ export class ContratoDetail {
   }
 
   postularse(contrato: Contrato, email: string) {
-
-    let postulacion = this._apiService.postularseAContrato(contrato.id!.toString(), email);
-
-    postulacion.subscribe({
-      next: () => {
-
-
-        let updateContrato: Contrato = {
-          id: contrato.id,
-          tiene_postulaciones: true
-        };
-
-
-        this._apiService.updateContrato(updateContrato)
-          .subscribe({
-            next: res => {
-              this.contrato = res.data;
-              this.alertService.success('Postulación realizada con éxito');
-            },
-            error: err => {
-              console.error('Error al actualizar contrato:', err);
-            }
-          });
+    // Una sola llamada: el servidor agrega el email y marca tiene_postulaciones (B-05)
+    this._apiService.postularseAContrato(contrato.id!.toString(), email).subscribe({
+      next: res => {
+        this.contrato = res.data;
+        this.alertService.success('Postulación realizada con éxito');
       },
       error: (err) => {
         console.error("Error al postular: ", err);
-        this.alertService.error('Error al realizar la postulación, ' + err);
+        this.alertService.error(err?.error?.detail || 'Error al realizar la postulación');
       }
     });
-
   }
 
   get postulacionesNormalizadas(): string[] {

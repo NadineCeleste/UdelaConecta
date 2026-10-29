@@ -43,10 +43,11 @@ export class Formcreatecontract {
 
   ngOnInit(): void {
     /* const pid = this.route.snapshot.paramMap.get('project_id') anterior método */
-    const proyecto_id = this.route.snapshot.paramMap.get('id')
+    // La ruta es formcreatecontract/:project_id (B-01)
+    const proyecto_id = this.route.snapshot.paramMap.get('project_id')
     const proyecto_nombre = this.route.snapshot.paramMap.get('nombre')
     this.proyecto = { nombre: proyecto_nombre }
-    this.contrato.proyecto_id = proyecto_id!
+    this.contrato.proyecto_id = proyecto_id ?? ''
 
   }
 

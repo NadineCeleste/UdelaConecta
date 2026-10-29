@@ -340,7 +340,14 @@ export class ProfileComponent implements OnInit {
       try {
         this.loading = true;
         const email = this.perfil.email;
-        await lastValueFrom(this.projectService.editProyecto(this.perfil.proyecto)) && lastValueFrom(this.usersService.updateUserByRole(this.rolActual, email, this.perfil));
+        // Se guardan en paralelo; el proyecto solo si existe (B-04 / E-21)
+        const tareas: Promise<any>[] = [
+          lastValueFrom(this.usersService.updateUserByRole(this.rolActual, email, this.perfil))
+        ];
+        if (this.perfil.proyecto?.email_gerente) {
+          tareas.push(lastValueFrom(this.projectService.editProyecto(this.perfil.proyecto)));
+        }
+        await Promise.all(tareas);
         this.isEditing = false;
         this.alertService.success('Perfil actualizado con éxito');
       } catch (error) {
@@ -430,6 +437,12 @@ export class ProfileComponent implements OnInit {
 
   formatLanguageLevel(nivel: string): string {
     return nivel || 'Básico';
+  }
+
+  // Sin proyecto no se puede crear un contrato: se manda primero a crear el proyecto (B-01)
+  get rutaNuevaOferta(): string[] {
+    const proyectoId = this.perfil?.proyecto?.id;
+    return proyectoId ? ['/formcreatecontract', String(proyectoId)] : ['/formcreateproyect'];
   }
 
   get isProfileEmpty(): boolean {

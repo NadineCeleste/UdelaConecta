@@ -43,11 +43,13 @@ export class Miproyecto {
         this.perfil = { ...data }; // Copia para editar sin afectar el estado global antes de tiempo
         // Determina el rol (esto lo saca de la tabla que devolvió la API en app.ts)
         this.rolActual = data.rol || '';
+        // Se pide el proyecto recién cuando hay perfil cargado (B-03)
+        if (this.perfil.email) {
+          this.mostrarProyecto(this.perfil.email);
+        }
       }
 
     });
-
-    this.mostrarProyecto(this.perfil.email)
 
   }
 

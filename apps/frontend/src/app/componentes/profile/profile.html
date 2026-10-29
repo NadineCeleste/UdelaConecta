@@ -2,7 +2,18 @@
 
   <aside class="sidebar">
 
-    <ng-container *ngIf="rolActual === 'gerente'">
+    <!-- Un gerente recién registrado todavía no tiene proyecto (GET proyecto devuelve []) -->
+    <ng-container *ngIf="rolActual === 'gerente' && !perfil.proyecto && isOwnProfile">
+      <div class="card">
+        <h3 class="sidebar-title">Todavía no creaste tu proyecto</h3>
+        <p class="sidebar-text">Creá el proyecto de tu empresa para poder publicar ofertas.</p>
+        <button class="btn-create-first" [routerLink]="rutaNuevaOferta">
+          <span class="material-icons-outlined">add_circle_outline</span> Crear proyecto
+        </button>
+      </div>
+    </ng-container>
+
+    <ng-container *ngIf="rolActual === 'gerente' && perfil.proyecto">
       <div class="card">
         <h3 class="sidebar-title">Mi estatus</h3>
         <p class="sidebar-text">¿Está tu empresa actualmente buscando desarrolladores?</p>
@@ -87,7 +98,7 @@
                 </div>
                 <div class="user-names">
                   <h3 class="user-h3">
-                    {{ rolActual === 'gerente' ? (perfil.proyecto.nombre || 'Nombre de la empresa...') : (perfil.nombre
+                    {{ rolActual === 'gerente' ? (perfil.proyecto?.nombre || 'Nombre de la empresa...') : (perfil.nombre
                     + ' ' + perfil.apellido) }}
                     <span class="badge-new" *ngIf="isProfileEmpty">Casi terminado</span>
                     <span class="verificado-badge" *ngIf="rolActual === 'desarrollador' && perfil.verificado" title="Perfil verificado">
@@ -132,19 +143,19 @@
 
               <ng-container *ngIf="rolActual === 'gerente'">
                 <div class="data-item"><span class="material-icons-outlined data-icon">link</span> {{
-                  perfil.proyecto.info_link
+                  perfil.proyecto?.info_link
                   || 'Web no definida' }}</div>
                 <div class="data-item"><span class="material-icons-outlined data-icon">person_outline</span> {{
                   perfil.nombre }} {{ perfil.apellido }} (Contacto)</div>
               </ng-container>
               <ng-container *ngIf="rolActual === 'gerente'">
-                <div class="data-item-full" *ngIf="perfil.proyecto.description" style="display: flex; gap: 8px;"><span
-                    class="material-icons-outlined data-icon">description</span> {{ perfil.proyecto.description }}</div>
+                <div class="data-item-full" *ngIf="perfil.proyecto?.description" style="display: flex; gap: 8px;"><span
+                    class="material-icons-outlined data-icon">description</span> {{ perfil.proyecto?.description }}</div>
               </ng-container>
             </div>
 
             <form *ngIf="isEditing" (submit)="handleUpdate()" class="form-container">
-              <div *ngIf="rolActual === 'gerente'" class="form-grid">
+              <div *ngIf="rolActual === 'gerente' && perfil.proyecto" class="form-grid">
                 <div class="input-group">
                   <label>Nombre de la Empresa</label>
                   <input type="text" [(ngModel)]="perfil.proyecto.nombre" name="empresa_nombre" class="custom-input"
@@ -187,7 +198,7 @@
                     (keypress)="soloNumeros($event)">
                 </div>
 
-                <div class="form-group-full" *ngIf="rolActual === 'gerente'">
+                <div class="form-group-full" *ngIf="rolActual === 'gerente' && perfil.proyecto">
                   <label class="label-pro" style="display: flex; align-items: center; gap: 4px;"><span
                       class="material-icons-outlined" style="font-size: 16px;">description</span> Descripcion
                     de la empresa</label>
@@ -195,7 +206,7 @@
                     placeholder="Misión y visión de {{perfil.proyecto.nombre}}" rows="8" maxlength="500">
                     </textarea>
                   <div class="char-counter">
-                    {{ perfil.proyecto.descripcion?.length || 0 }} / 500 caracteres
+                    {{ perfil.proyecto.description?.length || 0 }} / 500 caracteres
                   </div>
                 </div>
               </div>
@@ -281,7 +292,7 @@
       </ng-container>
 
       <ng-container *ngSwitchCase="'portfolio'">
-        <app-portfolio-component [emailDesarrollador]="perfil.email"></app-portfolio-component>
+        <app-portfolio-component [emailEstudiante]="perfil.email"></app-portfolio-component>
       </ng-container>
 
       <!-- SECCIÓN DE HABILIDADES -->
@@ -499,7 +510,7 @@
               <p class="section-subtitle">Gestioná y monitoreá todas las ofertas que tenés publicadas.</p>
             </div>
           </div>
-          <button class="btn-add-oferta" [routerLink]="['/formcreatecontract', perfil.proyecto]">
+          <button class="btn-add-oferta" [routerLink]="rutaNuevaOferta">
             <span class="material-icons-outlined">add</span> Nueva Oferta
           </button>
         </div>
@@ -583,7 +594,7 @@
           <p class="empty-subtitle">Cuando publiques una oferta, aparecerá aca para que puedas gestionarla y recibir
             postulaciones.</p>
 
-          <button class="btn-create-first" [routerLink]="['/formcreatecontract', perfil.proyecto]">
+          <button class="btn-create-first" [routerLink]="rutaNuevaOferta">
             <span class="material-icons-outlined">add_circle_outline</span> Crear mi primera oferta
           </button>
         </div>

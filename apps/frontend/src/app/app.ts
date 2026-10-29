@@ -116,6 +116,8 @@ export class App {
   async inicializarDatos() {
     //this.cargandoData = true;
 
+    // Evita suscripciones duplicadas cuando se vuelve a llamar tras crear el usuario (B-07)
+    this.authSub?.unsubscribe();
     this.authSub = this.authService.userEmail$.pipe(
 
       distinctUntilChanged()
@@ -125,8 +127,11 @@ export class App {
       this.cargandoData = true;
       this.userEmail = email;
       if (email) {
-        const usuarioExistente = await this.checkUserExists(email);
-        if (usuarioExistente.data.existe == 1) {
+        const usuarioExistente: any = await this.checkUserExists(email);
+        if (usuarioExistente.error) {
+          // Un error del servidor no significa "usuario inexistente" (E-10)
+          this.alertService.error('No se pudo conectar con el servidor para verificar tu perfil');
+        } else if (usuarioExistente.data.existe == 1) {
 
           this.usuarioRol = usuarioExistente.data.tabla
           this.closeModals(); //acá lo pusimos en la call moni celes ariel
@@ -134,13 +139,18 @@ export class App {
           // debug --> console.log("Usuario hallado en BBDD: ", this.usuarioRol)
 
 
-          const usuarioHalladoEnBBDD = await this.getUser(email, usuarioExistente.data.tabla)
+          try {
+            const usuarioHalladoEnBBDD = await this.getUser(email, usuarioExistente.data.tabla)
 
-          this.usersService.setUserProfile({
-            ...usuarioHalladoEnBBDD,
-            email: email,
-            rol: usuarioExistente.data.tabla
-          })
+            this.usersService.setUserProfile({
+              ...usuarioHalladoEnBBDD,
+              email: email,
+              rol: usuarioExistente.data.tabla
+            })
+          } catch {
+            // Sin esto la promesa rechazada dejaba el spinner girando para siempre
+            this.alertService.error('No se pudo cargar tu perfil');
+          }
         } else {
           this.usuarioRol = '';
           console.log("Usuario no hallado, mostrando selector de rol")
@@ -159,7 +169,7 @@ export class App {
       return res
     } catch (error) {
       console.error('Error checkeando existencia de usuario:', error);
-      return { data: { existe: 0 } };
+      return { data: { existe: 0, tabla: null }, error: true };
     }
   }
 
@@ -222,8 +232,11 @@ export class App {
   }
 
   async handleCreateUser() {
+    if (!this.selectedRole) {
+      this.alertService.warning('Por favor selecciona un rol');
+      return;
+    }
     this.cargandoData = true;
-    if (!this.selectedRole) this.alertService.warning('Por favor selecciona un rol');
 
     try {
       this.loading = true;

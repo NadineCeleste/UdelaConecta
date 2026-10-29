@@ -11,12 +11,13 @@ import { AlertService } from '../../servicios/alertService';
   styleUrl: './portfolio-component.css',
 })
 export class PortfolioComponent implements OnInit {
-  @Input() emailDesarrollador: string = '';
+  @Input() emailEstudiante: string = '';
 
   portfolio: Portfolio | null = null;
   mostrarFormulario = false;
   formularioEsEdicion = false;
   cargando = false;
+  errorCarga = false;
   guardando = false;
   formData: any = {
     titulo1: '', descripcion1: '', repositorio1: '', imagenes1: [] as string[], files1: [] as File[],
@@ -33,21 +34,27 @@ export class PortfolioComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
-    if (!this.emailDesarrollador) return;
+    if (!this.emailEstudiante) return;
     await this.cargarPortfolio();
   }
 
   async cargarPortfolio() {
     this.cargando = true;
+    this.errorCarga = false;
     try {
-      const res = await this.portfolioService.getPortfolioByEmail(this.emailDesarrollador).toPromise();
+      const res = await this.portfolioService.getPortfolioByEmail(this.emailEstudiante).toPromise();
       if (res?.data && (res.data.id || res.data.titulo1)) {
         this.portfolio = res.data;
       } else {
         this.portfolio = null;
       }
-    } catch (error) {
+    } catch (error: any) {
       this.portfolio = null;
+      // 404 = todavía no tiene portfolio; cualquier otro error es un problema de carga
+      if (error?.status !== 404) {
+        console.error('Error al cargar el portfolio:', error);
+        this.errorCarga = true;
+      }
     } finally {
       this.cargando = false;
     }
@@ -146,7 +153,7 @@ export class PortfolioComponent implements OnInit {
         imagenes3: imagenesUrls3
       };
 
-      await this.portfolioService.updatePortfolio(this.emailDesarrollador, payload).toPromise();
+      await this.portfolioService.updatePortfolio(this.emailEstudiante, payload).toPromise();
       this.alertService.success('Portfolio guardado correctamente');
       await this.cargarPortfolio();
       this.mostrarFormulario = false;
@@ -222,7 +229,7 @@ export class PortfolioComponent implements OnInit {
         imagenes3: imagenesUrls3
       };
 
-      await this.portfolioService.createPortfolio(this.emailDesarrollador, payload).toPromise();
+      await this.portfolioService.createPortfolio(this.emailEstudiante, payload).toPromise();
       this.alertService.success('Portfolio guardado correctamente');
       await this.cargarPortfolio();
       this.mostrarFormulario = false;
@@ -272,38 +279,17 @@ export class PortfolioComponent implements OnInit {
 
     if (!confirmado) return;
     
-    try {
-
-      const payload = {
-        imagenes1: this.portfolio?.imagenes1 || [],
-        imagenes2: this.portfolio?.imagenes2 || [],
-        imagenes3: this.portfolio?.imagenes3 || [],
-      };
-
-      // 1. Limpieza física en AWS S3 de los strings que tengan URLs
-      await this.portfolioService.deleteAllImagesFromPortfolio(payload);
-
-      // 2. Procede con la lógica para eliminar el Portfolio de la Base de Datos
-      //console.log('Paso 1 completado. Ahora borrando datos de la BD...');
-
-      this.portfolioService.deletePortfolio(this.emailDesarrollador).subscribe({
-        next: (res) => {
-          console.log('Portfolio eliminado de la base de datos con éxito');
-          // limpia la vista
-          this.cargarPortfolio();
-        },
-        error: (dbErr) => {
-          console.error('Las imágenes se borraron de S3, pero falló la Base de Datos:', dbErr);
-          this.alertService.error('Se borraron las imágenes pero hubo un error al actualizar los datos.');
-        }
-      });
-
-    } catch (s3Error) {
-      // Si S3 falló, el código saltó directo acá. La línea de la BBDD nunca se ejecutó.
-      console.error('Operación cancelada. Falló el borrado de imágenes en S3:', s3Error);
-      this.alertService.error('No se pudo eliminar el portfolio porque falló la eliminación de archivos en el servidor de AWS.');
-    }
-    
+    // El servidor borra el portfolio y también sus imágenes del storage
+    this.portfolioService.deletePortfolio(this.emailEstudiante).subscribe({
+      next: () => {
+        // limpia la vista
+        this.cargarPortfolio();
+      },
+      error: (err) => {
+        console.error('Error al eliminar el portfolio:', err);
+        this.alertService.error('No se pudo eliminar el portfolio');
+      }
+    });
   }
 
   cancelarEdicion() {
