@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "udela-conecta-backend"
 version = "1.0.0"
-description = "Backend FastAPI + PostgreSQL para Udela Conecta (HunTech)"
+description = "Backend FastAPI + PostgreSQL para Udela Conecta"
 authors = ["Udela Conecta"]
 package-mode = false
 

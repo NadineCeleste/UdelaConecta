@@ -41,10 +41,10 @@ export class Navbar {
   bookSpreads = [[-1, 0], [1, 2], [3, 4], [5, 6], [7, -1]];
   bookPages: BookPage[] = [
     {
-      isCover: true, title: '', body: 'HUNTECH', bg: '#2a1b0e'
+      isCover: true, title: '', body: 'UDELA CONECTA', bg: '#2a1b0e'
     },
-    { label: 'HunTech', title: '¿Qué es HunTech?', body: 'Nuestro objetivo es acompañar a nuestros pares a dar sus primeros pasos dentro del mundo laboral IT.', bg: '#e8d4b9' },
-    { label: 'Nosotros', title: '¿Quiénes Somos?', body: 'Detrás de HunTech hay un grupo de estudiantes de la Universidad de la Ciudad de Buenos Aires que decidió transformar una problemática común en una solución real. ', bg: '#e8d4b9' },
+    { label: 'Udela Conecta', title: '¿Qué es Udela Conecta?', body: 'Nuestro objetivo es acompañar a nuestros pares a dar sus primeros pasos dentro del mundo laboral IT.', bg: '#e8d4b9' },
+    { label: 'Nosotros', title: '¿Quiénes Somos?', body: 'Detrás de Udela Conecta hay un grupo de estudiantes de la Universidad de la Ciudad de Buenos Aires que decidió transformar una problemática común en una solución real. ', bg: '#e8d4b9' },
     { label: 'Nuestra Universidad', title: 'Donde comenzó todo...', body: 'Todo el equipo está formado por estudiantes de la Universidad de la Ciudad de Buenos Aires.', bg: '#e8d4b9' },
     { label: 'Nuestra Misión', body: ' Creamos este espacio de apoyo donde el conocimiento compartido de las aulas se transforma en una herramienta real de inserción laboral', bg: '#e8d4b9' },
     { label: 'Para Empresas', body: 'Publicá tus ofertas y encontrá conectá con estudiantes y futuros profesionales IT preparados para incorporarse al mundo laboral', bg: '#e8d4b9' },

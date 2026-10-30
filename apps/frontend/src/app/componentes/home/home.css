@@ -1703,7 +1703,7 @@
   padding: 0.8rem 1.6rem;
 }
 
-.ft-huntech {
+.ft-udela {
   padding: 0 1.5rem;
   overflow: hidden;
   line-height: 0.82;
@@ -1711,7 +1711,7 @@
   display: flex;
 }
 
-.ft-huntech-text {
+.ft-udela-text {
   font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
   font-size: clamp(60px, 15vw, 160px);
   font-weight: 900;
@@ -2090,7 +2090,7 @@
     padding: 2rem;
   }
 
-  .ft-huntech-text {
+  .ft-udela-text {
     font-size: clamp(60px, 18vw, 120px);
     transform: translateX(0%);
     text-align: center;
@@ -2194,7 +2194,7 @@
   .cards-grid-5 {
     grid-template-columns: repeat(2, 1fr);
   }
-   .ft-huntech-text {
+   .ft-udela-text {
     font-size: clamp(40px, 18vw, 100px);
     transform: translateX(0%);
     text-align: center;

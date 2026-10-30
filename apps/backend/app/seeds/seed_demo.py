@@ -120,9 +120,9 @@ async def seed(db: AsyncSession) -> None:
     if not await db.scalar(select(Portfolio).where(Portfolio.email == EMAIL_DEV)):
         db.add(Portfolio(
             email=EMAIL_DEV,
-            titulo1="Bolsa de trabajo Huntech",
+            titulo1="Bolsa de trabajo Udela Conecta",
             descripcion1="Frontend en Angular 20 con componentes standalone.",
-            repositorio1="https://github.com/udelaconecta/huntech",
+            repositorio1="https://github.com/NadineCeleste/UdelaConecta",
             titulo2="API de turnos",
             descripcion2="FastAPI + PostgreSQL con autenticación JWT.",
             repositorio2="https://github.com/udelaconecta/turnos-api",

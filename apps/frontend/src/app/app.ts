@@ -49,7 +49,7 @@ export class App {
   showForgotPasswordModal = false;
   reset_email = '';
   resetSent = false;
-  title = 'hunTech';
+  title = 'udelaConecta';
 
   searchKeyword = '';
   searchLocation = '';

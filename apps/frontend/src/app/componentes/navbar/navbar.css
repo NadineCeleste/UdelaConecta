@@ -991,7 +991,7 @@ html, body {
 }
 
 .mini-cover-content::after {
-  content: 'HT';
+  content: 'UC';
 
   position: absolute;
   top: 42%;

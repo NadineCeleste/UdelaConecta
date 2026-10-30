@@ -783,7 +783,7 @@ h4,
     0 0 0 4px rgba(49, 173, 28, 0.2);
 }
 
-.huntech-ticker {
+.udela-ticker {
   position: relative;
   z-index: 20;
   width: 100%;
@@ -1593,7 +1593,7 @@ button:disabled {
 }
 
 /* FOOTER */
-.huntech-footer {
+.udela-footer {
   background-image: url('/assets/instituto-footer.jpg');
   background-size: cover;
   background-position: bottom center;
@@ -1603,7 +1603,7 @@ button:disabled {
   z-index: 1;
 }
 
-.huntech-footer::before {
+.udela-footer::before {
   content: '';
   position: absolute;
   top: 0;
@@ -1982,7 +1982,7 @@ button:disabled {
     gap: 20px !important;
   }
 
-  .huntech-footer {
+  .udela-footer {
     padding: 60px 20px 30px 20px !important;
   }
 
@@ -2046,7 +2046,7 @@ button:disabled {
 }
 
 /* MODO OSCURO: FOOTER */
-.dark-theme .huntech-footer::before {
+.dark-theme .udela-footer::before {
   background: rgba(15, 23, 42, 0.85);
 }
 
@@ -2066,7 +2066,7 @@ button:disabled {
   color: #64748b;
 }
 
-/* MODO OSCURO: COMO FUNCIONA HUNTECH */
+/* MODO OSCURO: COMO FUNCIONA UDELA CONECTA */
 .dark-theme .how-it-works-section {
   background-color: #000000;
   background-image:
@@ -2087,7 +2087,7 @@ button:disabled {
 }
 
 /* MODO OSCURO: SCROLL INFINITO */
-.dark-theme .huntech-ticker {
+.dark-theme .udela-ticker {
   background-color: #01020b;
 }
 

@@ -6,7 +6,7 @@ from app.routers import auth, contratos, portfolio, proyectos, storage, usuarios
 
 app = FastAPI(
     title="Udela Conecta API",
-    description="Backend de Udela Conecta (HunTech): usuarios, proyectos, contratos y portfolios.",
+    description="Backend de Udela Conecta: usuarios, proyectos, contratos y portfolios.",
     version="1.0.0",
 )
 
