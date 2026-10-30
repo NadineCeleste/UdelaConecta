@@ -14,7 +14,28 @@
 		reverse_proxy backend:3000
 	}
 
+	# Front: el build de Angular copiado en /srv por Dockerfile.caddy
 	handle {
-		reverse_proxy frontend:80
+		root * /srv
+
+		# "route" respeta el orden: los headers se deciden después de reescribir la ruta
+		route {
+			# Assets con hash en el nombre: caché larga; si no existen, 404
+			@assets path *.js *.css *.woff *.woff2 *.ttf *.svg *.png *.jpg *.jpeg *.gif *.ico *.webp
+			header @assets Cache-Control "public, max-age=31536000, immutable"
+
+			# SPA: cualquier otra ruta inexistente vuelve a index.html (router de Angular)
+			@spa {
+				not path *.js *.css *.woff *.woff2 *.ttf *.svg *.png *.jpg *.jpeg *.gif *.ico *.webp
+				not file
+			}
+			rewrite @spa /index.html
+
+			# index.html nunca se cachea para que los deploys se vean al instante
+			@index path / /index.html
+			header @index Cache-Control "no-cache"
+
+			file_server
+		}
 	}
 }

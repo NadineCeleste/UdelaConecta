@@ -1,6 +1,6 @@
-# Producción en VPS (Caddy + Nginx + FastAPI + PostgreSQL):
-#   cp infra/vps/.env.vps.example infra/vps/.env.vps   # y completar
-#   npm run vps:up
+# Producción en VPS (DuckDNS + Caddy + FastAPI + PostgreSQL):
+#   infra/vps/setup-env.sh   # genera infra/vps/.env.vps
+#   infra/vps/deploy.sh      # o npm run vps:up
 name: udela-vps
 
 x-backend-env: &backend-env
@@ -13,32 +13,59 @@ x-backend-env: &backend-env
   AUTO_SEED: ${AUTO_SEED:-false}
 
 services:
-  caddy:
+  duckdns:
     image: caddy:2-alpine
+    container_name: udela-vps-duckdns
+    restart: unless-stopped
+    environment:
+      DUCKDNS_SUBDOMAIN: ${DUCKDNS_SUBDOMAIN:?Falta DUCKDNS_SUBDOMAIN}
+      DUCKDNS_TOKEN: ${DUCKDNS_TOKEN:?Falta DUCKDNS_TOKEN}
+    command:
+      - sh
+      - -c
+      - |
+        DOM="$${DUCKDNS_SUBDOMAIN%.duckdns.org}"
+        while true; do
+          RES=$$(wget -qO- "https://www.duckdns.org/update?domains=$${DOM}&token=$${DUCKDNS_TOKEN}&ip=" || echo "ERROR")
+          echo "[$$(date -Iseconds)] DuckDNS ($${DOM}.duckdns.org): $${RES}"
+          if [ "$${RES}" = "OK" ]; then
+            touch /tmp/duckdns_ok
+          else
+            rm -f /tmp/duckdns_ok
+          fi
+          sleep 300
+        done
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/duckdns_ok"]
+      interval: 5s
+      timeout: 3s
+      retries: 6
+      start_period: 5s
+    networks:
+      - udela_vps_net
+
+  # Caddy sirve el build de Angular y hace de proxy hacia el backend (Caddyfile incluido en la imagen)
+  caddy:
+    build:
+      context: ../..
+      dockerfile: infra/vps/Dockerfile.caddy
     container_name: udela-vps-caddy
     restart: unless-stopped
     environment:
       DOMAIN: ${DOMAIN:-:80}
+    # Si el servidor ya tiene un proxy en 80/443, se publica solo en 127.0.0.1 (ver .env.vps.example)
     ports:
-      - "80:80"
-      - "443:443"
-      - "443:443/udp"
+      - "${CADDY_HTTP_PORT:-80}:80"
+      - "${CADDY_HTTPS_PORT:-443}:443"
+      - "${CADDY_HTTPS_PORT:-443}:443/udp"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - frontend
-      - backend
-    networks:
-      - udela_vps_net
-
-  frontend:
-    build:
-      context: ../..
-      dockerfile: infra/vps/Dockerfile.frontend
-    container_name: udela-vps-frontend
-    restart: unless-stopped
+      duckdns:
+        condition: service_healthy
+      backend:
+        condition: service_started
     networks:
       - udela_vps_net
 
