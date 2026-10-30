@@ -1,10 +1,10 @@
 # Udela Conecta — contexto para IA
 
-Monorepo **Nx** de una bolsa de trabajo para estudiantes y graduados de la Universidad de la Ciudad de Buenos Aires. Conecta estudiantes y graduados (rol `estudiante`) con empresas (gerentes) a través de proyectos y contratos. El título del HTML es "Huntech". Idioma del código y los comentarios: español.
+Monorepo **Nx** de una bolsa de trabajo para estudiantes y graduados de la Universidad de la Ciudad de Buenos Aires. Conecta estudiantes y graduados (rol `estudiante`) con empresas (gerentes) a través de proyectos y contratos. El título del HTML es "Udela Conecta". Idioma del código y los comentarios: español.
 
 - `apps/frontend`: **Angular 20** (standalone components, rxjs, zone.js).
 - `apps/backend`: **FastAPI** + **SQLAlchemy 2.0 async** (asyncpg) + **Alembic** sobre **PostgreSQL 16**, con JWT propio.
-- `infra/local`: todo el stack en Docker con hot-reload. `infra/vps`: producción (Caddy + Nginx + FastAPI + Postgres).
+- `infra/local`: todo el stack en Docker con hot-reload. `infra/vps`: producción (Caddy + FastAPI + Postgres).
 
 ## Documentación relacionada
 
@@ -16,7 +16,7 @@ Leer según la tarea:
 | [`audit_front.md`](./audit_front.md) | Auditoría general con hallazgos priorizados (S-, B-, Q-, P-, A-, T-, D-), su estado y el plan de arreglo. Antes de corregir un error o refactorizar |
 | [`endpoint.md`](./endpoint.md) | Auditoría detallada de los endpoints: inventario, flujos, hallazgos E-xx y API propuesta. Antes de tocar servicios HTTP o el backend |
 | [`backend.md`](./backend.md) | Contexto completo del backend: ciclo de un request, modelo de datos, migraciones, cada endpoint con sus reglas de autorización, utilidades a reutilizar, tests y cómo extender. Antes de tocar `apps/backend` |
-| [`orquestacion.md`](./orquestacion.md) | Nx (proyectos, targets, cache, comandos), Docker local con hot-reload, producción en VPS (Caddy, Nginx, workers, backups) y problemas frecuentes. Antes de tocar `nx.json`, `project.json`, `package.json` o `infra/` |
+| [`orquestacion.md`](./orquestacion.md) | Nx (proyectos, targets, cache, comandos), Docker local con hot-reload, producción en VPS (DuckDNS, Caddy, workers, backups) y problemas frecuentes. Antes de tocar `nx.json`, `project.json`, `package.json` o `infra/` |
 | [`../apps/backend/README.md`](../apps/backend/README.md) | Backend: estructura, variables de entorno, reglas de autorización, migraciones y usuarios demo |
 | [`CLAUDE.md`](./CLAUDE.md) | Solo importa este archivo (`@AGENTS.md`) para Claude Code |
 | [`../README.md`](../README.md) | README del repo: narrativa del producto (problemática, solución, cómo funciona para cada rol) |
@@ -35,7 +35,8 @@ npm run build          # nx build frontend --configuration=production -> dist/ap
 npm run test:front     # Karma/Jasmine en ChromeHeadless
 npm run test:back      # pytest (requiere: cd apps/backend && poetry install)
 npx nx run backend:migrate  # alembic upgrade head (también backend:seed y backend:serve; no usar "nx migrate", que actualiza Nx)
-npm run vps:up         # producción; requiere infra/vps/.env.vps (copiar de .env.vps.example)
+infra/vps/setup-env.sh # producción: genera infra/vps/.env.vps (DuckDNS, secretos, modo detrás de un Caddy del host)
+infra/vps/deploy.sh    # producción: git pull + build + up (también npm run vps:up / vps:down / vps:logs)
 ```
 
 Stack local: front `http://localhost:4200`, API `http://localhost:3000/api/`, Swagger `http://localhost:3000/docs`, Adminer `http://localhost:8080`, Postgres `localhost:5432` (Postgres y Adminer solo escuchan en `127.0.0.1`). Los puertos del host se cambian con `FRONTEND_PORT`, `POSTGRES_HOST_PORT` y `ADMINER_PORT`. Si se cambia `package.json`, recrear el volumen de `node_modules` con `docker compose -f infra/local/docker-compose.yml down -v`.
@@ -51,6 +52,8 @@ Usuarios demo (los crea el seed cuando `AUTO_SEED=true`): `dev@udelaconecta.edu.
 - **Admin:** `navbar.ts` activa `isgests` con `user.is_admin` (columna `auth_users.is_admin`, solo se cambia desde la base). Ya no existe `environment.gests`.
 - **Login:** 5 intentos fallidos seguidos bloquean la cuenta 15 minutos (429).
 - **Privacidad:** `telefono` y `fecha_nacimiento` solo los recibe el dueño del perfil.
+- **Producción:** sin nginx. Caddy (`Dockerfile.caddy`) sirve el build de Angular y hace de proxy a `/api` y `/storage`; el servicio `duckdns` mantiene la IP del subdominio. Si el servidor ya tiene un Caddy en 80/443, el de Udela queda en `127.0.0.1:8081` y el del host termina el HTTPS. Detalle en `orquestacion.md`.
+- **Fin de línea:** `.gitattributes` fuerza LF en los `*.sh`; con CRLF los contenedores no arrancan.
 
 ## Estructura del frontend (`apps/frontend/src/app`)
 

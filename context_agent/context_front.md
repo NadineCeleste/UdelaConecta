@@ -14,7 +14,7 @@
 
 | | |
 |---|---|
-| **Qué es** | Bolsa de trabajo que conecta estudiantes y graduados IT de la Universidad de la Ciudad de Buenos Aires con empresas. Marca visible: **HunTech** / **Udela Conecta**. |
+| **Qué es** | Bolsa de trabajo que conecta estudiantes y graduados IT de la Universidad de la Ciudad de Buenos Aires con empresas. Marca visible: **Udela Conecta**. |
 | **Stack** | Angular **20.3** (standalone components, control flow `@if`/`@for` mezclado con `*ngIf`/`*ngFor`), RxJS 7.8, zone.js 0.15, TypeScript 5.9 en modo `strict`, `strictTemplates`. |
 | **Build** | `@angular/build:application` (esbuild + Vite dev server). |
 | **Tests** | Karma + Jasmine (hoy no compilan, ver auditoría). |
@@ -147,7 +147,7 @@ No hay ruta comodín (`**`) ni página 404. Query params usados: `contratos?id=<
 
 ### `Navbar` — `componentes/navbar/`
 - Menú principal (responsive), dropdowns por rol, toggle de tema, logout, botón "volver".
-- **Mini libro 3D** "¿Qué es HunTech?" (`bookPages`, `bookSpreads`, `bookNext/Prev`, modal).
+- **Mini libro 3D** "¿Qué es Udela Conecta?" (`bookPages`, `bookSpreads`, `bookNext/Prev`, modal).
 - `isOnContratos` y `activeFragment` según `NavigationEnd`.
 - Outputs `onLogin`, `onRegister` (declarados, no usados por `App`).
 

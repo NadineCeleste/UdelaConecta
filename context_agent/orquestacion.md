@@ -1,7 +1,7 @@
 # Orquestación — Nx, Docker local y VPS
 
 > Cómo se organiza el monorepo con **Nx** y cómo se levantan los servicios con **Docker Compose**, en desarrollo (`infra/local`) y en producción (`infra/vps`). El código de cada app está documentado en [`context_front.md`](./context_front.md) y [`backend.md`](./backend.md).
-> Fecha: 2026-10-29 · Nx 24.0.2 · Angular 20.3 · Docker Compose v2.
+> Fecha: 2026-10-30 · Nx 24.0.2 · Angular 20.3 · Docker Compose v2.
 
 ---
 
@@ -15,7 +15,7 @@ UdelaConecta/
     backend/    FastAPI      → proyecto Nx "backend"  (project.json, Poetry)
   infra/
     local/      docker-compose.yml + Dockerfiles .dev + .env.local   (desarrollo, hot-reload)
-    vps/        docker-compose.prod.yml + Caddy + Nginx + scripts   (producción)
+    vps/        docker-compose.prod.yml + Caddy + scripts   (producción)
   context_agent/  documentación para agentes
 ```
 
@@ -136,22 +136,31 @@ POSTGRES_HOST_PORT=5433 FRONTEND_PORT=4201 ADMINER_PORT=8081 npm run local:up
 ## 4. Producción en VPS (`infra/vps`)
 
 ```
+duckdns ──► https://www.duckdns.org/update cada 5 min (apunta DOMAIN a la IP del servidor)
 Internet ──► Caddy :80/:443 (HTTPS automático con DOMAIN)
                ├─ /api/*      ──► backend:3000   (uvicorn, 4 workers, usuario no-root)
                ├─ /storage/*  ──► backend:3000
-               └─ resto       ──► frontend:80    (nginx con el build de Angular)
+               └─ resto       ──► /srv           (build de Angular, servido por el mismo Caddy)
                                        backend ──► postgres:5432 (sin puertos publicados)
                       todo en la red bridge udela_vps_net
 ```
 
-Front, API y storage comparten dominio. Por eso `environment.prod.ts` usa rutas relativas (`/api/`, `/storage`) y no hace falta CORS.
+Front, API y storage comparten dominio. Por eso `environment.prod.ts` usa rutas relativas (`/api/`, `/storage`) y no hace falta CORS. No hay nginx: el mismo Caddy sirve los archivos del front.
+
+**Detrás de un Caddy del host.** Si el servidor ya tiene un Caddy en 80/443 (por ejemplo, con n8n u otros sitios), el de Udela Conecta no puede tomar esos puertos. `setup-env.sh` lo deja con `DOMAIN=:80` (HTTP plano) y publicado solo en `127.0.0.1:8081`:
+
+```
+Internet ──► Caddy del host :80/:443 (HTTPS de todos los sitios)
+               ├─ otro.dominio             ──► lo que ya sirviera
+               └─ <subdominio>.duckdns.org ──► 127.0.0.1:8081 ──► Caddy de Udela (mismo enrutamiento de arriba)
+```
 
 ### 4.1 Servicios (`docker-compose.prod.yml`, proyecto `udela-vps`)
 
 | Servicio | Imagen / build | Notas |
 |---|---|---|
-| `caddy` | `caddy:2-alpine` | Publica 80, 443 y 443/udp. `Caddyfile` montado. Volúmenes `caddy_data` (certificados) y `caddy_config`. `request_body max_size 6MB`, compresión zstd/gzip |
-| `frontend` | `Dockerfile.frontend`, multi-stage: node:24 con `npm ci` + `nx build frontend --configuration=production` → `nginx:stable-alpine` | `nginx.frontend.conf`: SPA con `try_files … /index.html`; assets con hash cacheados un año; `index.html` con `no-cache` |
+| `duckdns` | `caddy:2-alpine` (solo usa su `wget`) | Llama a la API de DuckDNS con `DUCKDNS_SUBDOMAIN` y `DUCKDNS_TOKEN` cada 5 minutos; `ip=` vacío hace que DuckDNS tome la IP pública de origen. Está *healthy* mientras la última respuesta sea `OK`. El log muestra el resultado, no el token |
+| `caddy` | `Dockerfile.caddy`, multi-stage: node:24 con `npm ci` + `nx build frontend --configuration=production` → `caddy:2-alpine` con el build en `/srv` y el `Caddyfile` incluido en la imagen (cambiarlo requiere rebuild, que `deploy.sh` ya hace) | Único punto de entrada: enruta `/api` y `/storage` al backend y sirve el front. SPA: las rutas que no son archivos vuelven a `index.html`; assets cacheados un año (404 si no existen); `index.html` con `no-cache`. Publica `CADDY_HTTP_PORT`/`CADDY_HTTPS_PORT` (80/443 por defecto). Volúmenes `caddy_data` (certificados) y `caddy_config`. `request_body max_size 6MB`, compresión zstd/gzip. Espera a `duckdns` *healthy* para pedir el certificado con el DNS ya actualizado |
 | `backend` | `Dockerfile.backend`: python:3.13-slim, `poetry install --only main` y después desinstala Poetry. Copia solo `app/`, `alembic/` y `alembic.ini`. Usuario `udela` (uid 10001) | Volumen `storage:/data/storage`. Espera a `postgres` *healthy* |
 | `postgres` | `postgres:16-alpine` | **Sin `ports`**: solo es accesible dentro de la red. Volumen `pgdata` |
 
@@ -162,8 +171,10 @@ Front, API y storage comparten dominio. Por eso `environment.prod.ts` usa rutas 
 
 ### 4.2 Variables (`infra/vps/.env.vps`, fuera de git)
 
-Se copia de `.env.vps.example` y se completa:
-- `DOMAIN`: `:80` sirve HTTP plano; con un dominio real, Caddy obtiene el certificado HTTPS solo.
+Lo genera `infra/vps/setup-env.sh`: pide el subdominio y el token de DuckDNS y si cargar el seed, genera la contraseña de Postgres (32 caracteres alfanuméricos, para no romper la URI) y la clave JWT (64), arma `DOMAIN` y `CORS_ORIGINS` y escribe el archivo con permisos 600. Si ya existe, pide confirmación antes de sobrescribirlo. A mano, se copia de `.env.vps.example` y se completa:
+- `DUCKDNS_SUBDOMAIN` (sin `.duckdns.org`) y `DUCKDNS_TOKEN`: obligatorias.
+- `DOMAIN`: `<subdominio>.duckdns.org`; Caddy obtiene el certificado HTTPS solo. Con `:80` sirve HTTP plano.
+- `CADDY_HTTP_PORT` / `CADDY_HTTPS_PORT`: dónde se publica Caddy en el host (por defecto `80` y `443`). Si el servidor ya tiene otro proxy en 80/443, `setup-env.sh` los pone en `127.0.0.1:<puerto>` y `127.0.0.1:<puerto+1>` con `DOMAIN=:80`; el proxy del host termina el HTTPS y reenvía el dominio a `127.0.0.1:<puerto>`. El backend no depende del esquema de la request (el storage usa la ruta relativa `/storage`), así que el doble proxy no le afecta.
 - `POSTGRES_*` y `DATABASE_URL`.
 - `JWT_SECRET_KEY`: generarla con `python3 -c "import secrets; print(secrets.token_urlsafe(64))"`. **El valor de ejemplo hace que el backend no arranque.**
 - `PUBLIC_STORAGE_BASE_URL=/storage`, `WEB_CONCURRENCY`, `AUTO_SEED=false`.
@@ -174,11 +185,26 @@ El compose usa `${VAR:?mensaje}`: si falta una variable obligatoria, `docker com
 
 | Tarea | Comando |
 |---|---|
-| Primer deploy | `cp infra/vps/.env.vps.example infra/vps/.env.vps` (completar) y `npm run vps:up` |
+| Primer deploy | `infra/vps/setup-env.sh` y `infra/vps/deploy.sh` (o `npm run vps:up` si hay Node) |
+| Sumar el sitio al Caddy del host (solo en ese modo) | Agregar `<subdominio>.duckdns.org { reverse_proxy 127.0.0.1:8081 }` a `/etc/caddy/Caddyfile`, `caddy validate --config /etc/caddy/Caddyfile` y `systemctl reload caddy`. Hacerlo después del deploy, con el DNS ya actualizado |
+| Ver la actualización de DuckDNS | `docker logs udela-vps-duckdns`: cada línea termina en `OK` o `KO` (`KO` = subdominio o token incorrectos) |
+| Ver el certificado | Servidor vacío: `docker logs udela-vps-caddy`. Detrás del Caddy del host: `journalctl -u caddy`. Buscar `certificate obtained successfully` |
+| Hacer admin a un usuario | `docker exec -it udela-vps-db psql -U udela_prod -d udelaconecta_prod -c "update auth_users set is_admin = true where email = '…';"` |
 | Actualizar | `infra/vps/deploy.sh`: `git pull --ff-only`, `up -d --build`, `docker image prune -f` y `ps` |
 | Logs / bajar | `npm run vps:logs` / `npm run vps:down` |
 | Backup | `infra/vps/backup-db.sh [días]`: genera `pg_dump` comprimido y un `tar.gz` del volumen `storage` en `infra/vps/backups/` (fuera de git) y borra los de más de N días (por defecto 14). Para cron: `0 3 * * * /ruta/al/repo/infra/vps/backup-db.sh 14` |
 | Validar la configuración | `docker compose -f infra/vps/docker-compose.prod.yml --env-file infra/vps/.env.vps config --quiet` |
+
+### 4.4 Problemas frecuentes
+
+| Síntoma | Causa y solución |
+|---|---|
+| `port is already allocated` en `udela-vps-caddy` | Otro programa ocupa 80/443 (`ss -tlnp \| grep -E ':(80\|443)\b'`). Si es un Caddy del host, regenerar `.env.vps` con `setup-env.sh` respondiendo que sí a esa pregunta |
+| Caddy no arranca y `duckdns` queda *unhealthy* | DuckDNS responde `KO`: subdominio o token incorrectos en `.env.vps`. Caddy depende de `duckdns` *healthy* |
+| Certificado inválido en el navegador | El DNS no apuntaba al servidor cuando se pidió el certificado. Verificar con `nslookup` y reiniciar el Caddy que corresponda |
+| `exec /usr/local/bin/entrypoint.sh: no such file or directory` | Los `.sh` llegaron con CRLF (copiados desde Windows o checkout sin `.gitattributes`). El repo los fuerza a LF; clonar con git |
+| `setup-env.sh` termina sin crear `.env.vps` | Versiones anteriores al arreglo de `aleatorio()`: con `pipefail`, el SIGPIPE de `tr` cortaba el script. Actualizar el repo |
+| Un nginx del sistema toma el puerto 80 al reiniciar | No se usa: `systemctl disable --now nginx` o desinstalarlo |
 
 ## 5. Local y producción
 
@@ -188,15 +214,16 @@ Los dos usan Docker Compose, pero no son intercambiables: `npm start` y `local:*
 |---|---|---|
 | Compose | `docker-compose.yml` + `.env.local` | `docker-compose.prod.yml` + `.env.vps` |
 | Comandos | `npm start` (primer plano), `local:up/down/logs/ps` | `vps:up/down/logs` o `infra/vps/deploy.sh` (sin Node) |
-| Front | `nx serve` con hot-reload | Build de producción servido por nginx |
+| Front | `nx serve` con hot-reload | Build de producción servido por Caddy |
 | API base del front | `http://localhost:3000/api/` (`environment.ts`) | `/api/` (`environment.prod.ts`) |
 | Backend | 1 proceso, `--reload`, código montado | 4 workers, imagen inmutable, usuario no-root |
 | Postgres | Publicado en `127.0.0.1` | Sin puertos |
-| Entrada | Puertos directos por servicio | Solo Caddy (80/443) |
+| Entrada | Puertos directos por servicio | Solo Caddy: 80/443, o `127.0.0.1:8081` detrás del Caddy del host |
+| Dominio | `localhost` | `<subdominio>.duckdns.org`, actualizado por el servicio `duckdns` |
 | Seed | `AUTO_SEED=true` | `AUTO_SEED=false` |
 | Secretos | `.env.local` versionado (solo para desarrollo) | `.env.vps` fuera de git |
 
-## 6. `.dockerignore` y `.gitignore`
+## 6. `.dockerignore`, `.gitignore` y `.gitattributes`
 
 - **`.dockerignore`** deja fuera del contexto de build:
   - `node_modules`, `__pycache__`, `.pytest_cache`, `.venv`;
@@ -206,3 +233,4 @@ Los dos usan Docker Compose, pero no son intercambiables: `npm start` y `local:*
   - `.nx/` y `dist/`;
   - los cachés de Python y `.venv/`;
   - `apps/backend/storage/`, `infra/vps/.env.vps` e `infra/vps/backups/`.
+- **`.gitattributes`** fuerza `eol=lf` en los `*.sh`. Con `core.autocrlf=true` en Windows, el checkout los dejaba con CRLF; al construir las imágenes desde esa copia, el shebang quedaba `#!/bin/sh\r` y el contenedor no arrancaba.

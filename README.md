@@ -1,4 +1,4 @@
-# · Udela Conecta
+# Udela Conecta
 
 **La bolsa de trabajo IT de la Universidad de la Ciudad de Buenos Aires.** Una plataforma que conecta a estudiantes y graduados de la universidad con empresas que buscan talento para dar sus primeros pasos en el mundo laboral tecnológico.
 
@@ -19,7 +19,7 @@ Del otro lado, las **empresas** que quieren sumar perfiles junior no tienen un c
 
 ## La solución
 
-HunTech es un espacio propio de la universidad donde **el conocimiento que se comparte en las aulas se transforma en una herramienta real de inserción laboral**.
+Udela Conecta es un espacio propio de la universidad donde **el conocimiento que se comparte en las aulas se transforma en una herramienta real de inserción laboral**.
 
 - **Para estudiantes y graduados:** un perfil profesional con habilidades, idiomas, disponibilidad y un **portfolio de hasta tres proyectos** con descripción, link al repositorio e imágenes. Desde ahí se exploran las ofertas publicadas y se postulan con un clic.
 - **Para empresas:** un proceso simple para llegar directo al talento de la universidad, **sin intermediarios ni comisiones**. La empresa crea su cuenta, describe su proyecto, publica ofertas (tipo de puesto, modalidad, seniority buscado, fechas), ve quién se postuló y asigna al candidato elegido.
@@ -41,7 +41,7 @@ HunTech es un espacio propio de la universidad donde **el conocimiento que se co
 
 También existe el perfil *Institución educativa*, pensado para que la universidad y sus institutos participen de la plataforma; por ahora no tiene funciones propias.
 
-## Por qué UdelaConecta
+## Por qué Udela Conecta
 
 - **Un canal propio de la universidad:** el objetivo es que quienes se postulan sean alumnos y graduados de la Universidad de la Ciudad de Buenos Aires.
 - **Pensado para el primer empleo:** perfiles trainee y junior, sin competir contra el mercado entero.
@@ -59,18 +59,21 @@ También existe el perfil *Institución educativa*, pensado para que la universi
 | **Autenticación** | JWT propio (PyJWT) y contraseñas con bcrypt |
 | **Monorepo** | Nx 24 (`apps/frontend` y `apps/backend`), npm para JavaScript y Poetry para Python |
 | **Tests** | Karma + Jasmine (frontend), pytest + httpx (backend) |
-| **Infraestructura** | Docker Compose; en producción Caddy (HTTPS automático), Nginx y uvicorn con varios workers |
+| **Infraestructura** | Docker Compose; en producción Caddy (HTTPS automático y archivos del front), uvicorn con varios workers y dominio en DuckDNS |
 
 ## Arquitectura
 
 ```
                     ┌──────────────────────────────┐
   Navegador  ──────►│ Caddy (HTTPS)                │
-                    │  /          → Nginx (Angular)│
+                    │  /          → build Angular  │
                     │  /api/*     → FastAPI        │──► PostgreSQL 16
                     │  /storage/* → FastAPI        │    (red interna)
                     └──────────────────────────────┘
+  duckdns: actualiza cada 5 min la IP de <subdominio>.duckdns.org
 ```
+
+Caddy es el único servidor web: sirve el build de Angular y hace de proxy hacia FastAPI. Si el servidor ya tiene su propio Caddy en 80/443, ese Caddy termina el HTTPS y le pasa el tráfico al de Udela Conecta por `127.0.0.1` (ver [Despliegue](#despliegue-en-un-servidor-vps)).
 
 ```
 apps/
@@ -78,7 +81,7 @@ apps/
   backend/    FastAPI: routers, modelos, migraciones, tests
 infra/
   local/      Docker para desarrollo (hot-reload)
-  vps/        Docker para producción (Caddy + Nginx + FastAPI + Postgres)
+  vps/        Docker para producción (Caddy + FastAPI + Postgres)
 context_agent/  documentación técnica
 ```
 
@@ -159,12 +162,12 @@ Los dos entornos usan Docker Compose, pero cada uno tiene su propio archivo, sus
 | | Local (desarrollo) | VPS (producción) |
 |---|---|---|
 | Archivo de Compose | `infra/local/docker-compose.yml` | `infra/vps/docker-compose.prod.yml` |
-| Variables | `infra/local/.env.local` (viene en el repo, solo para desarrollo) | `infra/vps/.env.vps` (se crea a mano y **nunca se sube a git**) |
+| Variables | `infra/local/.env.local` (viene en el repo, solo para desarrollo) | `infra/vps/.env.vps` (lo genera `setup-env.sh` y **nunca se sube a git**) |
 | Levantar | `npm start` (primer plano) o `npm run local:up` | `npm run vps:up` o `./infra/vps/deploy.sh` |
 | Bajar / logs | `npm run local:down` / `npm run local:logs` | `npm run vps:down` / `npm run vps:logs` |
-| Frontend | `ng serve` con recarga automática | Build de producción servido por Nginx |
+| Frontend | `ng serve` con recarga automática | Build de producción servido por Caddy |
 | Backend | Un proceso con `--reload` y el código montado | FastAPI con 4 workers, imagen cerrada y usuario sin privilegios |
-| Entrada | Un puerto por servicio (4200, 3000, 8080, 5432) | Solo Caddy en 80/443, con HTTPS automático |
+| Entrada | Un puerto por servicio (4200, 3000, 8080, 5432) | Solo Caddy: en 80/443 con HTTPS automático, o en `127.0.0.1:8081` detrás del Caddy del servidor |
 | Base de datos | Accesible en `127.0.0.1` y administrable con Adminer | Sin puertos expuestos, solo accesible dentro de Docker |
 | Datos de prueba | Se cargan solos (`AUTO_SEED=true`) | No se cargan (`AUTO_SEED=false`) |
 
@@ -176,34 +179,101 @@ docker compose -f infra/local/docker-compose.yml --env-file infra/local/.env.loc
 
 ## Despliegue en un servidor (VPS)
 
-En el servidor solo hacen falta **Git y Docker** (con Compose v2); Node no es necesario si se usa `deploy.sh`.
+En el servidor solo hacen falta **Git y Docker** (con Compose v2); Node no es necesario. El dominio es un subdominio gratuito de [DuckDNS](https://www.duckdns.org) (`<subdominio>.duckdns.org`): hay que crearlo antes y tener a mano el token de la cuenta. Todo el tráfico pasa por **Caddy**, que obtiene el certificado HTTPS, sirve el front y reenvía `/api` y `/storage` al backend; no hay nginx.
+
+Hay dos escenarios, y `setup-env.sh` pregunta cuál es:
+
+| | Servidor vacío | Servidor que ya tiene un Caddy en 80/443 (por ejemplo, con otros sitios como n8n) |
+|---|---|---|
+| Quién atiende 80/443 | El Caddy de Udela Conecta | El Caddy del servidor |
+| Quién saca el certificado | El Caddy de Udela Conecta | El Caddy del servidor |
+| El Caddy de Udela Conecta escucha en | `80` y `443` | `127.0.0.1:8081`, solo HTTP local |
+| Paso extra | Ninguno | Agregar un bloque al Caddyfile del servidor (paso 3) |
+
+### 1. Preparar el servidor
+
+```bash
+curl -fsSL https://get.docker.com | sh        # si Docker no está instalado
+apt install -y git
+ufw allow OpenSSH && ufw allow 80/tcp && ufw allow 443/tcp && ufw allow 443/udp && ufw enable
+```
+
+Antes de seguir, desde cualquier PC, `nslookup <subdominio>.duckdns.org` tiene que devolver la IP del servidor. Si no, se carga la IP a mano en duckdns.org; después el contenedor `duckdns` la mantiene actualizada.
+
+### 2. Clonar, configurar y levantar
 
 ```bash
 git clone https://github.com/NadineCeleste/UdelaConecta.git
 cd UdelaConecta
-cp infra/vps/.env.vps.example infra/vps/.env.vps
-nano infra/vps/.env.vps        # completar las variables (ver abajo)
-./infra/vps/deploy.sh
+./infra/vps/setup-env.sh       # genera infra/vps/.env.vps
+./infra/vps/deploy.sh          # construye y levanta (el primer build tarda varios minutos)
 ```
 
-Variables principales de `infra/vps/.env.vps`:
-- `DOMAIN`: el dominio del sitio (por ejemplo `huntech.com.ar`); Caddy obtiene el certificado HTTPS solo. Con `:80` sirve por HTTP, sin certificado.
-- `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB` y `DATABASE_URL`, con la misma contraseña en los dos lugares.
-- `JWT_SECRET_KEY`: se genera con `python3 -c "import secrets; print(secrets.token_urlsafe(64))"`. Si se deja el valor de ejemplo, el backend no arranca.
+`setup-env.sh` pide:
+- el subdominio (sin `.duckdns.org`) y el token, que no se muestra al escribirlo;
+- si cargar los datos demo: en un servidor público conviene responder que no, porque la contraseña de los usuarios demo figura en este README;
+- si el servidor ya tiene un Caddy en 80/443 y, en ese caso, el puerto local (8081 por defecto).
 
-`deploy.sh` verifica que exista `.env.vps`, hace `git pull`, reconstruye y levanta los contenedores en segundo plano, borra imágenes viejas y muestra el estado. Para actualizar el sitio después de cada cambio en `main`, alcanza con volver a correrlo. Los contenedores se reinician solos si se caen o si se reinicia el servidor.
+Con eso crea `infra/vps/.env.vps` (permisos 600, fuera de git) con contraseñas aleatorias para Postgres y JWT, y el dominio y el CORS armados a partir del subdominio.
 
-**Backups:** `./infra/vps/backup-db.sh 14` guarda la base y las imágenes subidas en `infra/vps/backups/` y borra los de más de 14 días. Conviene programarlo con cron, por ejemplo todos los días a las 3:
+### 3. Solo si el servidor ya tiene un Caddy
+
+Después de `deploy.sh`, cuando el DNS ya apunta al servidor, se agrega el sitio al Caddy del servidor. `setup-env.sh` muestra el bloque exacto al terminar:
+
+```bash
+cp /etc/caddy/Caddyfile /etc/caddy/Caddyfile.bak
+nano /etc/caddy/Caddyfile      # agregar el bloque de abajo al final
+caddy validate --config /etc/caddy/Caddyfile && systemctl reload caddy
+```
 
 ```
-0 3 * * * /ruta/al/repo/infra/vps/backup-db.sh 14
+<subdominio>.duckdns.org {
+	reverse_proxy 127.0.0.1:8081
+}
 ```
 
-Más detalles (variables de entorno, problemas frecuentes y cada servicio de los dos entornos) en [`context_agent/orquestacion.md`](./context_agent/orquestacion.md) y [`apps/backend/README.md`](./apps/backend/README.md).
+`reload` no corta los otros sitios. Si algo falla, se restaura el `.bak` y se vuelve a recargar.
+
+### 4. Verificar
+
+| Qué | Comando | Esperado |
+|---|---|---|
+| Contenedores | `docker ps --filter name=udela-vps` | `caddy`, `backend`, `db` y `duckdns` en `Up` |
+| DuckDNS | `docker logs udela-vps-duckdns` | Líneas que terminan en `OK` (`KO` = subdominio o token incorrectos) |
+| Certificado (servidor vacío) | `docker logs udela-vps-caddy` | `certificate obtained successfully` |
+| Certificado (Caddy del servidor) | `journalctl -u caddy -n 30` | `certificate obtained successfully` |
+| Udela Conecta en local (Caddy del servidor) | `curl -I http://127.0.0.1:8081` | `200` |
+
+Y por último abrir `https://<subdominio>.duckdns.org`.
+
+### 5. Después del primer deploy
+
+- **Administrador:** registrarse desde la web y después
+  ```bash
+  docker exec -it udela-vps-db psql -U udela_prod -d udelaconecta_prod \
+    -c "update auth_users set is_admin = true where email = 'TU_EMAIL';"
+  ```
+- **Backups:** `./infra/vps/backup-db.sh 14` guarda la base y las imágenes subidas en `infra/vps/backups/` y borra los de más de 14 días. Conviene programarlo con `crontab -e`, por ejemplo todos los días a las 3:
+  ```
+  0 3 * * * /ruta/al/repo/infra/vps/backup-db.sh 14
+  ```
+- **Actualizar el sitio:** después de cada cambio en `main`, volver a correr `./infra/vps/deploy.sh`. Hace `git pull`, reconstruye, levanta en segundo plano, borra imágenes viejas y muestra el estado. Los contenedores se reinician solos si se caen o si se reinicia el servidor.
+
+### Problemas frecuentes
+
+| Síntoma | Causa y solución |
+|---|---|
+| `port is already allocated` en `udela-vps-caddy` | Otro programa ya usa 80/443 (`ss -tlnp \| grep -E ':(80\|443)\b'`). Si es un Caddy, volver a correr `setup-env.sh` y responder que sí a esa pregunta |
+| Caddy no arranca y `duckdns` queda *unhealthy* | DuckDNS responde `KO`: revisar el subdominio y el token en `infra/vps/.env.vps` |
+| El navegador avisa que el certificado no es válido | El DNS todavía no apuntaba al servidor cuando Caddy pidió el certificado. Comprobar con `nslookup` y reiniciar el Caddy que corresponda |
+| `exec entrypoint.sh: no such file or directory` en el backend | Los `.sh` tienen fin de línea CRLF (copiados desde Windows). Clonar con git: `.gitattributes` fuerza LF |
+| Un nginx del sistema le gana el puerto 80 a Caddy al reiniciar | `systemctl disable --now nginx` (o desinstalarlo): no se usa |
+
+Para configurar a mano, sin `setup-env.sh`, se copia `infra/vps/.env.vps.example` a `infra/vps/.env.vps` y se completan las variables; cada una está comentada en el archivo. Más detalles (cada servicio, variables y comparación con el entorno local) en [`context_agent/orquestacion.md`](./context_agent/orquestacion.md) y [`apps/backend/README.md`](./apps/backend/README.md).
 
 ## De dónde nace
 
-Detrás de UdelaConecta hay un grupo de estudiantes de la Universidad de la Ciudad de Buenos Aires que decidió transformar una problemática común en una solución real, con un objetivo claro: **acompañar a nuestros pares a dar sus primeros pasos dentro del mundo laboral IT.**
+Detrás de Udela Conecta hay un grupo de estudiantes de la Universidad de la Ciudad de Buenos Aires que decidió transformar una problemática común en una solución real, con un objetivo claro: **acompañar a nuestros pares a dar sus primeros pasos dentro del mundo laboral IT.**
 
 ## Equipo
 
