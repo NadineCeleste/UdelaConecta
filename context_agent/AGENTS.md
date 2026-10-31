@@ -42,7 +42,7 @@ infra/vps/deploy.sh    # producción: git pull + build + up (también npm run vp
 
 Stack local: front `http://localhost:4200`, API `http://localhost:3000/api/`, Swagger `http://localhost:3000/docs`, Adminer `http://localhost:8080`, Postgres `localhost:5432` (Postgres y Adminer solo escuchan en `127.0.0.1`). Los puertos del host se cambian con `FRONTEND_PORT`, `POSTGRES_HOST_PORT` y `ADMINER_PORT`. Si se cambia `package.json`, recrear el volumen de `node_modules` con `docker compose -f infra/local/docker-compose.yml down -v`.
 
-Usuarios demo (los crea el seed cuando `AUTO_SEED=true`): `dev@udelaconecta.edu.ar` y `empresa@udelaconecta.edu.ar`, contraseña `Udela1234!`.
+Usuarios demo (los crea el seed cuando `AUTO_SEED=true`), contraseña `Udela1234!`: `dev@udelaconecta.edu.ar` y `empresa@udelaconecta.edu.ar`, más 5 estudiantes y 3 empresas con 11 ofertas en total (tabla en `backend.md`, sección Seed).
 
 ## Estado actual (importante)
 

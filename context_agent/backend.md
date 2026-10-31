@@ -166,12 +166,12 @@ Endpoints de solo lectura que usan las herramientas HTTP del workflow. Devuelven
 
 | Endpoint | Quién | Devuelve |
 |---|---|---|
-| `GET ofertas?texto=&modalidad=` | Público | Ofertas libres, sin postulantes ni pasante |
+| `GET ofertas?texto=&modalidad=` | Público | Ofertas libres, sin postulantes ni pasante. La búsqueda ignora tildes, mayúsculas y palabras vacías ("de", "oferta"…) y también mira el nombre del proyecto |
 | `GET mi-perfil` | Token del asistente | Rol, nombre, descripción, skills, idiomas, disponibilidad y portfolio (o el proyecto, si es gerente), más `faltantes` |
 | `GET mis-postulaciones` | Estudiante (si no, 403) | Ofertas en las que se postuló con estado: `en revisión`, `asignado a vos` o `cubierto por otra persona` |
 | `GET mis-ofertas` | Gerente | Sus ofertas con id, estado, cantidad de postulantes y pasante |
 | `GET postulantes/{contrato_id}` | Gerente dueño de la oferta | Resumen de cada postulante. Si la oferta no existe o es de otra empresa: 404 (no revela cuáles existen) |
-| `GET candidatos?skills=` | Gerente | Estudiantes disponibles ordenados por coincidencias con las skills |
+| `GET candidatos?skills=` | Gerente | Estudiantes disponibles ordenados por coincidencias con las skills (sin distinguir tildes ni mayúsculas) |
 
 El agente invitado solo tiene la herramienta de ofertas; el agente usuario tiene todas. El workflow exportado (sin ids de credenciales) está en `infra/n8n/udela-chatbot.json`; se importa en n8n y se le asignan las credenciales `Udela-Secret` (Header Auth) y `DeepSeek account`. El n8n del VPS no llega a `localhost`, así que las herramientas solo funcionan contra producción.
 
@@ -203,23 +203,37 @@ Se lee de variables de entorno (y de `.env` si existe). La tabla completa con va
 
 ## 8. Seed (`app/seeds/seed_demo.py`)
 
-Idempotente: se puede correr muchas veces sin duplicar nada. Crea:
-- `dev@udelaconecta.edu.ar` (estudiante con portfolio);
-- `empresa@udelaconecta.edu.ar` (gerente) con el proyecto "Plataforma FinTech Udela" y 3 contratos: uno libre, uno con postulación del estudiante y uno asignado a él.
+Idempotente y basado en datos: las listas `ESTUDIANTES` y `EMPRESAS` describen cada cuenta con su perfil, su portfolio, su proyecto y sus ofertas. Cada registro se busca por su clave natural (email, email del gerente o título de la oferta dentro del proyecto) y solo se crea si falta. Así, sumar una oferta a la lista y volver a correrlo la agrega a una base existente sin tocar lo que los usuarios cambiaron. `esta_ocupado` y `tiene_postulaciones` se derivan de `pasante_email` y `postulaciones`.
 
-Contraseña de los dos: `Udela1234!`. Corre en el arranque si `AUTO_SEED=true` (local sí, producción no).
+Crea 6 estudiantes y 4 empresas con 11 ofertas (9 libres), pensadas para que el asistente tenga qué responder: modalidades remota, híbrida y presencial, seniority de Trainee a Semisenior, postulaciones cruzadas, dos ofertas asignadas y una estudiante no disponible y sin portfolio.
+
+| Email | Rol | Qué tiene |
+|---|---|---|
+| `dev@udelaconecta.edu.ar` | Estudiante | Angular, Python y SQL; portfolio de 2 proyectos; postulada en FinTech y SaludConecta, asignada a "QA de la app móvil" |
+| `lucas.fernandez@udelaconecta.edu.ar` | Estudiante | React y TypeScript; portfolio de 3 proyectos; postulado en SaludConecta |
+| `camila.rios@udelaconecta.edu.ar` | Estudiante | Python, Pandas, SQL y Power BI; postulada a las dos ofertas de datos |
+| `tomas.acosta@udelaconecta.edu.ar` | Estudiante | Flutter y Dart; postulado en RutaSur |
+| `julieta.medina@udelaconecta.edu.ar` | Estudiante | Docker, Linux y GitHub Actions; postulada en AgroData y RutaSur |
+| `martina.sosa@udelaconecta.edu.ar` | Estudiante | QA y análisis funcional; no disponible (asignada en RutaSur) y sin portfolio |
+| `empresa@udelaconecta.edu.ar` | Empresa | Plataforma FinTech Udela: 4 ofertas (frontend, backend, QA asignada y data analyst) |
+| `agrotech@udelaconecta.edu.ar` | Empresa | AgroData Pampa: Python para IoT y Data Engineer |
+| `salud@udelaconecta.edu.ar` | Empresa | SaludConecta: frontend React y soporte/QA |
+| `logistica@udelaconecta.edu.ar` | Empresa | RutaSur Logística: Flutter, DevOps y analista funcional (asignada) |
+
+Contraseña de todos: `Udela1234!`. Corre en el arranque si `AUTO_SEED=true` (local sí, producción no).
 
 ## 9. Tests (`apps/backend/tests/`)
 
 - **Herramientas:** pytest + `pytest-asyncio` (`asyncio_mode = auto`) + httpx `ASGITransport`.
 - **Base:** `conftest.py` crea una SQLite en memoria (`StaticPool`) por test, reemplaza `get_db` y apunta `STORAGE_DIR` a una carpeta temporal.
 - **Ayudante:** `registrar_usuario(email, rol)` devuelve los headers con el token.
-- **Contenido:** 55 tests en 5 archivos:
+- **Contenido:** 58 tests en 6 archivos:
   - `test_auth_usuarios.py`: registro, login, bloqueo, admin, privacidad y perfiles;
   - `test_proyectos_contratos.py`: dueño, postulación y asignación;
   - `test_portfolio_storage.py`: CRUD, imágenes y rechazo de archivos ejecutables;
   - `test_chat.py`: modo según el token (el body no lo cambia), secreto hacia n8n, validación, 502/503 y límite de mensajes. n8n se simula con `httpx.MockTransport` en `routers.chat._transporte`.
   - `test_chat_datos.py`: cada endpoint de `/api/chat/datos`, permisos por rol, 404 en ofertas ajenas, token vencido o con otra audiencia, y que no salgan `telefono` ni `fecha_nacimiento`.
+  - `test_seed.py`: el seed no duplica, completa ofertas que falten sin pisar las editadas, y sus ofertas sirven para la búsqueda del asistente (sin tildes ni palabras vacías).
 - **Límite:** SQLite ignora `FOR UPDATE`, así que los bloqueos de fila no se prueban acá. Sí se probaron contra Postgres en Docker.
 
 Comandos: `npx nx test backend` o `cd apps/backend && poetry run pytest -v`.

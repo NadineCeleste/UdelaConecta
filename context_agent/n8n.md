@@ -157,6 +157,21 @@ Sin el header → 403. Con el header → `{"respuesta": "..."}`.
 
 **Publicar cambios:** en n8n, editar el workflow guarda un borrador; el webhook de producción sigue usando la versión activa hasta publicar. Después de cambiarlo, volver a exportarlo a `infra/n8n/udela-chatbot.json` (sin ids de credenciales).
 
+### Preguntas para probar con los datos de demo
+
+| Quién | Pregunta | Qué tiene que responder |
+|---|---|---|
+| Invitado | "¿Hay ofertas de Flutter?" | La de RutaSur Logística, y que se registre para postularse |
+| Invitado | "¿Qué ofertas híbridas hay?" | Las 3 híbridas: Flutter, Python IoT y Backend FastAPI |
+| Invitado | "¿En qué me postulé?" | Que inicie sesión |
+| `dev@` | "¿En qué me postulé?" | Backend FastAPI y Frontend React en revisión; QA de la app móvil asignada a ella |
+| `dev@` | "¿Qué me falta completar del perfil?" | Un tercer proyecto en el portfolio |
+| `camila.rios@` | "Ayudame a preparar la postulación a Data Engineer" | Qué destacar de Python, SQL, Power BI e inglés C1 |
+| `empresa@` | "¿Quiénes se postularon al Data Analyst?" | Camila Ríos, con sus skills |
+| `logistica@` | "Recomendame candidatos con Docker" | Julieta Medina primero |
+| `salud@` | "Mejorame la descripción de la oferta de soporte" | Una propuesta de texto, sin publicarla |
+| `empresa@` | "Mostrame los postulantes de la oferta 99" | Que no la encontró entre sus ofertas |
+
 ## 11. Problemas frecuentes
 
 | Síntoma | Causa y solución |

@@ -76,4 +76,18 @@ Todo `/api/*` exige `Authorization: Bearer <token>`, salvo `/api/auth/*`, `POST 
 
 ## Usuarios demo
 
-`dev@udelaconecta.edu.ar` (estudiante con portfolio) y `empresa@udelaconecta.edu.ar` (gerente con el proyecto "Plataforma FinTech Udela" y 3 contratos: uno libre, uno con postulación y uno asignado). La contraseña de los dos es `Udela1234!`.
+Todos con la contraseña `Udela1234!`. Hay 6 estudiantes y 4 empresas con 11 ofertas (9 libres), variadas en modalidad, seniority y skills, para probar la plataforma y el asistente:
+
+| Email | Rol | Qué tiene |
+|---|---|---|
+| `dev@udelaconecta.edu.ar` | Estudiante | Angular, Python y SQL; portfolio de 2 proyectos; postulada en FinTech y SaludConecta, asignada a "QA de la app móvil" |
+| `lucas.fernandez@udelaconecta.edu.ar` | Estudiante | React y TypeScript; portfolio de 3 proyectos; postulado en SaludConecta |
+| `camila.rios@udelaconecta.edu.ar` | Estudiante | Python, Pandas, SQL y Power BI; postulada a las dos ofertas de datos |
+| `tomas.acosta@udelaconecta.edu.ar` | Estudiante | Flutter y Dart; postulado en RutaSur |
+| `julieta.medina@udelaconecta.edu.ar` | Estudiante | Docker, Linux y GitHub Actions; postulada en AgroData y RutaSur |
+| `martina.sosa@udelaconecta.edu.ar` | Estudiante | QA y análisis funcional; no disponible (asignada en RutaSur) y sin portfolio |
+| `empresa@udelaconecta.edu.ar` | Empresa | Plataforma FinTech Udela: 4 ofertas (frontend, backend, QA asignada y data analyst) |
+| `agrotech@udelaconecta.edu.ar` | Empresa | AgroData Pampa: Python para IoT y Data Engineer |
+| `salud@udelaconecta.edu.ar` | Empresa | SaludConecta: frontend React y soporte/QA |
+| `logistica@udelaconecta.edu.ar` | Empresa | RutaSur Logística: Flutter, DevOps y analista funcional (asignada) |
+

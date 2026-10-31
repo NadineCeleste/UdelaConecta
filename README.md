@@ -124,8 +124,9 @@ npm start
 | Adminer (administrar la base) | http://localhost:8080 · servidor `postgres`, usuario `udela`, contraseña `udela_local_pass`, base `udelaconecta` |
 
 **Usuarios de prueba** (contraseña `Udela1234!`):
-- `dev@udelaconecta.edu.ar`: estudiante con portfolio y una postulación.
-- `empresa@udelaconecta.edu.ar`: empresa con un proyecto y tres ofertas.
+- `dev@udelaconecta.edu.ar`: estudiante con portfolio y postulaciones.
+- `empresa@udelaconecta.edu.ar`: empresa con un proyecto y cuatro ofertas.
+- Además: estudiantes `lucas.fernandez@`, `camila.rios@`, `tomas.acosta@`, `julieta.medina@` y `martina.sosa@`, y empresas `agrotech@`, `salud@` y `logistica@` (todos `@udelaconecta.edu.ar`). En total hay 11 ofertas variadas para probar la plataforma y el asistente. El detalle está en el [README del backend](apps/backend/README.md#usuarios-demo).
 
 **Asistente en local (opcional):** crear `infra/local/.env.chat` (no se sube a git) con `N8N_CHAT_WEBHOOK_URL` y `N8N_CHAT_SECRET`. Sin ese archivo el chat aparece pero responde "no disponible".
 
