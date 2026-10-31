@@ -36,6 +36,15 @@ else
   AUTO_SEED="false"
 fi
 
+# Asistente (opcional): webhook de producción del workflow de n8n y su secreto (header X-Udela-Secret)
+read -r -p "URL del webhook de n8n para el asistente (Enter para dejarlo sin configurar): " N8N_URL
+N8N_SECRETO=""
+if [ -n "$N8N_URL" ]; then
+  printf "Secreto del webhook (el valor de la credencial Header Auth; no se verá en pantalla): "
+  read -r -s N8N_SECRETO
+  echo ""
+fi
+
 # Si un Caddy del host ya ocupa 80/443, ese Caddy maneja el HTTPS
 # y el Caddy de Udela queda en HTTP, publicado solo en 127.0.0.1
 read -r -p "¿El servidor ya tiene un Caddy usando los puertos 80/443? [s/N]: " PROXY_RESP
@@ -82,6 +91,9 @@ PUBLIC_STORAGE_BASE_URL=/storage
 CORS_ORIGINS=https://${SUBDOMAIN}.duckdns.org
 WEB_CONCURRENCY=4
 AUTO_SEED=${AUTO_SEED}
+N8N_CHAT_WEBHOOK_URL=${N8N_URL}
+N8N_CHAT_SECRET=${N8N_SECRETO}
+CHAT_DATOS_URL=https://${SUBDOMAIN}.duckdns.org/api/chat/datos
 EOF
 
 echo "Listo: se creó infra/vps/.env.vps para https://${SUBDOMAIN}.duckdns.org (permisos 600)."

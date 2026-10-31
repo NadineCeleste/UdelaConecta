@@ -11,6 +11,10 @@ x-backend-env: &backend-env
   CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
   WEB_CONCURRENCY: ${WEB_CONCURRENCY:-4}
   AUTO_SEED: ${AUTO_SEED:-false}
+  # Asistente (workflow de n8n). Vacías: POST /api/chat responde 503
+  N8N_CHAT_WEBHOOK_URL: ${N8N_CHAT_WEBHOOK_URL:-}
+  N8N_CHAT_SECRET: ${N8N_CHAT_SECRET:-}
+  CHAT_DATOS_URL: ${CHAT_DATOS_URL:-}
 
 services:
   duckdns:

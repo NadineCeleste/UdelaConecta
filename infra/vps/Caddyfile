@@ -1,3 +1,11 @@
+{
+	servers {
+		# Detrás del Caddy del host (red privada de Docker) se conserva la IP real del visitante
+		# en X-Forwarded-For; el backend la usa para el límite de mensajes del asistente
+		trusted_proxies static private_ranges
+	}
+}
+
 # Con DOMAIN=:80 sirve HTTP plano; con un dominio real gestiona HTTPS (Let's Encrypt) automáticamente
 {$DOMAIN} {
 	encode zstd gzip
