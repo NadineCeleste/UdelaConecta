@@ -34,6 +34,14 @@ Tests: `poetry run pytest -v` (o `npx nx test backend`). Usan SQLite en memoria,
 | `CORS_ORIGINS` | `http://localhost:4200` | Orígenes permitidos, separados por coma |
 | `AUTO_SEED` | `false` | Si el entrypoint corre el seed |
 | `WEB_CONCURRENCY` | 4 | Workers de uvicorn en producción |
+| `N8N_CHAT_WEBHOOK_URL` | vacía | Webhook de producción del workflow del asistente en n8n. Vacía: `POST /api/chat` responde 503 |
+| `N8N_CHAT_SECRET` | vacía | Valor del header `X-Udela-Secret` (el mismo de la credencial Header Auth de n8n) |
+| `N8N_CHAT_TIMEOUT_SEGUNDOS` | 60 | Espera máxima de la respuesta de n8n (si no, 502) |
+| `CHAT_MENSAJES_POR_MINUTO` | 20 | Límite por usuario o IP, por worker (429) |
+| `CHAT_DATOS_URL` | vacía | URL pública de `/api/chat/datos` que se le pasa a n8n para sus herramientas (n8n tiene un respaldo con la de producción) |
+| `CHAT_TOKEN_MINUTOS` | 5 | Duración del token de solo lectura que reciben las herramientas del asistente |
+
+En local, las dos variables de n8n van en `infra/local/.env.chat` (opcional y fuera de git), que el compose carga si existe.
 
 ## Estructura
 
@@ -43,7 +51,7 @@ app/
   core/                config, database (get_db), security (JWT, bcrypt, dependencias), storage
   models/entities.py   tablas (JSONB en Postgres, JSON en SQLite)
   schemas/             requests de Pydantic y serialización/aplicación de cambios
-  routers/             auth, usuarios, proyectos, contratos, portfolio, storage
+  routers/             auth, usuarios, proyectos, contratos, portfolio, storage, chat, chat_datos
   seeds/seed_demo.py   datos demo idempotentes
 alembic/versions/      migraciones (0001 esquema inicial, 0002 bloqueo de login y admin, 0003 desarrollador → estudiante)
 tests/                 pytest + httpx
@@ -51,7 +59,7 @@ tests/                 pytest + httpx
 
 ## Autorización
 
-Todo `/api/*` exige `Authorization: Bearer <token>`, salvo `/api/auth/*`. Las reglas de dueño usan el email del token:
+Todo `/api/*` exige `Authorization: Bearer <token>`, salvo `/api/auth/*`, `POST /api/chat` (el token es opcional: sin él responde el asistente de invitados) y `/api/chat/datos/*`, que no acepta el token de sesión sino el token corto del asistente (`aud=udela-chat`) y es de solo lectura (`ofertas` es pública). Detalle en [`context_agent/n8n.md`](../../context_agent/n8n.md). Las reglas de dueño usan el email del token:
 
 - `PUT usuario/:email`, `POST :rol`, `PUT proyecto/:email`, `createportfolio`/`updateportfolio`/`deleteportfolio`: solo sobre el propio email.
 - `POST proyecto`: solo un gerente, y una sola vez; el dueño sale del token.

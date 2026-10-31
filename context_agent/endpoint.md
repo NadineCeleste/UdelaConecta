@@ -6,6 +6,8 @@
 
 
 
+> **Asistente (2026-10-31):** se sumaron `POST /api/chat` (token opcional, puerta hacia n8n) y los endpoints de solo lectura `GET /api/chat/datos/*` que usan las herramientas del workflow, con un token propio (`aud=udela-chat`, 5 minutos). No cambian ninguna ruta existente. Ver [`n8n.md`](./n8n.md) y [`backend.md`](./backend.md).
+
 ## Estado tras implementar el backend (2026-10-29)
 
 El backend vive en `apps/backend/` (FastAPI + PostgreSQL). Mantiene las 19 rutas del inventario con los mismos sobres de respuesta.

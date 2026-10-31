@@ -6,6 +6,8 @@
 
 
 
+> **Asistente (2026-10-31):** nuevo componente `componentes/chatbot` y servicio `chat.service.ts`, con specs propios. No resuelve ni modifica hallazgos de esta auditoría. Ver [`n8n.md`](./n8n.md).
+
 ## Estado tras la migración a monorepo (2026-10-29)
 
 | Hallazgo | Estado | Cómo |
