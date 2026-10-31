@@ -1,0 +1,62 @@
+<div class="chatbot">
+  @if (abierto()) {
+  <section class="chat-panel" role="dialog" aria-label="Asistente de Udela Conecta">
+    <header class="chat-header">
+      <div class="chat-avatar" aria-hidden="true">U</div>
+      <div class="chat-titulo">
+        <h2>Asistente Udela</h2>
+        <span class="chat-estado"><span class="punto-estado"></span>En línea</span>
+      </div>
+      <button type="button" class="chat-icono" (click)="nuevaConversacion()"
+        aria-label="Empezar una conversación nueva" title="Nueva conversación">
+        <span class="material-icons-outlined">refresh</span>
+      </button>
+      <button type="button" class="chat-icono" (click)="cerrar()" aria-label="Cerrar el asistente">
+        <span class="material-icons-outlined">close</span>
+      </button>
+    </header>
+
+    <div class="chat-mensajes" #lista role="log" aria-live="polite">
+      @for (mensaje of mensajes(); track $index) {
+      <div class="mensaje" [class.mensaje-usuario]="mensaje.autor === 'usuario'">
+        <p class="burbuja">{{ mensaje.texto }}</p>
+        <span class="hora">{{ mensaje.hora.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) }}</span>
+      </div>
+      }
+
+      @if (escribiendo()) {
+      <div class="mensaje">
+        <p class="burbuja escribiendo" aria-label="El asistente está escribiendo">
+          <span></span><span></span><span></span>
+        </p>
+      </div>
+      }
+
+      @if (mostrarSugerencias) {
+      <div class="sugerencias">
+        @for (sugerencia of sugerencias; track sugerencia) {
+        <button type="button" class="chip" (click)="enviar(sugerencia)">{{ sugerencia }}</button>
+        }
+      </div>
+      }
+    </div>
+
+    <form class="chat-entrada" (ngSubmit)="enviar()">
+      <textarea #campo [(ngModel)]="texto" name="texto" rows="1" [maxlength]="MAX_CARACTERES"
+        placeholder="Escribí tu pregunta…" aria-label="Mensaje para el asistente"
+        (keydown)="alPresionarTecla($event)"></textarea>
+      <button type="submit" class="chat-enviar" [disabled]="!texto.trim() || escribiendo()"
+        aria-label="Enviar mensaje">
+        <span class="material-icons-outlined">send</span>
+      </button>
+    </form>
+    <p class="chat-aviso">El asistente puede equivocarse. Revisá los datos importantes.</p>
+  </section>
+  }
+
+  <button type="button" class="chat-lanzador" [class.pulso]="!visto()" (click)="alternar()"
+    [attr.aria-label]="abierto() ? 'Cerrar el asistente' : 'Abrir el asistente'"
+    [attr.aria-expanded]="abierto()">
+    <span class="material-icons-outlined">{{ abierto() ? 'close' : 'chat' }}</span>
+  </button>
+</div>
