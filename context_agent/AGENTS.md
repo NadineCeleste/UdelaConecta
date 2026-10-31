@@ -15,6 +15,7 @@ Leer según la tarea:
 | [`context_front.md`](./context_front.md) | Contexto completo del frontend (componentes, servicios, modelos, API). Antes de tocar código del front |
 | [`audit_front.md`](./audit_front.md) | Auditoría general con hallazgos priorizados (S-, B-, Q-, P-, A-, T-, D-), su estado y el plan de arreglo. Antes de corregir un error o refactorizar |
 | [`endpoint.md`](./endpoint.md) | Auditoría detallada de los endpoints: inventario, flujos, hallazgos E-xx y API propuesta. Antes de tocar servicios HTTP o el backend |
+| [`n8n.md`](./n8n.md) | Asistente (chatbot): arquitectura widget → backend → n8n, nodos del workflow, herramientas de datos, prompts, credenciales, variables y problemas frecuentes. Antes de tocar `routers/chat*.py`, `componentes/chatbot` o el workflow |
 | [`backend.md`](./backend.md) | Contexto completo del backend: ciclo de un request, modelo de datos, migraciones, cada endpoint con sus reglas de autorización, utilidades a reutilizar, tests y cómo extender. Antes de tocar `apps/backend` |
 | [`orquestacion.md`](./orquestacion.md) | Nx (proyectos, targets, cache, comandos), Docker local con hot-reload, producción en VPS (DuckDNS, Caddy, workers, backups) y problemas frecuentes. Antes de tocar `nx.json`, `project.json`, `package.json` o `infra/` |
 | [`../apps/backend/README.md`](../apps/backend/README.md) | Backend: estructura, variables de entorno, reglas de autorización, migraciones y usuarios demo |
@@ -41,7 +42,7 @@ infra/vps/deploy.sh    # producción: git pull + build + up (también npm run vp
 
 Stack local: front `http://localhost:4200`, API `http://localhost:3000/api/`, Swagger `http://localhost:3000/docs`, Adminer `http://localhost:8080`, Postgres `localhost:5432` (Postgres y Adminer solo escuchan en `127.0.0.1`). Los puertos del host se cambian con `FRONTEND_PORT`, `POSTGRES_HOST_PORT` y `ADMINER_PORT`. Si se cambia `package.json`, recrear el volumen de `node_modules` con `docker compose -f infra/local/docker-compose.yml down -v`.
 
-Usuarios demo (los crea el seed cuando `AUTO_SEED=true`): `dev@udelaconecta.edu.ar` y `empresa@udelaconecta.edu.ar`, contraseña `Udela1234!`.
+Usuarios demo (los crea el seed cuando `AUTO_SEED=true`), contraseña `Udela1234!`: `dev@udelaconecta.edu.ar` y `empresa@udelaconecta.edu.ar`, más 5 estudiantes y 3 empresas con 11 ofertas en total (tabla en `backend.md`, sección Seed).
 
 ## Estado actual (importante)
 
@@ -54,14 +55,15 @@ Usuarios demo (los crea el seed cuando `AUTO_SEED=true`): `dev@udelaconecta.edu.
 - **Privacidad:** `telefono` y `fecha_nacimiento` solo los recibe el dueño del perfil.
 - **Producción:** sin nginx. Caddy (`Dockerfile.caddy`) sirve el build de Angular y hace de proxy a `/api` y `/storage`; el servicio `duckdns` mantiene la IP del subdominio. Si el servidor ya tiene un Caddy en 80/443, el de Udela queda en `127.0.0.1:8081` y el del host termina el HTTPS. Detalle en `orquestacion.md`.
 - **Fin de línea:** `.gitattributes` fuerza LF en los `*.sh`; con CRLF los contenedores no arrancan.
+- **Asistente (chatbot):** widget `componentes/chatbot` (visible con y sin sesión) → `POST /api/chat` → workflow de n8n "Udela Conecta – Chatbot" (DeepSeek) con un agente para invitados y otro para usuarios. El modo lo decide el backend por el JWT; el secreto del webhook (`N8N_CHAT_SECRET`, header `X-Udela-Secret`) solo lo conocen el backend y n8n. Las herramientas del agente usuario leen `GET /api/chat/datos/*` con un JWT de 5 minutos (`aud=udela-chat`) que no sirve para el resto de la API. Sin configurar, el chat responde 503. El workflow está exportado en `infra/n8n/udela-chatbot.json`. Detalle en `n8n.md`.
 
 ## Estructura del frontend (`apps/frontend/src/app`)
 
 | Carpeta | Contenido |
 |---|---|
-| `componentes/` | home, navbar, profile, contratos, contrato-detail, miproyecto, portfolio-component, alertas, spinner |
+| `componentes/` | home, navbar, profile, contratos, contrato-detail, miproyecto, portfolio-component, alertas, spinner, chatbot |
 | `views/` | formularios: `formcreateproyect`, `formcreatecontract` |
-| `servicios/` | `users`, `contrato`, `miproyecto`, `portfolioService`, `alertService`, `loading-service`, `AuthService`, `guards/authGuard`, `interceptors/auth.interceptor` |
+| `servicios/` | `users`, `contrato`, `miproyecto`, `portfolioService`, `alertService`, `loading-service`, `AuthService`, `chat.service`, `guards/authGuard`, `interceptors/auth.interceptor` |
 | `models/` | `users/` (usuario, estudiante, gerente, institucion-educativa), `contrato`, `proyectos`, `cards/` |
 | `environments/` | `environment.ts` (dev: `http://localhost:3000/api/`) y `environment.prod.ts` (`/api/`, `/storage`, por `fileReplacements`) |
 
@@ -80,6 +82,8 @@ Hay tres tipos de usuario, cada uno en su propia tabla: `estudiante`, `gerente`,
 - Contratos: `GET contratos`, `GET contratoslibres`, `GET contratos/:emailGerente`, `POST contrato`, `PUT contrato/:id` (postulaciones), `PUT contrato/asignar/:idContrato`, `DELETE contrato/:id`
 - Proyectos: `GET proyecto/:email`, `POST proyecto`, `PUT proyecto/:email_gerente`
 - Portfolio: `GET portfolio/:email`, `POST createportfolio/:email`, `PUT updateportfolio/:email`, `DELETE deleteportfolio/:email`
+- Chat: `POST chat` `{mensaje, session_id}` (token opcional) → `{data: {respuesta}}`
+- Datos del asistente (solo los usa n8n, con el token corto del asistente): `GET chat/datos/ofertas` (pública), `chat/datos/mi-perfil`, `chat/datos/mis-postulaciones`, `chat/datos/mis-ofertas`, `chat/datos/postulantes/:id`, `chat/datos/candidatos`
 - Storage (fuera de `/api`): `GET|PUT|DELETE /storage/portfolios/:nombre`
 
 ## Convenciones

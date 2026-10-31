@@ -21,6 +21,16 @@ class Settings(BaseSettings):
     LOGIN_BLOQUEO_MINUTOS: int = 15
     # Orígenes permitidos para CORS, separados por coma
     CORS_ORIGINS: str = "http://localhost:4200"
+    # Asistente: webhook del workflow de n8n y secreto que se manda en X-Udela-Secret.
+    # Si falta alguno, POST /api/chat responde 503 y el resto de la API sigue igual.
+    N8N_CHAT_WEBHOOK_URL: str = ""
+    N8N_CHAT_SECRET: str = ""
+    N8N_CHAT_TIMEOUT_SEGUNDOS: float = 60
+    CHAT_MENSAJES_POR_MINUTO: int = 20
+    # URL pública de /api/chat/datos a la que llaman las herramientas de n8n.
+    # Vacía: el asistente responde solo con la guía, sin leer datos de la plataforma.
+    CHAT_DATOS_URL: str = ""
+    CHAT_TOKEN_MINUTOS: int = 5
 
     @field_validator("JWT_SECRET_KEY")
     @classmethod

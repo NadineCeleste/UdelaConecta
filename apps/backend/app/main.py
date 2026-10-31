@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
-from app.routers import auth, contratos, portfolio, proyectos, storage, usuarios
+from app.routers import auth, chat, chat_datos, contratos, portfolio, proyectos, storage, usuarios
 
 app = FastAPI(
     title="Udela Conecta API",
@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-for modulo in (auth, usuarios, proyectos, contratos, portfolio, storage):
+for modulo in (auth, usuarios, proyectos, contratos, portfolio, storage, chat, chat_datos):
     app.include_router(modulo.router)
 
 

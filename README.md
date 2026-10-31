@@ -23,6 +23,7 @@ Udela Conecta es un espacio propio de la universidad donde **el conocimiento que
 
 - **Para estudiantes y graduados:** un perfil profesional con habilidades, idiomas, disponibilidad y un **portfolio de hasta tres proyectos** con descripción, link al repositorio e imágenes. Desde ahí se exploran las ofertas publicadas y se postulan con un clic.
 - **Para empresas:** un proceso simple para llegar directo al talento de la universidad, **sin intermediarios ni comisiones**. La empresa crea su cuenta, describe su proyecto, publica ofertas (tipo de puesto, modalidad, seniority buscado, fechas), ve quién se postuló y asigna al candidato elegido.
+- **Asistente virtual:** un chat disponible en todas las pantallas. Sin sesión explica cómo funciona la plataforma y muestra las ofertas abiertas; con sesión mira tus propios datos para decirte qué te falta completar del perfil, cómo van tus postulaciones o, si sos empresa, quiénes se postularon y qué candidatos tienen las skills que buscás. También ayuda a redactar la descripción del perfil, una postulación o una oferta. Solo lee: postularse, publicar o asignar se sigue haciendo desde la web.
 - **Orientación para el primer empleo:** la página reúne consejos para armar el CV, las preguntas más frecuentes en entrevistas junior y cómo presentar un portfolio en GitHub.
 
 ### Cómo funciona
@@ -59,6 +60,7 @@ También existe el perfil *Institución educativa*, pensado para que la universi
 | **Autenticación** | JWT propio (PyJWT) y contraseñas con bcrypt |
 | **Monorepo** | Nx 24 (`apps/frontend` y `apps/backend`), npm para JavaScript y Poetry para Python |
 | **Tests** | Karma + Jasmine (frontend), pytest + httpx (backend) |
+| **Asistente** | n8n (workflow con dos agentes de IA) y DeepSeek como modelo; httpx desde el backend |
 | **Infraestructura** | Docker Compose; en producción Caddy (HTTPS automático y archivos del front), uvicorn con varios workers y dominio en DuckDNS |
 
 ## Arquitectura
@@ -73,6 +75,14 @@ También existe el perfil *Institución educativa*, pensado para que la universi
   duckdns: actualiza cada 5 min la IP de <subdominio>.duckdns.org
 ```
 
+El asistente pasa siempre por el backend: el navegador manda el mensaje a `POST /api/chat`, el backend decide por el token si responde el agente de invitados o el de usuarios y llama al webhook de n8n con un secreto compartido. Las herramientas del agente vuelven a leer datos de `/api/chat/datos/*` con un token propio de 5 minutos y solo lectura.
+
+```
+  Navegador ─► /api/chat ─► FastAPI ─► n8n (webhook + secreto) ─► agente invitado │ agente usuario (DeepSeek)
+                                ▲                                          │
+                                └──────── GET /api/chat/datos/* ◄──────────┘ (token de 5 min, solo lectura)
+```
+
 Caddy es el único servidor web: sirve el build de Angular y hace de proxy hacia FastAPI. Si el servidor ya tiene su propio Caddy en 80/443, ese Caddy termina el HTTPS y le pasa el tráfico al de Udela Conecta por `127.0.0.1` (ver [Despliegue](#despliegue-en-un-servidor-vps)).
 
 ```
@@ -82,6 +92,7 @@ apps/
 infra/
   local/      Docker para desarrollo (hot-reload)
   vps/        Docker para producción (Caddy + FastAPI + Postgres)
+  n8n/        workflow del asistente exportado (se importa en n8n)
 context_agent/  documentación técnica
 ```
 
@@ -113,8 +124,11 @@ npm start
 | Adminer (administrar la base) | http://localhost:8080 · servidor `postgres`, usuario `udela`, contraseña `udela_local_pass`, base `udelaconecta` |
 
 **Usuarios de prueba** (contraseña `Udela1234!`):
-- `dev@udelaconecta.edu.ar`: estudiante con portfolio y una postulación.
-- `empresa@udelaconecta.edu.ar`: empresa con un proyecto y tres ofertas.
+- `dev@udelaconecta.edu.ar`: estudiante con portfolio y postulaciones.
+- `empresa@udelaconecta.edu.ar`: empresa con un proyecto y cuatro ofertas.
+- Además: estudiantes `lucas.fernandez@`, `camila.rios@`, `tomas.acosta@`, `julieta.medina@` y `martina.sosa@`, y empresas `agrotech@`, `salud@` y `logistica@` (todos `@udelaconecta.edu.ar`). En total hay 11 ofertas variadas para probar la plataforma y el asistente. El detalle está en el [README del backend](apps/backend/README.md#usuarios-demo).
+
+**Asistente en local (opcional):** crear `infra/local/.env.chat` (no se sube a git) con `N8N_CHAT_WEBHOOK_URL` y `N8N_CHAT_SECRET`. Sin ese archivo el chat aparece pero responde "no disponible".
 
 Si algún puerto ya está ocupado, se puede cambiar al levantar:
 
@@ -257,6 +271,7 @@ Y por último abrir `https://<subdominio>.duckdns.org`.
   ```
   0 3 * * * /ruta/al/repo/infra/vps/backup-db.sh 14
   ```
+- **Asistente (opcional):** importar `infra/n8n/udela-chatbot.json` en n8n, crear las credenciales `Udela-Secret` (Header Auth, header `X-Udela-Secret`) y `DeepSeek account`, y publicar el workflow. Después cargar en `infra/vps/.env.vps` `N8N_CHAT_WEBHOOK_URL`, `N8N_CHAT_SECRET` (el mismo valor de la credencial) y `CHAT_DATOS_URL` (`https://<subdominio>.duckdns.org/api/chat/datos`); `setup-env.sh` ya las pide. Sin ellas el chat muestra "no disponible" y el resto del sitio funciona igual. Guía completa en [`context_agent/n8n.md`](context_agent/n8n.md).
 - **Actualizar el sitio:** después de cada cambio en `main`, volver a correr `./infra/vps/deploy.sh`. Hace `git pull`, reconstruye, levanta en segundo plano, borra imágenes viejas y muestra el estado. Los contenedores se reinician solos si se caen o si se reinicia el servidor.
 
 ### Problemas frecuentes

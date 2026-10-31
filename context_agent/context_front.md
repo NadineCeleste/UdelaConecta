@@ -200,6 +200,12 @@ No hay ruta comodín (`**`) ni página 404. Query params usados: `contratos?id=<
 ### `Spinner` — `componentes/spinner/`
 - Overlay de carga. `spinner.ts` reexporta `SpinnerComponent` como `Spinner`.
 
+### `Chatbot` — `componentes/chatbot/` (2026-10-31)
+- Widget del asistente, standalone con signals. Se monta en `app.html` con y sin sesión (z-index 2500).
+- Botón flotante y panel; en pantallas de 600 px o menos ocupa toda la pantalla. Sugerencias distintas para invitado y usuario, indicador "escribiendo…", Enter envía (Shift+Enter, salto de línea) y Escape cierra.
+- `nuevaConversacion()` genera un `session_id` con `crypto.randomUUID()` cada vez que cambia `userEmail$`.
+- Usa `ChatService.enviar`; los errores muestran `err.error.detail`. El modo (invitado o usuario) lo decide el backend por el token. Detalle en [`n8n.md`](./n8n.md).
+
 ---
 
 ## 7. Servicios (`app/servicios/`)
@@ -216,6 +222,7 @@ Todos con `providedIn: 'root'`. Base URL: `environment.apiUrl`.
 | `LoadingService` | `loading-service.ts` | `isLoading` (signal), `showLoader`, `hideLoader` — *ningún template lee `isLoading`* |
 | `AuthService` | `AuthService.ts` | mock, ver §4 |
 | `authGuard` | `guards/authGuard.ts` | `CanActivateFn` asíncrono |
+| `ChatService` | `chat.service.ts` | `enviar(mensaje, sessionId): Observable<string>` → `POST chat` |
 
 ---
 
@@ -280,6 +287,7 @@ Base: `environment.apiUrl` = `http://127.0.0.1:3000/api/`. Sin headers de autent
 | DELETE | `deleteportfolio/:email` | — | — | PortfolioComponent |
 | PUT | `${bucketUrl}/portfolios/<timestamp>_<nombre>` | archivo binario | 2xx | `PortfolioService.uploadImage` |
 | DELETE | `<url de imagen>` | — | 2xx | `PortfolioService.deleteImage` |
+| POST | `chat` | `{mensaje, session_id}` | `{message, data: {respuesta}}` | `ChatService.enviar` (Chatbot) |
 
 ---
 

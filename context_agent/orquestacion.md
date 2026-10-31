@@ -16,6 +16,7 @@ UdelaConecta/
   infra/
     local/      docker-compose.yml + Dockerfiles .dev + .env.local   (desarrollo, hot-reload)
     vps/        docker-compose.prod.yml + Caddy + scripts   (producción)
+    n8n/        udela-chatbot.json: export del workflow del asistente (sin credenciales)
   context_agent/  documentación para agentes
 ```
 
@@ -106,6 +107,8 @@ Postgres y Adminer solo escuchan en `127.0.0.1` porque la contraseña de desarro
 
 `POSTGRES_USER/PASSWORD/DB`, `DATABASE_URL`, `JWT_SECRET_KEY` (de desarrollo, más de 32 caracteres), `STORAGE_DIR=/data/storage` (fuera de `/app` para que no aparezca dentro del código montado), `PUBLIC_STORAGE_BASE_URL`, `AUTO_SEED=true`.
 
+Para probar el asistente en local se crea `infra/local/.env.chat` (fuera de git, el compose lo carga solo si existe) con `N8N_CHAT_WEBHOOK_URL` y `N8N_CHAT_SECRET`. Sin ese archivo el chat responde "no disponible". El n8n del VPS no llega a `localhost`, así que las herramientas del asistente solo leen datos de producción. Detalle en [`n8n.md`](./n8n.md).
+
 Los puertos del host se cambian con variables de entorno al levantar, no en `.env.local`:
 
 ```bash
@@ -178,6 +181,10 @@ Lo genera `infra/vps/setup-env.sh`: pide el subdominio y el token de DuckDNS y s
 - `POSTGRES_*` y `DATABASE_URL`.
 - `JWT_SECRET_KEY`: generarla con `python3 -c "import secrets; print(secrets.token_urlsafe(64))"`. **El valor de ejemplo hace que el backend no arranque.**
 - `PUBLIC_STORAGE_BASE_URL=/storage`, `WEB_CONCURRENCY`, `AUTO_SEED=false`.
+- `N8N_CHAT_WEBHOOK_URL` y `N8N_CHAT_SECRET` (opcionales): webhook de producción del asistente en n8n y el valor del header `X-Udela-Secret`. `setup-env.sh` los pide; vacíos, el chat responde "no disponible".
+- `CHAT_DATOS_URL`: `https://<subdominio>.duckdns.org/api/chat/datos`, desde donde leen las herramientas del asistente. `setup-env.sh` la completa sola.
+
+El Caddyfile confía en los proxies de rangos privados (`trusted_proxies static private_ranges`) para que, detrás del Caddy del host, `X-Forwarded-For` conserve la IP real del visitante; el límite de mensajes del asistente la usa.
 
 El compose usa `${VAR:?mensaje}`: si falta una variable obligatoria, `docker compose` falla antes de levantar nada.
 

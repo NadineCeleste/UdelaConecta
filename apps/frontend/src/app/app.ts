@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { Usuario } from './models/users/usuario';
 import { Alertas } from './componentes/alertas/alertas';
 import { AlertService } from './servicios/alertService';
+import { Chatbot } from './componentes/chatbot/chatbot';
 
 @Component({
   selector: 'app-root',
@@ -22,7 +23,8 @@ import { AlertService } from './servicios/alertService';
     CommonModule,
     Spinner,
     FormsModule,
-    Alertas
+    Alertas,
+    Chatbot
   ],
   templateUrl: './app.html',
   styleUrls: ['./app.css'],

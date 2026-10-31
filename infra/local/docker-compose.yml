@@ -27,7 +27,11 @@ services:
       context: ../..
       dockerfile: infra/local/Dockerfile.backend.dev
     container_name: udela-local-backend
-    env_file: .env.local
+    env_file:
+      - .env.local
+      # Opcional y fuera de git: N8N_CHAT_WEBHOOK_URL y N8N_CHAT_SECRET del asistente
+      - path: .env.chat
+        required: false
     environment:
       # El front corre en el puerto publicado de abajo: se habilita ese origen en CORS
       CORS_ORIGINS: http://localhost:${FRONTEND_PORT:-4200},http://127.0.0.1:${FRONTEND_PORT:-4200}

@@ -31,7 +31,7 @@ apps/backend/
     schemas/
       auth.py                    requests Pydantic (Credenciales, EmailRequest, AsignarRequest…)
       serializacion.py           a_dict (fila → dict) y aplicar_cambios (dict → fila, con coerción)
-    routers/                     auth, usuarios, proyectos, contratos, portfolio, storage
+    routers/                     auth, usuarios, proyectos, contratos, portfolio, storage, chat
     seeds/seed_demo.py           datos demo idempotentes
   tests/                         pytest + httpx ASGITransport sobre SQLite en memoria
 ```
@@ -144,6 +144,37 @@ Reemplaza al bucket S3. El front hace `PUT`/`DELETE` con `fetch` sobre la URL de
 - **Archivos:** se guardan en `STORAGE_DIR/portfolios/`. El dueño se registra en un archivo oculto al lado, `.<nombre>.owner`. Los nombres que empiezan con `.` o contienen `/ \ \0` se rechazan, y se verifica que la ruta resuelta no salga de la carpeta.
 - **Por qué la lista blanca:** el `Content-Type` lo elige el cliente. Sin ella, un `.html` o `.svg` servido desde el mismo dominio ejecutaría scripts y podría robar el token de `localStorage`.
 
+### Chat (`POST /api/chat`, token opcional)
+
+Puerta hacia el workflow de n8n del asistente ("Udela Conecta – Chatbot"). El front nunca habla con n8n.
+
+| Paso | Comportamiento |
+|---|---|
+| Entrada | `{mensaje (1..1000), session_id (1..100)}`; un mensaje solo con espacios da 422. Otros campos del body se ignoran |
+| Modo | Lo decide `get_current_user_optional`: sin token `invitado`, con token `usuario` + `{email, rol}` (rol = tabla de `buscar_perfil`, `""` si no tiene perfil). Un token inválido da 401 |
+| Límite | `CHAT_MENSAJES_POR_MINUTO` por usuario o IP, en memoria de cada worker (429) |
+| n8n | `POST N8N_CHAT_WEBHOOK_URL` con el header `X-Udela-Secret: N8N_CHAT_SECRET` y `{mensaje, session_id, modo, usuario, datos_url, token_herramientas}` (`token_herramientas` es `null` para invitados). Sin configuración: 503. Error, timeout o respuesta sin `respuesta`: 502 |
+| Salida | `{message, data: {respuesta}}` |
+
+El workflow tiene dos agentes (invitado y usuario) y un Switch por `modo` que, ante cualquier valor raro, cae en invitado. La memoria de conversación vive en n8n por `session_id`; el widget genera uno nuevo al iniciar o cerrar sesión.
+
+### Datos del asistente (`/api/chat/datos/*`, `routers/chat_datos.py`)
+
+Endpoints de solo lectura que usan las herramientas HTTP del workflow. Devuelven resúmenes cortos (textos recortados, máximo 10 resultados) y nunca `telefono` ni `fecha_nacimiento`.
+
+- **Token:** `create_chat_token(user_id, email)` firma un JWT con `aud="udela-chat"` que dura `CHAT_TOKEN_MINUTOS`. La dependencia `get_usuario_chat` exige esa audiencia, así que el token de sesión normal da 401 acá y el del asistente da 401 en el resto de la API (`decode_access_token` rechaza tokens con `aud`). El usuario sale siempre del token, nunca de un parámetro.
+
+| Endpoint | Quién | Devuelve |
+|---|---|---|
+| `GET ofertas?texto=&modalidad=` | Público | Ofertas libres, sin postulantes ni pasante. La búsqueda ignora tildes, mayúsculas y palabras vacías ("de", "oferta"…) y también mira el nombre del proyecto |
+| `GET mi-perfil` | Token del asistente | Rol, nombre, descripción, skills, idiomas, disponibilidad y portfolio (o el proyecto, si es gerente), más `faltantes` |
+| `GET mis-postulaciones` | Estudiante (si no, 403) | Ofertas en las que se postuló con estado: `en revisión`, `asignado a vos` o `cubierto por otra persona` |
+| `GET mis-ofertas` | Gerente | Sus ofertas con id, estado, cantidad de postulantes y pasante |
+| `GET postulantes/{contrato_id}` | Gerente dueño de la oferta | Resumen de cada postulante. Si la oferta no existe o es de otra empresa: 404 (no revela cuáles existen) |
+| `GET candidatos?skills=` | Gerente | Estudiantes disponibles ordenados por coincidencias con las skills (sin distinguir tildes ni mayúsculas) |
+
+El agente invitado solo tiene la herramienta de ofertas; el agente usuario tiene todas. El workflow exportado (sin ids de credenciales) está en `infra/n8n/udela-chatbot.json`; se importa en n8n y se le asignan las credenciales `Udela-Secret` (Header Auth) y `DeepSeek account`. El n8n del VPS no llega a `localhost`, así que las herramientas solo funcionan contra producción.
+
 ### Otros
 
 `GET /api/health` → `{status: "ok"}`. No pide token y se usa para chequear que el servicio está vivo.
@@ -167,24 +198,42 @@ Se lee de variables de entorno (y de `.env` si existe). La tabla completa con va
 - `JWT_SECRET_KEY` es **obligatoria**: si tiene menos de 32 caracteres o contiene `CAMBIAR`, el backend no arranca. Así se evita levantar producción con el valor de ejemplo.
 - `DATABASE_URL` usa el driver async: `postgresql+asyncpg://…`.
 - `CORS_ORIGINS`: en Docker local la arma el compose a partir de `FRONTEND_PORT`. En el VPS front y API comparten dominio, así que casi no se usa.
+- `CHAT_DATOS_URL`: URL pública de `/api/chat/datos` para las herramientas de n8n; `setup-env.sh` la arma con el subdominio.
+- `N8N_CHAT_WEBHOOK_URL` / `N8N_CHAT_SECRET`: opcionales; sin ellas el asistente responde 503 y el resto de la API funciona igual. En local van en `infra/local/.env.chat` (fuera de git).
 
 ## 8. Seed (`app/seeds/seed_demo.py`)
 
-Idempotente: se puede correr muchas veces sin duplicar nada. Crea:
-- `dev@udelaconecta.edu.ar` (estudiante con portfolio);
-- `empresa@udelaconecta.edu.ar` (gerente) con el proyecto "Plataforma FinTech Udela" y 3 contratos: uno libre, uno con postulación del estudiante y uno asignado a él.
+Idempotente y basado en datos: las listas `ESTUDIANTES` y `EMPRESAS` describen cada cuenta con su perfil, su portfolio, su proyecto y sus ofertas. Cada registro se busca por su clave natural (email, email del gerente o título de la oferta dentro del proyecto) y solo se crea si falta. Así, sumar una oferta a la lista y volver a correrlo la agrega a una base existente sin tocar lo que los usuarios cambiaron. `esta_ocupado` y `tiene_postulaciones` se derivan de `pasante_email` y `postulaciones`.
 
-Contraseña de los dos: `Udela1234!`. Corre en el arranque si `AUTO_SEED=true` (local sí, producción no).
+Crea 6 estudiantes y 4 empresas con 11 ofertas (9 libres), pensadas para que el asistente tenga qué responder: modalidades remota, híbrida y presencial, seniority de Trainee a Semisenior, postulaciones cruzadas, dos ofertas asignadas y una estudiante no disponible y sin portfolio.
+
+| Email | Rol | Qué tiene |
+|---|---|---|
+| `dev@udelaconecta.edu.ar` | Estudiante | Angular, Python y SQL; portfolio de 2 proyectos; postulada en FinTech y SaludConecta, asignada a "QA de la app móvil" |
+| `lucas.fernandez@udelaconecta.edu.ar` | Estudiante | React y TypeScript; portfolio de 3 proyectos; postulado en SaludConecta |
+| `camila.rios@udelaconecta.edu.ar` | Estudiante | Python, Pandas, SQL y Power BI; postulada a las dos ofertas de datos |
+| `tomas.acosta@udelaconecta.edu.ar` | Estudiante | Flutter y Dart; postulado en RutaSur |
+| `julieta.medina@udelaconecta.edu.ar` | Estudiante | Docker, Linux y GitHub Actions; postulada en AgroData y RutaSur |
+| `martina.sosa@udelaconecta.edu.ar` | Estudiante | QA y análisis funcional; no disponible (asignada en RutaSur) y sin portfolio |
+| `empresa@udelaconecta.edu.ar` | Empresa | Plataforma FinTech Udela: 4 ofertas (frontend, backend, QA asignada y data analyst) |
+| `agrotech@udelaconecta.edu.ar` | Empresa | AgroData Pampa: Python para IoT y Data Engineer |
+| `salud@udelaconecta.edu.ar` | Empresa | SaludConecta: frontend React y soporte/QA |
+| `logistica@udelaconecta.edu.ar` | Empresa | RutaSur Logística: Flutter, DevOps y analista funcional (asignada) |
+
+Contraseña de todos: `Udela1234!`. Corre en el arranque si `AUTO_SEED=true` (local sí, producción no).
 
 ## 9. Tests (`apps/backend/tests/`)
 
 - **Herramientas:** pytest + `pytest-asyncio` (`asyncio_mode = auto`) + httpx `ASGITransport`.
 - **Base:** `conftest.py` crea una SQLite en memoria (`StaticPool`) por test, reemplaza `get_db` y apunta `STORAGE_DIR` a una carpeta temporal.
 - **Ayudante:** `registrar_usuario(email, rol)` devuelve los headers con el token.
-- **Contenido:** 26 tests en 3 archivos:
+- **Contenido:** 58 tests en 6 archivos:
   - `test_auth_usuarios.py`: registro, login, bloqueo, admin, privacidad y perfiles;
   - `test_proyectos_contratos.py`: dueño, postulación y asignación;
-  - `test_portfolio_storage.py`: CRUD, imágenes y rechazo de archivos ejecutables.
+  - `test_portfolio_storage.py`: CRUD, imágenes y rechazo de archivos ejecutables;
+  - `test_chat.py`: modo según el token (el body no lo cambia), secreto hacia n8n, validación, 502/503 y límite de mensajes. n8n se simula con `httpx.MockTransport` en `routers.chat._transporte`.
+  - `test_chat_datos.py`: cada endpoint de `/api/chat/datos`, permisos por rol, 404 en ofertas ajenas, token vencido o con otra audiencia, y que no salgan `telefono` ni `fecha_nacimiento`.
+  - `test_seed.py`: el seed no duplica, completa ofertas que falten sin pisar las editadas, y sus ofertas sirven para la búsqueda del asistente (sin tildes ni palabras vacías).
 - **Límite:** SQLite ignora `FOR UPDATE`, así que los bloqueos de fila no se prueban acá. Sí se probaron contra Postgres en Docker.
 
 Comandos: `npx nx test backend` o `cd apps/backend && poetry run pytest -v`.
