@@ -6,6 +6,8 @@ Las respuestas son resúmenes cortos (sin teléfonos, fechas de nacimiento ni em
 postulantes ajenos) para no mandarle al modelo más de lo necesario.
 """
 
+import unicodedata
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -19,11 +21,19 @@ router = APIRouter(prefix="/api/chat/datos", tags=["chat"])
 
 MAX_RESULTADOS = 10
 MAX_TEXTO = 300
+# Palabras que el modelo suele mandar en "texto" y que coincidirían con todas las ofertas
+PALABRAS_VACIAS = {"de", "del", "la", "el", "los", "las", "en", "y", "o", "para", "con", "un", "una", "oferta", "ofertas"}
 
 
 def _recortar(texto: str | None, largo: int = MAX_TEXTO) -> str:
     texto = (texto or "").strip()
     return texto if len(texto) <= largo else texto[: largo - 1].rstrip() + "…"
+
+
+def _normalizar(texto: str) -> str:
+    """Minúsculas y sin tildes: "Híbrido" y "hibrido" tienen que coincidir."""
+    sin_tildes = unicodedata.normalize("NFKD", texto or "").encode("ascii", "ignore").decode()
+    return sin_tildes.lower()
 
 
 def _nombres(items: list | None, clave: str) -> list[str]:
@@ -113,15 +123,17 @@ async def ofertas(
             .order_by(Contrato.id.desc())
         )
     ).all()
-    palabras = [p for p in texto.lower().split() if p]
+    palabras = [p for p in _normalizar(texto).split() if p not in PALABRAS_VACIAS]
+    modalidad = _normalizar(modalidad).strip()
     resultado = []
     for contrato, proyecto in filas:
         oferta = _oferta(contrato, proyecto)
-        if modalidad and modalidad.lower() not in oferta["modalidad"].lower():
+        if modalidad and modalidad not in _normalizar(oferta["modalidad"]):
             continue
-        buscable = " ".join(
-            [contrato.titulo, contrato.tipo or "", contrato.descripcion or "", " ".join(oferta["seniority"])]
-        ).lower()
+        buscable = _normalizar(" ".join(
+            [contrato.titulo, contrato.tipo or "", contrato.descripcion or "", " ".join(oferta["seniority"]),
+             oferta["proyecto"]]
+        ))
         if palabras and not any(p in buscable for p in palabras):
             continue
         resultado.append(oferta)
@@ -250,13 +262,13 @@ async def candidatos(
     db: AsyncSession = Depends(get_db),
 ):
     await _exigir_rol(db, user, "gerente")
-    buscadas = [s.strip().lower() for s in skills.replace(",", " ").split() if s.strip()]
+    buscadas = _normalizar(skills.replace(",", " ")).split()
     estudiantes = (
         await db.scalars(select(Estudiante).where(Estudiante.is_disponible.is_(True)).order_by(Estudiante.id))
     ).all()
     puntuados = []
     for estudiante in estudiantes:
-        propias = [s.lower() for s in _skills(estudiante)]
+        propias = [_normalizar(s) for s in _skills(estudiante)]
         coincidencias = sum(1 for b in buscadas if any(b in p for p in propias))
         if buscadas and not coincidencias:
             continue
