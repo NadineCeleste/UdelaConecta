@@ -156,7 +156,7 @@ Puerta hacia el workflow de n8n del asistente ("Udela Conecta – Chatbot"). El 
 | n8n | `POST N8N_CHAT_WEBHOOK_URL` con el header `X-Udela-Secret: N8N_CHAT_SECRET` y `{mensaje, session_id, modo, usuario, datos_url, token_herramientas}` (`token_herramientas` es `null` para invitados). Sin configuración: 503. Error, timeout o respuesta sin `respuesta`: 502 |
 | Salida | `{message, data: {respuesta}}` |
 
-El workflow tiene dos agentes (invitado y usuario) y un Switch por `modo` que, ante cualquier valor raro, cae en invitado. La memoria de conversación vive en n8n por `session_id`; el widget genera uno nuevo al iniciar o cerrar sesión.
+El workflow tiene tres agentes (invitado, estudiante y empresa) y un Switch por `modo` y `rol`: `gerente` va al agente de empresa, cualquier otro usuario logueado al de estudiante y, ante cualquier valor raro, cae en invitado. La memoria de conversación vive en n8n por `session_id`; el widget genera uno nuevo al iniciar o cerrar sesión.
 
 ### Datos del asistente (`/api/chat/datos/*`, `routers/chat_datos.py`)
 
@@ -173,7 +173,7 @@ Endpoints de solo lectura que usan las herramientas HTTP del workflow. Devuelven
 | `GET postulantes/{contrato_id}` | Gerente dueño de la oferta | Resumen de cada postulante. Si la oferta no existe o es de otra empresa: 404 (no revela cuáles existen) |
 | `GET candidatos?skills=` | Gerente | Estudiantes disponibles ordenados por coincidencias con las skills (sin distinguir tildes ni mayúsculas) |
 
-El agente invitado solo tiene la herramienta de ofertas; el agente usuario tiene todas. El workflow exportado (sin ids de credenciales) está en `infra/n8n/udela-chatbot.json`; se importa en n8n y se le asignan las credenciales `Udela-Secret` (Header Auth) y `DeepSeek account`. El n8n del VPS no llega a `localhost`, así que las herramientas solo funcionan contra producción.
+El agente invitado solo tiene la herramienta de ofertas; el de estudiante tiene ofertas, perfil y postulaciones, y el de empresa tiene perfil, sus ofertas, postulantes y candidatos. El workflow exportado (sin ids de credenciales) está en `infra/n8n/udela-chatbot.json`; se importa en n8n y se le asignan las credenciales `Udela-Secret` (Header Auth) y `DeepSeek account`. El n8n del VPS no llega a `localhost`, así que las herramientas solo funcionan contra producción.
 
 ### Otros
 
