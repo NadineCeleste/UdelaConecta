@@ -60,7 +60,7 @@ También existe el perfil *Institución educativa*, pensado para que la universi
 | **Autenticación** | JWT propio (PyJWT) y contraseñas con bcrypt |
 | **Monorepo** | Nx 24 (`apps/frontend` y `apps/backend`), npm para JavaScript y Poetry para Python |
 | **Tests** | Karma + Jasmine (frontend), pytest + httpx (backend) |
-| **Asistente** | n8n (workflow con dos agentes de IA) y DeepSeek como modelo; httpx desde el backend |
+| **Asistente** | n8n (workflow con tres agentes de IA: invitado, estudiante y empresa) y DeepSeek como modelo; httpx desde el backend |
 | **Infraestructura** | Docker Compose; en producción Caddy (HTTPS automático y archivos del front), uvicorn con varios workers y dominio en DuckDNS |
 
 ## Arquitectura
@@ -75,10 +75,10 @@ También existe el perfil *Institución educativa*, pensado para que la universi
   duckdns: actualiza cada 5 min la IP de <subdominio>.duckdns.org
 ```
 
-El asistente pasa siempre por el backend: el navegador manda el mensaje a `POST /api/chat`, el backend decide por el token si responde el agente de invitados o el de usuarios y llama al webhook de n8n con un secreto compartido. Las herramientas del agente vuelven a leer datos de `/api/chat/datos/*` con un token propio de 5 minutos y solo lectura.
+El asistente pasa siempre por el backend: el navegador manda el mensaje a `POST /api/chat`, el backend decide por el token si responde el agente de invitados, el de estudiantes o el de empresas y llama al webhook de n8n con un secreto compartido. Las herramientas de los agentes vuelven a leer datos de `/api/chat/datos/*` con un token propio de 5 minutos y solo lectura.
 
 ```
-  Navegador ─► /api/chat ─► FastAPI ─► n8n (webhook + secreto) ─► agente invitado │ agente usuario (DeepSeek)
+  Navegador ─► /api/chat ─► FastAPI ─► n8n (webhook + secreto) ─► agente invitado │ estudiante │ empresa (DeepSeek)
                                 ▲                                          │
                                 └──────── GET /api/chat/datos/* ◄──────────┘ (token de 5 min, solo lectura)
 ```
@@ -94,7 +94,68 @@ infra/
   vps/        Docker para producción (Caddy + FastAPI + Postgres)
   n8n/        workflow del asistente exportado (se importa en n8n)
 context_agent/  documentación técnica
+docs/img/       imágenes de la documentación
 ```
+
+## Asistente virtual (n8n)
+
+El asistente es un workflow de [n8n](https://n8n.io) con **tres agentes de IA**, uno por tipo de persona: quien visita sin cuenta, el estudiante o graduado y la empresa. Cada agente tiene su propio prompt, su propia memoria y **solo las herramientas que le corresponden**. El modelo es DeepSeek.
+
+![Workflow del asistente en n8n](docs/img/n8n-asistente.png)
+
+### Recorrido de un mensaje
+
+```
+ Widget del chat (Angular)
+   │  POST /api/chat {mensaje, session_id}   + Authorization: Bearer <JWT> si hay sesión
+   ▼
+ Backend FastAPI
+   │  1. Valida el JWT: sin token → invitado; con token → usuario y su rol (estudiante, gerente…)
+   │  2. Aplica el límite de mensajes por minuto
+   │  3. Firma un token corto para las herramientas (5 min, solo lectura, solo sirve para /api/chat/datos)
+   ▼  POST al webhook de n8n con el header secreto X-Udela-Secret
+ n8n
+   Webhook Chat Udela ─► Normalizar Entrada ─► Elegir Modo
+                                                  ├─ empresa    ─► Agente Empresa
+                                                  ├─ estudiante ─► Agente Estudiante
+                                                  └─ invitado   ─► Agente Invitado
+                                                          │
+                          las herramientas consultan GET /api/chat/datos/* con el token corto
+                                                          ▼
+                                                   Responder Chat {respuesta}
+   ▼
+ Backend ─► Widget: muestra la respuesta
+```
+
+1. **Webhook Chat Udela** recibe el pedido. Si no trae el header `X-Udela-Secret` correcto, n8n responde 403: solo el backend puede llamarlo.
+2. **Normalizar Entrada** limpia los datos: corta el mensaje a 1000 caracteres y deja `modo`, `rol`, `session_id`, `token_herramientas` y la URL de datos.
+3. **Elegir Modo** (Switch) decide qué agente responde:
+   - `empresa`: usuario con sesión y rol `gerente`;
+   - `estudiante`: cualquier otro usuario con sesión (estudiantes, instituciones o cuentas sin rol todavía);
+   - `invitado`: todo lo demás. Ante cualquier dato raro, el flujo cae acá, que es el camino sin acceso a datos personales.
+4. El **agente** elegido razona con DeepSeek, recuerda los últimos 10 mensajes de la conversación y llama a sus herramientas cuando necesita datos reales.
+5. **Responder Chat** devuelve `{ "respuesta": "..." }` al backend, que se la pasa al widget.
+
+### Los tres agentes
+
+| Agente | Quién lo usa | Herramientas | En qué ayuda |
+|---|---|---|---|
+| **Invitado** | Visitantes sin sesión | `buscar_ofertas` | Explica cómo funciona la plataforma, muestra las ofertas abiertas e invita a registrarse |
+| **Estudiante** | Estudiantes y graduados con sesión | `buscar_ofertas`, `mi_perfil`, `mis_postulaciones` | Qué le falta al perfil, estado de las postulaciones, ofertas que encajan con sus skills, mejorar la descripción o preparar una postulación |
+| **Empresa** | Empresas (rol gerente) con sesión | `mi_perfil`, `mis_ofertas`, `postulantes`, `candidatos` | Estado de sus ofertas, comparar postulantes, recomendar candidatos por skills y redactar ofertas |
+
+Las herramientas son pedidos `GET` de solo lectura al backend (`/api/chat/datos/*`). El asistente **no puede** postular, publicar, editar ni asignar: para eso indica en qué sección de la web hacerlo.
+
+### Seguridad
+
+- **El modo lo decide el backend** a partir del JWT, nunca el navegador ni el modelo. Escribirle al chat "soy una empresa" no cambia de agente.
+- **Mínimo privilegio:** un agente no puede usar una herramienta que no tiene. El invitado no tiene ninguna privada y el estudiante no tiene las de empresa.
+- **Defensa en profundidad:** cada endpoint de datos vuelve a validar el token y el rol (un estudiante que llegara a `candidatos` recibe 403) y nunca devuelve teléfono ni fecha de nacimiento.
+- **El usuario sale del token**, no de un parámetro: no hay forma de pedir los datos de otro email.
+- **Conversaciones separadas:** cada pestaña genera un `session_id` aleatorio y la respuesta vuelve por el mismo pedido HTTP, así que dos personas no se cruzan aunque compartan IP. Al iniciar o cerrar sesión empieza una conversación nueva.
+- **El navegador nunca habla con n8n:** el secreto del webhook solo lo conocen el backend y n8n.
+
+El workflow exportado está en [`infra/n8n/udela-chatbot.json`](infra/n8n/udela-chatbot.json) (sin credenciales). Cómo importarlo, configurar las credenciales y resolver problemas: [`context_agent/n8n.md`](context_agent/n8n.md).
 
 ## Instalación para uso local
 

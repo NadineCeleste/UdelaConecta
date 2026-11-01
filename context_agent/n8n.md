@@ -27,8 +27,9 @@ Backend FastAPI (routers/chat.py)
   │  límite de CHAT_MENSAJES_POR_MINUTO por usuario o IP (429)
   ▼  POST N8N_CHAT_WEBHOOK_URL   header X-Udela-Secret: N8N_CHAT_SECRET
 n8n  Webhook → Normalizar Entrada → Elegir Modo (Switch)
-                                     ├─ usuario  → Agente Usuario  (todas las herramientas)
-                                     └─ invitado → Agente Invitado (solo ofertas)
+                                     ├─ empresa    → Agente Empresa    (rol gerente: perfil, ofertas propias, postulantes, candidatos)
+                                     ├─ estudiante → Agente Estudiante (otro usuario logueado: ofertas, perfil, postulaciones)
+                                     └─ invitado   → Agente Invitado   (solo ofertas)
        → Responder Chat {respuesta}
           │
           └─ herramientas: GET {datos_url}/...  (Authorization: Bearer token_herramientas)
@@ -39,7 +40,7 @@ n8n  Webhook → Normalizar Entrada → Elegir Modo (Switch)
 **Principios:**
 - **El modo lo decide el backend**, nunca el navegador ni el modelo. Lo que mande el body además de `mensaje` y `session_id` se ignora.
 - **El front nunca habla con n8n.** El secreto del webhook solo lo conocen el backend y n8n.
-- **Mínimo privilegio:** el agente invitado no tiene herramientas privadas. Aunque alguien le pida datos de otra persona, no hay forma de pedirlos.
+- **Mínimo privilegio:** cada agente tiene solo las herramientas de su perfil. El invitado no tiene herramientas privadas, el estudiante no tiene las de empresa y la empresa no tiene `mis_postulaciones`. Lo que un agente no tiene, no lo puede pedir aunque se lo pidan en el chat.
 - **El usuario sale del token**, nunca de un parámetro: las herramientas no reciben emails.
 - **Defensa en profundidad:** cada endpoint de datos vuelve a validar el token y el rol, y no devuelve `telefono` ni `fecha_nacimiento`.
 
@@ -66,11 +67,12 @@ n8n  Webhook → Normalizar Entrada → Elegir Modo (Switch)
 |---|---|---|
 | Webhook Chat Udela | Webhook | `POST /webhook/udela-chat`, autenticación Header Auth con la credencial `Udela-Secret` (header `X-Udela-Secret`), responde desde el nodo Responder Chat |
 | Normalizar Entrada | Set | `mensaje` (cortado a 1000), `session_id`, `modo` (todo lo que no sea `usuario` es `invitado`), `rol`, `email`, `token_herramientas`, `datos_url` (sin `/` final; si no llega, la de producción) |
-| Elegir Modo | Switch | Salida `usuario` si `modo == "usuario"`; la salida de respaldo es `invitado` |
+| Elegir Modo | Switch | Salida `empresa` si `modo == "usuario"` y `rol == "gerente"`; salida `estudiante` si `modo == "usuario"` (estudiantes, instituciones y usuarios sin rol); la salida de respaldo es `invitado` |
 | Agente Invitado | AI Agent | Prompt de guía general, máximo 5 iteraciones |
-| Agente Usuario | AI Agent | Prompt con el rol del usuario, herramientas y ayudas de redacción, máximo 8 iteraciones |
-| DeepSeek Invitado / Usuario | DeepSeek Chat Model | Credencial `DeepSeek account`, modelo `deepseek-flash`, temperatura 0.4, máximo 600 / 800 tokens |
-| Memoria Invitado / Usuario | Simple Memory | Clave `{{ $('Normalizar Entrada').first().json.session_id }}`, ventana de 10 |
+| Agente Estudiante | AI Agent | Prompt para estudiantes y graduados, con el rol del usuario y ayudas de redacción, máximo 8 iteraciones |
+| Agente Empresa | AI Agent | Prompt para empresas: ofertas, postulantes, candidatos y redacción de ofertas, máximo 8 iteraciones |
+| DeepSeek Invitado / Estudiante / Empresa | DeepSeek Chat Model | Credencial `DeepSeek account`, modelo `deepseek-flash`, temperatura 0.4, máximo 600 / 800 / 800 tokens |
+| Memoria Invitado / Estudiante / Empresa | Simple Memory | Clave `{{ $('Normalizar Entrada').first().json.session_id }}`, ventana de 10 |
 | Herramientas | HTTP Request Tool | Ver sección 5 |
 | Responder Chat | Respond to Webhook | `{ "respuesta": $json.output }`, código 200 |
 
@@ -83,12 +85,15 @@ Todas son `GET` sobre `{datos_url}`, con un tiempo máximo de 15 s y "Never Erro
 | Nodo | Agente | Ruta | Parámetros (`$fromAI`) | Auth |
 |---|---|---|---|---|
 | Ofertas Invitado | Invitado | `/ofertas` | `texto`, `modalidad` | — |
-| Ofertas Usuario | Usuario | `/ofertas` | `texto`, `modalidad` | — |
-| Mi Perfil | Usuario | `/mi-perfil` | — | Bearer |
-| Mis Postulaciones | Usuario | `/mis-postulaciones` | — | Bearer |
-| Mis Ofertas | Usuario | `/mis-ofertas` | — | Bearer |
-| Postulantes | Usuario | `/postulantes/{contrato_id}` | `contrato_id` (number) | Bearer |
-| Candidatos | Usuario | `/candidatos` | `skills` | Bearer |
+| Ofertas Estudiante | Estudiante | `/ofertas` | `texto`, `modalidad` | — |
+| Mi Perfil Estudiante | Estudiante | `/mi-perfil` | — | Bearer |
+| Mis Postulaciones | Estudiante | `/mis-postulaciones` | — | Bearer |
+| Mi Perfil Empresa | Empresa | `/mi-perfil` | — | Bearer |
+| Mis Ofertas | Empresa | `/mis-ofertas` | — | Bearer |
+| Postulantes | Empresa | `/postulantes/{contrato_id}` | `contrato_id` (number) | Bearer |
+| Candidatos | Empresa | `/candidatos` | `skills` | Bearer |
+
+Un nodo de herramienta se conecta a un solo agente, por eso `mi_perfil` está duplicado (Mi Perfil Estudiante y Mi Perfil Empresa) con la misma ruta.
 
 "Bearer" = header `Authorization: Bearer {{ $('Normalizar Entrada').first().json.token_herramientas }}`. El token no es una credencial guardada en n8n: viene en cada pedido y vence a los `CHAT_TOKEN_MINUTOS`.
 
@@ -96,7 +101,7 @@ Qué devuelve cada endpoint y sus reglas por rol: ver [`backend.md`](./backend.m
 
 ## 6. Prompts
 
-Los dos agentes comparten estas reglas:
+Los tres agentes comparten estas reglas:
 - Español rioplatense, breve y amable.
 - **Texto plano**: sin asteriscos, numerales, negritas ni tablas; listas con guiones. El widget muestra el texto tal cual, sin interpretar Markdown.
 - No inventar datos: lo que no devuelve una herramienta no existe.
@@ -106,7 +111,8 @@ Los dos agentes comparten estas reglas:
 | Agente | Qué agrega |
 |---|---|
 | Invitado | Cómo funciona la plataforma (roles, registro, login, bloqueo tras 5 intentos), secciones con su ruta (`/contratos`, `/miproyecto`) y `buscar_ofertas`. Para postularse o ver datos personales lo invita a registrarse o iniciar sesión |
-| Usuario | El rol (`{{ $json.rol }}`), las secciones (`/profile`, `/contratos`, `/miproyecto`), las 6 herramientas y las ayudas de solo texto: mejorar la descripción del perfil o de un proyecto, preparar una postulación, redactar una oferta, recomendar ofertas o comparar candidatos. Solo muestra emails de postulantes si la empresa los pide para contactar |
+| Estudiante | El rol (`{{ $json.rol }}`), las secciones (`/profile`, `/contratos`), las 3 herramientas y las ayudas de solo texto: mejorar la descripción del perfil o de un proyecto, preparar una postulación y recomendar ofertas. Si es institución educativa o no tiene rol, explica qué puede hacer. Si pide funciones de empresa, aclara que son del perfil "Empresa / Reclutador" |
+| Empresa | Las secciones (`/profile`, `/miproyecto`, `/contratos`), los campos de una oferta, las 4 herramientas y las ayudas: resumir sus ofertas, comparar postulantes con lo que pide una oferta, recomendar candidatos, redactar ofertas y señalar lo que le falta al perfil o al proyecto. Compara personas solo por skills, proyectos, idiomas y disponibilidad (nunca por género ni edad) y solo muestra emails si la empresa los pide para contactar |
 
 ## 7. Credenciales en n8n
 
