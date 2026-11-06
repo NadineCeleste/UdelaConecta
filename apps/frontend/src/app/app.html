@@ -65,118 +65,39 @@
   <div class="guest-container">
     <app-navbar (onLogin)="toggleLoginModal()" (onRegister)="toggleRegisterModal()"></app-navbar>
 
-    <!-- SECCIÓN HERO NUEVA (DISEÑO IMAGEN 2) -->
+    <!-- HERO DE BIENVENIDA -->
     <section class="hero hero-v2">
+      <img
+        class="hero-logo-circle"
+        src="/logo-udela-ciudad.png"
+        alt="Logo de la Universidad de la Ciudad de Buenos Aires"
+      />
       <div class="hero-v2-container">
-
-        <!-- COLUMNA IZQUIERDA: CONTENIDO PRINCIPAL Y BUSCADOR -->
         <div class="hero-v2-content">
           <div class="hero-v2-badge">
-            BOLSA DE TRABAJO UNIVERSITARIA
+            <span class="material-icons-outlined" aria-hidden="true">school</span>
+            UNIVERSIDAD DE LA CIUDAD DE BUENOS AIRES
           </div>
 
           <h1 class="hero-v2-title">
-            Tu primer paso<br>profesional empieza acá
+            Bienvenido a<br><span>Udela Conecta</span>
           </h1>
 
           <p class="hero-v2-subtitle">
-            La bolsa de trabajo de la Universidad de la Ciudad de Buenos Aires. Conectamos a estudiantes y graduados con empresas y oportunidades reales.
+            Conectando talento universitario con<br class="hero-desktop-break"> oportunidades reales.
           </p>
 
-          <!-- TARJETA BUSCADOR -->
-          <div class="hero-v2-search-card">
-            <div class="search-inputs-row">
-              <div class="search-input-wrapper">
-                <input
-                  type="text"
-                  [(ngModel)]="searchKeyword"
-                  name="searchKeyword"
-                  placeholder="Puesto, área o palabra clave"
-                  class="search-field-input"
-                  (keyup.enter)="handleSearch()"
-                />
-              </div>
-
-              <div class="search-divider-line"></div>
-
-              <div class="search-input-wrapper">
-                <input
-                  type="text"
-                  [(ngModel)]="searchLocation"
-                  name="searchLocation"
-                  placeholder="Modalidad o ubicación"
-                  class="search-field-input"
-                  (keyup.enter)="handleSearch()"
-                />
-              </div>
-            </div>
-
-            <div class="search-action-row">
-              <button type="button" class="btn-buscar-ofertas" (click)="handleSearch()">
-                Buscar ofertas
-              </button>
-            </div>
-          </div>
-
-          <!-- BÚSQUEDAS FRECUENTES -->
-          <div class="frequent-searches-box">
-            <span class="frequent-label">Búsquedas frecuentes:</span>
-            <div class="frequent-tags-group">
-              <button type="button" class="frequent-tag-pill" (click)="handleSearch('Frontend')">Frontend</button>
-              <button type="button" class="frequent-tag-pill" (click)="handleSearch('Backend')">Backend</button>
-              <button type="button" class="frequent-tag-pill" (click)="handleSearch('Full Stack')">Full Stack</button>
-              <button type="button" class="frequent-tag-pill" (click)="handleSearch('DevOps')">DevOps</button>
-            </div>
+          <div class="hero-v2-actions">
+            <button type="button" class="hero-cta-primary" (click)="toggleRegisterModal()">
+              Soy estudiante / graduado
+            </button>
+            <button type="button" class="hero-cta-secondary" (click)="toggleRegisterModal()">
+              Soy Empresa
+            </button>
           </div>
         </div>
-
-        <!-- COLUMNA DERECHA: CÓMO FUNCIONA -->
-        <div class="hero-v2-sidebar">
-          <div class="hiw-sidebar-card">
-            <h3 class="hiw-sidebar-title">CÓMO FUNCIONA</h3>
-
-            <div class="hiw-sidebar-list">
-              <!-- PASO 1 -->
-              <div class="hiw-sidebar-item">
-                <div class="hiw-sidebar-num">1</div>
-                <div class="hiw-sidebar-text">
-                  <h4 class="hiw-sidebar-heading">Creá tu perfil</h4>
-                  <p class="hiw-sidebar-desc">Sumá tu formación, proyectos y experiencia.</p>
-                </div>
-              </div>
-
-              <!-- PASO 2 -->
-              <div class="hiw-sidebar-item">
-                <div class="hiw-sidebar-num">2</div>
-                <div class="hiw-sidebar-text">
-                  <h4 class="hiw-sidebar-heading">Postulate a ofertas</h4>
-                  <p class="hiw-sidebar-desc">Filtrá por especialidad y aplicá en un paso.</p>
-                </div>
-              </div>
-
-              <!-- PASO 3 -->
-              <div class="hiw-sidebar-item">
-                <div class="hiw-sidebar-num">3</div>
-                <div class="hiw-sidebar-text">
-                  <h4 class="hiw-sidebar-heading">Conectá con empresas</h4>
-                  <p class="hiw-sidebar-desc">Las empresas ven tu perfil y te contactan.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
     </section>
-
-    <div class="udela-ticker">
-      <div class="ticker-track">
-        <div class="ticker-item">
-          <span> UDELA CONECTA - UNIVERSIDAD DE LA CIUDAD DE BUENOS AIRES</span>
-        </div>
-      </div>
-    </div>
-
 
     <!-- SECCIÓN DE CARACTERÍSTICAS (TALENTO) -->
 
