@@ -11,10 +11,16 @@ a {
     text-decoration: none;
 }
 
-a,
-button,
+a {
+    color: inherit;
+}
+
+button {
+    color: inherit;
+}
+
 select {
-    color: white;
+    color: var(--text-main, #09090b);
 }
 
 h1,
@@ -30,7 +36,7 @@ img {
 }
 
 ::placeholder {
-    color: rgb(209, 209, 209);
+    color: var(--text-muted, #52525b);
 }
 
 section {

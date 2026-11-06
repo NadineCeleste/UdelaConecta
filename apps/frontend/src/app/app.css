@@ -2,15 +2,15 @@
 
 :root {
   --bg-primary: #ffffff;
-  --bg-secondary: #e7fbe3;
+  --bg-secondary: #f3f3f3;
   --text-main: #09090b;
-  --text-muted: #fafafc;
+  --text-muted: #52525b;
   --card-bg: #ffffff;
   --border-color: #e4e4e7;
   --navbar-bg: rgba(246, 244, 255, 0.85);
   --accent-primary: #B23A8C;
   --accent-secondary: #f59e0b;
-  --bg-split: linear-gradient(to right, #dc84c0 50%, #d972b8 50%);
+  --bg-split: linear-gradient(to right, #e8e8e8 50%, #e1dde0 50%);
   --accent-secondary: #f59e0b;
   --danger-primary: #a00c0c;
   --match-col: #C4B5F4;
@@ -397,80 +397,178 @@ h4,
 }
 
 .hero.hero-v2 {
+  position: relative;
   width: 100%;
-  background-color: var(--bg-primary);
-  padding: 135px 5% 55px 5%;
+  min-height: 680px;
+  margin-bottom: 64px;
+  background-color: var(--bg-secondary);
+  background-image:
+    linear-gradient(90deg, rgba(248, 249, 252, 0.94) 0%, rgba(248, 249, 252, 0.82) 34%, rgba(248, 249, 252, 0.24) 68%, rgba(248, 249, 252, 0.08) 100%),
+    url('/aula-universidad.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: 125px 5% 70px;
   box-sizing: border-box;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: auto;
+}
+
+.hero-logo-circle {
+  position: absolute;
+  top: 24px;
+  left: 5%;
+  z-index: 2;
+  display: block;
+  width: 108px;
+  height: 108px;
+  padding: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  background-color: #b63a95;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.2);
+  object-fit: contain;
 }
 
 .hero-v2-container {
   max-width: 1240px;
   width: 100%;
   display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 48px;
+  justify-content: flex-start;
+  align-items: center;
 }
 
-/* Columna Izquierda */
-.hero-v2-content {
-  flex: 1 1 58%;
-  max-width: 660px;
+.guest-container .hero.hero-v2 .hero-v2-container .hero-v2-content {
+  max-width: 680px;
+  width: 100%;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
 }
 
 .hero-v2-badge {
   display: inline-flex;
   align-items: center;
-  background-color: rgba(178, 58, 140, 0.08);
-  color: var(--accent-primary);
-  border: 1px solid rgba(178, 58, 140, 0.22);
-  padding: 6px 14px;
-  border-radius: 8px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
+  gap: 10px;
+  background-color: rgba(255, 255, 255, 0.84);
+  color: #1f2937;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  padding: 9px 16px;
+  border-radius: 999px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   font-family: 'Plus Jakarta Sans', sans-serif;
   width: fit-content;
-  margin-bottom: 22px;
-  box-shadow: 0 2px 8px rgba(178, 58, 140, 0.06);
+  margin-bottom: 24px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
+  backdrop-filter: blur(8px);
+}
+
+.hero-v2-badge .material-icons-outlined {
+  font-size: 1.25rem;
 }
 
 .dark-theme .hero-v2-badge {
-  background-color: rgba(168, 85, 247, 0.15);
-  border-color: rgba(168, 85, 247, 0.35);
-  color: var(--accent-primary);
+  background-color: rgba(17, 17, 19, 0.86);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f4f4f5;
 }
 
 .hero-v2-title {
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: clamp(2.3rem, 4.2vw, 3.4rem);
+  font-size: clamp(3.2rem, 5vw, 4.5rem);
   font-weight: 800;
-  line-height: 1.16;
+  line-height: 1.08;
   letter-spacing: -0.03em;
-  color: var(--text-main) !important;
-  margin: 0 0 18px 0;
+  color: #111827 !important;
+  margin: 0 0 16px;
+}
+
+.hero-v2-title span {
+  color: #a32276;
+}
+
+.dark-theme .hero-v2-title {
+  color: #f8fafc !important;
+}
+
+.dark-theme .hero-v2-title span {
+  color: #e879c4;
+}
+
+.dark-theme .hero.hero-v2 {
+  background-image:
+    linear-gradient(90deg, rgba(8, 10, 18, 0.9) 0%, rgba(8, 10, 18, 0.75) 34%, rgba(8, 10, 18, 0.35) 68%, rgba(8, 10, 18, 0.18) 100%),
+    url('/aula-universidad.png');
 }
 
 .hero-v2-subtitle {
   font-family: 'Inter', sans-serif;
-  font-size: 1.05rem;
-  line-height: 1.6;
-  color: #475569;
-  margin: 0 0 32px 0;
-  max-width: 580px;
+  font-size: clamp(1.15rem, 1.8vw, 1.45rem);
+  line-height: 1.45;
+  color: #111827;
+  margin: 0 0 26px;
+  max-width: 520px;
   font-weight: 400;
 }
 
 .dark-theme .hero-v2-subtitle {
-  color: #94a3b8;
+  color: #e2e8f0;
+}
+
+.hero-v2-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+button.hero-cta-primary,
+button.hero-cta-secondary {
+  min-height: 54px;
+  padding: 0 28px;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+}
+
+button.hero-cta-primary {
+  background: #a32276;
+  border: 2px solid #a32276;
+  color: #ffffff;
+}
+
+button.hero-cta-primary:hover:not(:disabled) {
+  background: #881c63;
+  border-color: #881c63;
+  color: #ffffff;
+}
+
+button.hero-cta-secondary {
+  background: rgba(255, 255, 255, 0.86);
+  border: 2px solid #71345f;
+  color: #71345f;
+}
+
+button.hero-cta-secondary:hover:not(:disabled) {
+  background: #ffffff;
+  border-color: #a32276;
+  color: #a32276;
+}
+
+.dark-theme button.hero-cta-secondary {
+  background: rgba(17, 17, 19, 0.82);
+  border-color: #e879c4;
+  color: #f8fafc;
+}
+
+.dark-theme button.hero-cta-secondary:hover:not(:disabled) {
+  background: #271322;
+  color: #ffffff;
 }
 
 /* Tarjeta Buscador */
@@ -1594,9 +1692,12 @@ button:disabled {
 
 /* FOOTER */
 .udela-footer {
-  background-image: url('/assets/instituto-footer.jpg');
+  background-color: #111827;
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.58), rgba(15, 23, 42, 0.72)),
+    url('/aula-universidad.png');
   background-size: cover;
-  background-position: bottom center;
+  background-position: center 58%;
   background-repeat: no-repeat;
   padding: 120px 40px 40px 40px;
   position: relative;
@@ -2046,8 +2147,10 @@ button:disabled {
 }
 
 /* MODO OSCURO: FOOTER */
-.dark-theme .udela-footer::before {
-  background: rgba(15, 23, 42, 0.85);
+.dark-theme .udela-footer {
+  background-image:
+    linear-gradient(rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.82)),
+    url('/aula-universidad.png');
 }
 
 .dark-theme .footer-logo,
@@ -2098,55 +2201,75 @@ button:disabled {
 /* RESPONSIVE: HERO V2 */
 @media (max-width: 992px) {
   .hero.hero-v2 {
-    padding-top: 115px !important;
-    padding-bottom: 45px !important;
+    min-height: 640px;
+    padding: 120px 6% 60px;
+    margin-bottom: 48px;
+  }
+
+  .hero-logo-circle {
+    top: 14px;
+    left: 6%;
+    width: 82px;
+    height: 82px;
+    padding: 6px;
   }
 
   .hero-v2-container {
     flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 40px !important;
+    align-items: flex-start !important;
+    gap: 0 !important;
   }
 
-  .hero-v2-content {
-    max-width: 100% !important;
-    flex: none !important;
-  }
-
-  .hero-v2-sidebar {
-    max-width: 100% !important;
-    flex: none !important;
-  }
-
-  .hiw-sidebar-card {
+  .guest-container .hero.hero-v2 .hero-v2-container .hero-v2-content {
     max-width: 100% !important;
   }
 }
 
 @media (max-width: 600px) {
+  .hero.hero-v2 {
+    min-height: 620px;
+    padding: 120px 6% 48px;
+    margin-bottom: 40px;
+    background-position: 58% center;
+    background-image:
+      linear-gradient(90deg, rgba(248, 249, 252, 0.94), rgba(248, 249, 252, 0.72)),
+      url('/aula-universidad.png');
+  }
+
+  .dark-theme .hero.hero-v2 {
+    background-image:
+      linear-gradient(90deg, rgba(8, 10, 18, 0.9), rgba(8, 10, 18, 0.66)),
+      url('/aula-universidad.png');
+  }
+
+  .hero-v2-badge {
+    max-width: 100%;
+    font-size: 0.68rem;
+    gap: 6px;
+    padding: 8px 11px;
+  }
+
   .hero-v2-title {
-    font-size: 2.1rem !important;
+    font-size: clamp(2.6rem, 12vw, 3.4rem) !important;
   }
 
-  .search-inputs-row {
+  .hero-v2-subtitle {
+    font-size: 1.1rem;
+  }
+
+  .hero-v2-actions {
+    width: 100%;
     flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 6px !important;
+    align-items: stretch;
+    gap: 12px;
   }
 
-  .search-divider-line {
-    width: 100% !important;
-    height: 1px !important;
-    margin: 4px 0 !important;
+  button.hero-cta-primary,
+  button.hero-cta-secondary {
+    width: 100%;
   }
 
-  .btn-buscar-ofertas {
-    width: 100% !important;
-  }
-
-  .frequent-searches-box {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    gap: 10px !important;
+  .hero-desktop-break {
+    display: none;
   }
 }

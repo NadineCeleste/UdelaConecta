@@ -37,21 +37,45 @@
 /* HERO PRINCIPAL (con imagen de fondo)*/
 .home-hero {
   position: relative;
+  background-color: var(--bg-secondary);
+  background-image: url('/aula-universidad.png');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   overflow: hidden;
-  min-height: 600px;
+  min-height: 680px;
   display: flex;
   align-items: center;
-  padding: 4rem 2rem;
+  padding: 7rem 2rem 4rem;
+}
+
+.home-hero > .hero-logo-circle {
+  position: absolute;
+  top: 24px;
+  left: 5%;
+  z-index: 2;
+  display: block;
+  width: 108px;
+  height: 108px;
+  padding: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  background-color: #b63a95;
+  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.2);
+  object-fit: contain;
 }
 
 .home-hero::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.10);
+  background: linear-gradient(
+    90deg,
+    rgba(248, 249, 252, 0.94) 0%,
+    rgba(248, 249, 252, 0.82) 34%,
+    rgba(248, 249, 252, 0.24) 68%,
+    rgba(248, 249, 252, 0.08) 100%
+  );
   z-index: 0;
 }
 
@@ -71,70 +95,139 @@
 
 .hero-content-wrapper {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
 }
 
-.hero-text {
+.home-hero .hero-text {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 0;
   align-items: flex-start;
+  max-width: 680px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: clamp(24px, 3vw, 40px);
+  border: 1px solid rgba(255, 255, 255, 0.92);
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.68);
+  background-clip: padding-box;
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px) saturate(1.35);
+  -webkit-backdrop-filter: blur(24px) saturate(1.35);
+  isolation: isolate;
 }
 
 .hero-badge {
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  color: #ffffff;
+  color: #1f2937;
   padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
+  border-radius: 999px;
+  font-size: 0.86rem;
   font-weight: 600;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.84);
   backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(148, 163, 184, 0.35);
   white-space: nowrap;
   width: fit-content;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
 }
 
 .hero-title {
-  font-size: 3.5rem;
+  font-size: clamp(3.2rem, 5vw, 4.5rem);
   font-weight: 800;
-  line-height: 1.2;
-  color: #ffffff !important;
+  line-height: 1.08;
+  color: #111827 !important;
   text-align: left;
-  margin: 0;
+  margin: 0 0 16px;
+  letter-spacing: -0.03em;
 }
+
+.hero-title span {
+  color: #a32276;
+}
+
+.hero-subtitle {
+  color: #111827;
+  font-size: clamp(1.15rem, 1.8vw, 1.45rem);
+  font-weight: 400;
+  line-height: 1.45;
+  margin: 0 0 26px;
+}
+
 .hero-ctas {
   display: flex;
   flex-direction: row;
-  gap: 1rem;
-  margin-top: 0.5rem;
-}
-.hero-image {
-  display: flex;
-  justify-content: flex-end;
-  align-items: flex-start;
-  align-self: flex-start;
-  margin-top: -8rem;
-  margin-right: -10rem;
-  transform: scale(0.85);
-  transition: transform 0.3s ease;
-}
-.hero-image:hover {
-  transform: scale(1);
+  gap: 16px;
 }
 
-.hero-img {
-  max-width: 60%;
-  height: auto;
-  max-height: 100px;
-  border-radius: 20px;
-  box-shadow: 0 0 40px rgba(49, 173, 28, 0.5), var(--shadow-lg);
+button.btn-cta-outline {
+  min-height: 54px;
+  padding: 0 28px;
+  border: 2px solid #71345f;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.86);
+  color: #71345f;
 }
 
+button.btn-cta-outline:first-child {
+  background: #a32276;
+  border-color: #a32276;
+  color: #ffffff;
+}
+
+button.btn-cta-outline:first-child:hover {
+  background: #881c63;
+  border-color: #881c63;
+}
+
+button.btn-cta-outline:hover {
+  background: #ffffff;
+  border-color: #a32276;
+  color: #a32276;
+}
+
+:host-context(.dark-theme) .home-hero::before {
+  background: linear-gradient(
+    90deg,
+    rgba(8, 10, 18, 0.9) 0%,
+    rgba(8, 10, 18, 0.75) 34%,
+    rgba(8, 10, 18, 0.35) 68%,
+    rgba(8, 10, 18, 0.18) 100%
+  );
+}
+
+:host-context(.dark-theme) .hero-title {
+  color: #f8fafc !important;
+}
+
+:host-context(.dark-theme) .hero-title span {
+  color: #e879c4;
+}
+
+:host-context(.dark-theme) .hero-subtitle {
+  color: #e2e8f0;
+}
+
+:host-context(.dark-theme) .hero-badge {
+  background: rgba(17, 17, 19, 0.86);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #f4f4f5;
+}
+
+:host-context(.dark-theme) button.btn-cta-outline:not(:first-child) {
+  background: rgba(17, 17, 19, 0.82);
+  border-color: #e879c4;
+  color: #f8fafc;
+}
+
+:host-context(.dark-theme) button.btn-cta-outline:not(:first-child):hover {
+  background: #271322;
+  color: #ffffff;
+}
 /* INSTITUTO */
 
 .instituto-section {
@@ -608,7 +701,7 @@
 }
 
 .inst-titulo-verde {
-  color: var(--color-primary);
+  color: rgb(118, 116, 116);
   position: relative;
   display: inline-block;
 }
@@ -620,7 +713,7 @@
   left: 0;
   width: 100%;
   height: 3px;
-  background: var(--color-primary);
+  background: rgb(188, 188, 188);
   border-radius: 2px;
 }
 
@@ -1619,7 +1712,8 @@
 
 .btn-cta-outline {
   background: transparent;
-  color: #ffffff;
+  color: var(--text-main);
+  border-color: var(--accent-primary);
   backdrop-filter: blur(8px);
 }
 
@@ -1735,12 +1829,17 @@
 /* MODO OSCURO*/
 :host-context(.dark-theme) {
   .home-hero::before {
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(0, 0, 0, 0.55);
   }
 
-   .hero-image img {
-    filter: grayscale(100%);
-    } 
+  .home-hero .hero-text {
+    border-color: rgba(255, 255, 255, 0.36);
+    background: rgba(15, 18, 28, 0.62);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    backdrop-filter: blur(24px) saturate(1.35);
+    -webkit-backdrop-filter: blur(24px) saturate(1.35);
+  }
+
   .infografia-empresas {
     background: linear-gradient(135deg, #0d1f10 0%, #0a1a0d 50%, #111f14 100%);
   }
@@ -1964,8 +2063,17 @@
 @media (max-width: 768px) {
   /* Hero */
   .home-hero {
-    padding: 3rem 1.5rem;
-    min-height: auto;
+    padding: 7rem 1.5rem 3rem;
+    min-height: 620px;
+    background-position: 58% center;
+  }
+
+  .hero-logo-circle {
+    top: 14px;
+    left: 6%;
+    width: 82px;
+    height: 82px;
+    padding: 6px;
   }
 
   .hero-content-wrapper {
@@ -1974,8 +2082,10 @@
     gap: 2rem;
   }
 
-  .hero-text {
+  .home-hero .hero-text {
     align-items: center;
+    width: 100%;
+    padding: 24px 18px;
   }
 
   .hero-badge {
@@ -1984,7 +2094,12 @@
   }
 
   .hero-title {
-    font-size: 2.2rem;
+    font-size: clamp(2.6rem, 12vw, 3.4rem);
+    text-align: center;
+  }
+
+  .hero-subtitle {
+    font-size: 1.1rem;
     text-align: center;
   }
 
@@ -1997,10 +2112,6 @@
   .hero-ctas .btn-cta-outline {
     width: 100%;
     text-align: center;
-  }
-
-  .hero-image {
-    display: none;
   }
 
   /* Instituto */
