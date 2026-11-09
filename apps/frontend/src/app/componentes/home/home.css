@@ -1,32 +1,5 @@
-:host {
-  /* Colores principales */
-  --color-primary: var(--accent-primary, #31ad1c);
-  --color-text: var(--text-main, #09090b);
-  --color-text-muted: var(--text-muted, #71717a);
-  --color-bg: var(--bg-primary, #ffffff);
-  --color-bg-light: var(--bg-secondary, #f9f9f9);
-  --color-border: var(--border-color, #e0e0e0);
-  --color-card: var(--card-bg, #ffffff);
-  --green-bg-light: rgba(49, 173, 28, 0.08);
-  --green-bg-mid: rgba(49, 173, 28, 0.12);
-  --green-border: rgba(49, 173, 28, 0.15);
-  --green-border-strong: rgba(49, 173, 28, 0.30);
-  --green-shadow: rgba(49, 173, 28, 0.10);
-  --accent-secondary: #f59e0b;
-  /* Border radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 20px;
-  --radius-xl: 28px;
-  --radius-full: 999px;
-
-  /* Sombras */
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.08);
-  --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.10);
-  --shadow-green: 0 8px 20px var(--green-shadow);
-  --shadow-green-hover: 0 12px 32px rgba(49, 173, 28, 0.14);
-}
+/* Los tokens (colores, radios, sombras, lavados) viven en src/styles.css:
+   esta página los hereda como cualquier otra y no define valores propios. */
 
 * {
   margin: 0;
@@ -48,26 +21,12 @@
   background-position: center;
   background-repeat: no-repeat;
   overflow: hidden;
-  min-height: 680px;
+  /* Misma altura y respiro que el héroe del inicio público (480px + 64/70px):
+     con 680px el `cover` ampliaba la foto un 28% y se veía "con zoom". */
+  min-height: 480px;
   display: flex;
   align-items: center;
-  padding: 7rem 2rem 4rem;
-}
-
-.home-hero > .hero-logo-circle {
-  position: absolute;
-  top: 24px;
-  left: 5%;
-  z-index: 2;
-  display: block;
-  width: 108px;
-  height: 108px;
-  padding: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  background-color: #b63a95;
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.2);
-  object-fit: contain;
+  padding: 64px 5% 70px;
 }
 
 .home-hero::before {
@@ -109,15 +68,20 @@
   flex-direction: column;
   gap: 0;
   align-items: flex-start;
-  max-width: 680px;
+  /* La caja acompaña la reducción del contenido: con 680px quedaba media
+     tarjeta vacía a la derecha. */
+  max-width: 476px;
   width: 100%;
   box-sizing: border-box;
-  padding: clamp(24px, 3vw, 40px);
-  border: 1px solid rgba(255, 255, 255, 0.92);
+  padding: clamp(17px, 2.1vw, 28px);
+  /* Sin borde ni línea interior: el vidrio se define solo por el relleno y la
+     sombra exterior. Sobre el fondo de la foto ya no se dibuja el contorno. */
+  border: none;
   border-radius: 28px;
-  background: rgba(255, 255, 255, 0.68);
+  /* Otro 20% menos de relleno (0,54 → 0,43): deja pasar más la foto. */
+  background: rgba(255, 255, 255, 0.43);
   background-clip: padding-box;
-  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
   backdrop-filter: blur(24px) saturate(1.35);
   -webkit-backdrop-filter: blur(24px) saturate(1.35);
   isolation: isolate;
@@ -126,28 +90,30 @@
 .hero-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.35rem;
   color: #1f2937;
-  padding: 0.5rem 1rem;
+  padding: 0.35rem 0.7rem;
   border-radius: 999px;
-  font-size: 0.86rem;
+  /* -30% daría 9,6px: por debajo de 10px el texto en mayúsculas deja de leerse,
+     así que el badge queda en el piso legible. */
+  font-size: 0.65rem;
   font-weight: 600;
   background: rgba(255, 255, 255, 0.84);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(148, 163, 184, 0.35);
   white-space: nowrap;
   width: fit-content;
-  margin-bottom: 24px;
+  margin-bottom: 17px;
   box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
 }
 
 .hero-title {
-  font-size: clamp(3.2rem, 5vw, 4.5rem);
+  font-size: clamp(2.24rem, 3.5vw, 3.15rem);
   font-weight: 800;
   line-height: 1.08;
   color: #111827 !important;
   text-align: left;
-  margin: 0 0 16px;
+  margin: 0 0 11px;
   letter-spacing: -0.03em;
 }
 
@@ -157,21 +123,21 @@
 
 .hero-subtitle {
   color: #111827;
-  font-size: clamp(1.15rem, 1.8vw, 1.45rem);
+  font-size: clamp(0.81rem, 1.26vw, 1.02rem);
   font-weight: 400;
   line-height: 1.45;
-  margin: 0 0 26px;
+  margin: 0 0 18px;
 }
 
 .hero-ctas {
   display: flex;
   flex-direction: row;
-  gap: 16px;
+  gap: 11px;
 }
 
 button.btn-cta-outline {
-  min-height: 54px;
-  padding: 0 28px;
+  min-height: 38px;
+  padding: 0 20px;
   border: 2px solid #71345f;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.86);
@@ -233,68 +199,6 @@ button.btn-cta-outline:hover {
   background: #271322;
   color: #ffffff;
 }
-/* INSTITUTO */
-
-.instituto-section {
-  background: var(--bg-primary);
-  border: 1px solid var(--green-bg-light);
-  border-radius: 20px;
-  padding: 24px 32px;
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-top: 24px;
-  flex-wrap: wrap;
-}
-
-.instituto-logo {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
-  background: var(--bg-split);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 800;
-  color: var(--accent-primary);
-  text-align: center;
-  line-height: 1.3;
-  flex-shrink: 0;
-}
-
-.instituto-text {
-  flex: 1;
-  min-width: 200px;
-}
-
-.instituto-text h3 {
-  font-family: 'Montserrat', sans-serif;
-  font-size: 15px;
-  font-weight: 800;
-  color: #1a3d2b;
-  margin-bottom: 4px;
-}
-
-.instituto-text p {
-  font-size: 12px;
-  color: var(--text-main);
-  line-height: 1.5;
-}
-
-.instituto-btn {
-  margin-left: auto;
-  background: var(--color-primary);
-  color: #fff;
-  border: none;
-  border-radius: var(--radius-full);
-  padding: 10px 22px;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
 
 
 /*  TABS */
@@ -302,7 +206,7 @@ button.btn-cta-outline:hover {
 .tabs-section {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 4rem 2rem;
+  padding: 2.5rem 2rem 3.5rem;
 }
 
 .tabs-container {
@@ -351,7 +255,7 @@ button.btn-cta-outline:hover {
 /*oportunidades */
 
 .content-section {
-  margin-bottom: 5rem;
+  margin-bottom: 3.5rem;
 }
 
 .section-title {
@@ -820,27 +724,7 @@ button.btn-cta-outline:hover {
 }
 
 .beneficios-header-left {
-  margin-bottom: 2.5rem;
-}
-
-.beneficios-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  background: var(--green-bg-light);
-  border: 1px solid rgba(49, 173, 28, 0.25);
-  border-radius: var(--radius-full);
-  padding: 0.35rem 1rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--color-primary);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  margin-bottom: 1rem;
-}
-
-.beneficios-label .material-icons-outlined {
-  font-size: 15px;
+  margin-bottom: 2rem;
 }
 
 .beneficios-titulo {
@@ -1274,12 +1158,15 @@ button.btn-cta-outline:hover {
   margin-bottom: 1.5rem;
 }
 
+/* El durazno del diseño anterior dejaba el ícono violeta claro casi invisible;
+   ahora el recuadro es un lavado de la paleta y el ícono toma el violeta. */
 .match-logo-box {
   width: 48px;
   height: 48px;
-  background: #FFE5D9;
-  color: var(--match-badge);
-  border-radius: 12px;
+  background: var(--wash-violet, rgba(139, 92, 246, 0.16));
+  color: var(--accent-violet, #8b5cf6);
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1758,77 +1645,112 @@ button.btn-cta-outline:hover {
   box-shadow: 0 4px 12px rgba(49, 173, 28, 0.3);
 }
 
-/*FOOTER */
+/*FOOTER: misma foto, medidas y ritmo que el footer de la portada pública */
 .footer-cta-wrapper {
-  background: #000000;
-  overflow: hidden;
-  border-radius: 32px 32px 32px 32px;
+  background-color: #111827;
+  /* Velo en variable + PNG de fallback y WebP vía image-set, igual que la portada. */
+  --footer-overlay: linear-gradient(rgba(15, 23, 42, 0.66), rgba(15, 23, 42, 0.76));
+  background-image: var(--footer-overlay), url('/aula-universidad.png');
+  background-image:
+    var(--footer-overlay),
+    image-set(url('/aula-universidad.webp') type('image/webp'), url('/aula-universidad.png') type('image/png'));
+  background-size: cover;
+  /* Banda baja: se ve la franja de pupitres, como en la portada. */
+  background-position: center 55%;
+  background-repeat: no-repeat;
+  padding: 48px 40px 32px;
+  border-radius: 0;
+}
+
+/* Mismo ancho máximo y centrado que el .footer-top público. */
+.ft-inner {
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .ft-cta-grid {
-  padding: 3rem 3rem 2.5rem;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 0 3rem;
+  padding: 0;
+}
+
+/* Con el rol definido queda un solo bloque: toma la columna izquierda y deja
+   ver la foto a la derecha, en vez de estirarse a los 1200px. */
+/* Un solo bloque por rol: queda centrado en la franja, con la foto a los lados. */
+.ft-cta-grid--single {
+  grid-template-columns: minmax(0, 560px);
+  justify-content: center;
 }
 
 .ft-cta-card {
-  background: rgba(255, 255, 255, 0.04);
-  border: 0.5px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 2.5rem 2rem;
+  /* Misma caja de cristal que el footer público: veladura de la paleta,
+     esquinas rectas, sin borde ni sombra. */
+  background: rgba(139, 92, 246, 0.22);
+  backdrop-filter: blur(18px) saturate(1.25);
+  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  border: none;
+  border-radius: 0;
+  padding: 16px 20px;
   text-align: center;
+  box-shadow: none;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
+}
+
+/* El bloque de empresa lleva la veladura rosada del wordmark, así los dos roles
+   se distinguen también en el pie. */
+.ft-cta-card--empresa {
+  background: rgba(191, 22, 109, 0.22);
 }
 
 .ft-cta-card h3 {
+  font-family: 'Montserrat', sans-serif;
   font-size: 1.25rem;
   font-weight: 800;
-  color: #ffffff !important;
-  margin: 0 0 0.6rem;
+  letter-spacing: -0.2px;
+  color: #f5f0f8 !important;
+  margin: 0 0 8px;
 }
 
 .ft-cta-card p {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.45);
-  margin: 0 0 1.5rem;
-  line-height: 1.6;
+  font-size: 0.9rem;
+  color: #f5f0f8;
+  /* El ancho de lectura se centra junto con el texto. */
+  margin: 0 auto 18px;
+  line-height: 1.65;
+  max-width: 46ch;
 }
 
 .ft-cta-card .btn-cta-solid {
-  background: var(--bg-primary);
-  color: var(--text-main);
+  background: var(--accent-magenta, #ba3995);
+  color: #ffffff;
   border: none;
-  border-radius: 10px;
-  padding: 0.8rem 1.6rem;
+  border-radius: 0;
+  padding: 0.7rem 1.4rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: none;
+  transform: none;
 }
 
-.ft-udela {
-  padding: 0 1.5rem;
-  overflow: hidden;
-  line-height: 0.82;
-  align-items: center;
-  display: flex;
-}
-
-.ft-udela-text {
-  font-family: 'Montserrat', sans-serif;
-  font-size: clamp(60px, 15vw, 160px);
-  font-weight: 900;
-  color: rgba(255, 255, 255, 0.06);
-  letter-spacing: -0.04em;
-  user-select: none;
-  transform: translateX(50%);
-
+.ft-cta-card .btn-cta-solid:hover {
+  background: var(--accent-magenta-deep, #bf166d);
+  transform: none;
+  box-shadow: none;
 }
 
 .ft-bottom {
-  padding: 0.75rem 3rem 1.5rem;
+  padding: 24px 0 0;
 }
 
 .ft-bottom p {
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.2);
+  /* Sobre la foto la línea legal necesita más cuerpo que el 20% blanco que
+     tenía con el fondo negro plano. */
+  color: rgba(245, 240, 248, 0.85);
   margin: 0;
+  text-align: center;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.72);
 }
 
 /* MODO OSCURO*/
@@ -1838,11 +1760,24 @@ button.btn-cta-outline:hover {
   }
 
   .home-hero .hero-text {
-    border-color: rgba(255, 255, 255, 0.36);
-    background: rgba(15, 18, 28, 0.62);
-    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+    border: none;
+    background: rgba(15, 18, 28, 0.4);
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.48);
     backdrop-filter: blur(24px) saturate(1.35);
     -webkit-backdrop-filter: blur(24px) saturate(1.35);
+  }
+
+  /* Footer oscuro: mismo velo más cerrado que la portada. */
+  .footer-cta-wrapper {
+    --footer-overlay: linear-gradient(rgba(0, 0, 0, 0.78), rgba(0, 0, 0, 0.88));
+  }
+
+  .ft-cta-card {
+    background: rgba(139, 92, 246, 0.26);
+  }
+
+  .ft-cta-card--empresa {
+    background: rgba(232, 121, 196, 0.18);
   }
 
   .infografia-empresas {
@@ -1925,11 +1860,6 @@ button.btn-cta-outline:hover {
     background: rgba(255, 255, 255, 0.08);
   }
 
-  /* Label "Beneficios" */
-  .beneficios-label {
-    background: rgba(49, 173, 28, 0.12);
-    border-color: rgba(49, 173, 28, 0.2);
-  }
   .cf-pill-nav {
     background-color: rgba(30, 30, 32, 0.9);
   }
@@ -1972,7 +1902,7 @@ button.btn-cta-outline:hover {
   }
 
   .hero-title {
-    font-size: 2.8rem;
+    font-size: 1.96rem;
   }
 
   .inst-cards-row {
@@ -2068,17 +1998,8 @@ button.btn-cta-outline:hover {
 @media (max-width: 768px) {
   /* Hero */
   .home-hero {
-    padding: 7rem 1.5rem 3rem;
-    min-height: 620px;
+    padding: 2.5rem 1.5rem 3rem;
     background-position: 58% center;
-  }
-
-  .hero-logo-circle {
-    top: 14px;
-    left: 6%;
-    width: 82px;
-    height: 82px;
-    padding: 6px;
   }
 
   .hero-content-wrapper {
@@ -2090,7 +2011,7 @@ button.btn-cta-outline:hover {
   .home-hero .hero-text {
     align-items: center;
     width: 100%;
-    padding: 24px 18px;
+    padding: 17px 13px;
   }
 
   .hero-badge {
@@ -2099,12 +2020,12 @@ button.btn-cta-outline:hover {
   }
 
   .hero-title {
-    font-size: clamp(2.6rem, 12vw, 3.4rem);
+    font-size: clamp(1.82rem, 8.4vw, 2.38rem);
     text-align: center;
   }
 
   .hero-subtitle {
-    font-size: 1.1rem;
+    font-size: 0.77rem;
     text-align: center;
   }
 
@@ -2117,18 +2038,6 @@ button.btn-cta-outline:hover {
   .hero-ctas .btn-cta-outline {
     width: 100%;
     text-align: center;
-  }
-
-  /* Instituto */
-  .instituto-section {
-    flex-direction: column;
-    text-align: center;
-    padding: 20px;
-  }
-
-  .instituto-btn {
-    margin-left: 0;
-    width: 100%;
   }
 
   /* Tabs */
@@ -2196,26 +2105,23 @@ button.btn-cta-outline:hover {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  /* Footer */
-  .ft-cta-grid {
+  /* Footer: mismas medidas que el footer público en móvil */
+  .footer-cta-wrapper {
+    padding: 40px 20px 28px;
+  }
+
+  .ft-cta-grid,
+  .ft-cta-grid--single {
     grid-template-columns: 1fr;
-    padding: 2rem 1.5rem;
+    gap: 1.5rem;
   }
 
   .ft-cta-card {
-    padding: 2rem;
-  }
-
-  .ft-udela-text {
-    font-size: clamp(60px, 18vw, 120px);
-    transform: translateX(0%);
-    text-align: center;
-    width: 100%;
-    display: block;
+    padding: 16px 18px;
   }
 
   .ft-bottom {
-    padding: 0.75rem 1.5rem 1.5rem;
+    padding: 20px 0 0;
   }
 }
 
@@ -2225,7 +2131,7 @@ button.btn-cta-outline:hover {
   }
 
   .hero-title {
-    font-size: 1.8rem;
+    font-size: 1.26rem;
   }
 
   .inst-infografia {

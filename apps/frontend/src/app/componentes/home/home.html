@@ -1,11 +1,6 @@
 <!-- HERO SECTION -->
 <section class="home-hero">
   <div class="hero-gradient"></div>
-  <img
-    class="hero-logo-circle"
-    src="/logo-udela-ciudad.png"
-    alt="Logo de la Universidad de la Ciudad de Buenos Aires"
-  />
   <div class="hero-container">
   
 
@@ -23,12 +18,14 @@
           Una herramienta de la Universidad para conectar talento universitario con oportunidades reales.
         </p>
 
-        <div class="hero-ctas">
-          <button class="btn-cta btn-cta-outline" (click)="scrollToTab('estudiantes')">
-            Soy estudiante / graduado
+        <!-- Un solo CTA, el del rol que inició sesión: la acción lleva directo
+             a la pantalla que corresponde en vez de saltar de pestaña. -->
+        <div class="hero-ctas" *ngIf="esEstudiante || esGerente">
+          <button class="btn-cta btn-cta-outline" *ngIf="esEstudiante" (click)="irABuscarEmpleo()">
+            Buscar empleo
           </button>
-          <button class="btn-cta btn-cta-outline" (click)="scrollToTab('empresas')">
-            Soy Empresa
+          <button class="btn-cta btn-cta-outline" *ngIf="esGerente" (click)="irAPublicarOferta()">
+            Publicar una oferta
           </button>
         </div>
       </div>
@@ -36,20 +33,13 @@
   </div>
 </section>
 
-<!-- SECCION Universidad -->
-<div class="instituto-section">
-  <div class="instituto-logo">UDELA<br>Ciudad</div>
-  <div class="instituto-text">
-    <h3>Una herramienta de Udela Ciudad</h3>
-    
-  </div>
-  <button class="instituto-btn" (click)="irAlSitioOficial()">Sitio oficial →</button>
-</div>
 
 <!-- TABS SECTION -->
 <section class="tabs-section">
   <div class="tabs-container">
-    <div class="tabs-header">
+    <!-- Con el rol definido se muestra solo el espacio propio: la barra de
+         pestañas queda únicamente cuando el rol todavía no se conoce. -->
+    <div class="tabs-header" *ngIf="!esEstudiante && !esEmpresa">
       <button class="tab-button" [class.active]="activeTab === 'estudiantes'"
         (click)="setActiveTab('estudiantes')">
         Para estudiantes y graduados
@@ -310,7 +300,11 @@
               <span class="material-icons-outlined faq-icon" [class.open]="openFaq === 0">expand_more</span>
             </button>
             <div class="faq-content" [class.open]="openFaq === 0">
-              <p>ni idea, hay que averiguar</p>
+              <p>No hay un plazo único: depende del perfil y de la constancia. En general, quien empieza a postularse
+                con dos o tres proyectos propios y practica entrevistas suele ubicarse entre los 3 y los 9 meses. El
+                primer trabajo muchas veces llega por una pasantía, una práctica de la facultad o un contacto. Lo que
+                más acelera el proceso es un portfolio con proyectos que puedas explicar, un CV de una página y
+                postularte todas las semanas, aunque la búsqueda no sea la ideal.</p>
             </div>
           </div>
 
@@ -333,7 +327,11 @@
               <span class="material-icons-outlined faq-icon" [class.open]="openFaq === 2">expand_more</span>
             </button>
             <div class="faq-content" [class.open]="openFaq === 2">
-              <p>ni idea, hay que averiguar o cambiar la pregunta.</p>
+              <p>En el mercado local, JavaScript y TypeScript concentran la mayor cantidad de búsquedas junior, con React
+                y Angular como los frameworks más pedidos en frontend. En backend aparecen Java con Spring Boot, Python
+                y Node.js, casi siempre junto a bases de datos SQL. A cualquier puesto le suma saber Git, consumir APIs
+                REST y tener nociones de testing. No hace falta cubrir todo: conviene elegir un stack, profundizarlo y
+                mirar en las ofertas activas qué tecnologías se repiten.</p>
             </div>
           </div>
         </div>
@@ -487,10 +485,6 @@
       <div class="beneficios-coverflow-section">
 
         <div class="beneficios-header-left">
-          <span class="beneficios-label">
-            <span class="material-icons-outlined">auto_awesome</span>
-            Beneficios
-          </span>
           <h2 class="beneficios-titulo">
             ¿Por qué publicar en <span class="beneficios-titulo-verde">Udela Conecta</span>?
           </h2>
@@ -704,22 +698,23 @@
   </div>
 </section>
 
-<section class="footer-cta-wrapper">
-  <div class="ft-cta-grid">
-    <div class="ft-cta-card">
-      <h3>¿Listo para postularte?</h3>
-      <p>Explorá las ofertas disponibles y dá el primer paso en tu carrera IT.</p>
-      <button class="btn-cta btn-cta-solid" (click)="irAlPerfil()">Completá tu perfil</button>
+<footer class="footer-cta-wrapper">
+  <div class="ft-inner">
+    <div class="ft-cta-grid" [class.ft-cta-grid--single]="esEstudiante || esEmpresa">
+      <div class="ft-cta-card ft-cta-card--estudiante" *ngIf="esEstudiante">
+        <h3>¿Listo para postularte?</h3>
+        <p>Explorá las ofertas disponibles y dá el primer paso en tu carrera IT.</p>
+        <button class="btn-cta btn-cta-solid" (click)="irABuscarEmpleo()">Ver ofertas disponibles</button>
+      </div>
+      <div class="ft-cta-card ft-cta-card--empresa" *ngIf="esEmpresa">
+        <h3>¿Buscás talento IT?</h3>
+        <p>Publicá una oferta y llegá a estudiantes y egresados de la Universidad.</p>
+        <button class="btn-cta btn-cta-solid" (click)="irAPublicarOferta()">Publicar una oferta</button>
+      </div>
     </div>
-    <div class="ft-cta-card">
-      <h3>¿Buscás talento IT?</h3>
-      <p>Registrá tu empresa y publicá tu primera oferta gratis hoy.</p>
-     <button class="btn-cta btn-cta-solid" (click)="irAContratos()">Registrar empresa</button>
+
+    <div class="ft-bottom">
+      <p>© 2026 Universidad de la Ciudad de Buenos Aires · Desarrollado por y para estudiantes</p>
     </div>
   </div>
-
-
-  <div class="ft-bottom">
-    <p>© 2026 Universidad de la Ciudad de Buenos Aires · Desarrollado por y para estudiantes</p>
-  </div>
-</section>
+</footer>
