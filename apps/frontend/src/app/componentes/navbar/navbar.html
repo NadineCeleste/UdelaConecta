@@ -111,13 +111,22 @@
               </a>
             </li>
             <li class="divider"></li>
-            <li>
+            <li class="li-cerrar-sesion">
               <a class="cerrar-sesion" (click)="logout()">
                 <span class="material-icons-outlined">logout</span>
                 Cerrar sesión
               </a>
             </li>
           </ul>
+        </li>
+
+        <!-- En el menu de hamburguesa el desplegable de la cuenta queda anidado,
+             asi que el cierre de sesion va suelto para poder salir desde el menu. -->
+        <li class="nav-item nav-item-logout">
+          <a class="btn-halo btn-logout" (click)="logout()">
+            <span class="material-icons-outlined">logout</span>
+            Cerrar sesión
+          </a>
         </li>
 
       </ng-container>

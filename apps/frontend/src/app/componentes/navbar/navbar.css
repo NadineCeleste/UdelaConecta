@@ -249,23 +249,13 @@ html, body {
     align-items: center;
     justify-content: center;
     padding: 6px 14px;
-    border-radius: 8px;
+    border-radius: 0;
     font-family: 'Montserrat', sans-serif; /* ← Tipografía actualizada */
     font-weight: 700;
     font-size: 0.75rem;
     letter-spacing: 0.5px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    box-shadow: none;
 
-    /* 1. Definimos una transición rápida y limpia (200 milisegundos) */
-    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
-    
-    /* 2. Bloque Hover: cambia la sombra y desplaza apenas 1 píxel hacia arriba */
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
-      cursor: default; /* Mantiene el cursor normal si no es un botón cliqueable */
-    }
-    
     /* RESET CRÍTICO: quita los márgenes del <p> interno */
     & p {
       margin: 0;
@@ -275,19 +265,21 @@ html, body {
     }
   }
 
-  /* Modificador específico para Gerente */
-  & .badge-gerente {
-    background-color: #f59e0b;
-    color: #ffffff;
-    border-radius: 50px solid rgba(255, 152, 0, 0.2);
-  }
-
-  /* Modificador específico para Estudiante */
+  /* El rol se indica con un lavado de la paleta, sin relleno sólido: el
+     ámbar anterior dejaba texto blanco sobre naranja, ilegible en oscuro. */
+  & .badge-gerente,
   & .badge-dev {
-    background-color: #f59e0b;
-    color: #ffffff;
-    border-radius: 50px solid rgba(76, 175, 80, 0.2);
+    background-color: var(--wash-magenta, rgba(186, 57, 149, 0.18));
+    color: var(--accent-magenta, #ba3995);
+    border: 1px solid rgba(186, 57, 149, 0.32);
+    border-radius: 0;
   }
+}
+
+:host-context(.dark-theme) .badge-rol {
+  background-color: rgba(232, 121, 196, 0.16);
+  color: #e879c4;
+  border-color: rgba(232, 121, 196, 0.34);
 }
 
 .material-icons-outlined {
@@ -297,57 +289,104 @@ html, body {
   vertical-align: middle;
 }
 
-/*btn-halo*/
+/* Los enlaces del navbar logueado (Perfil, Buscar empleo, Ver mis contratos)
+   usan la misma receta que los botones del navbar público: rectángulo con
+   lavado magenta, sin sombra ni salto en hover. */
 .btn-halo {
   position: relative;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 20px;
-  color: var(--text-main);
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 0;
+  border: 1px solid transparent;
+  background-color: #ba399530;
+  color: #ba3995;
   text-decoration: none;
   font-family: 'Montserrat', sans-serif;
+  font-size: 0.875rem;
   font-weight: 500;
-  font-size: 1rem;
-  letter-spacing: 0.3px;
-  border-radius: 8px;
-  background-color: transparent;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  box-shadow: none;
+  transform: none;
+  filter: none;
   z-index: 10;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid transparent;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
 
 .btn-halo:hover {
-  transform: translateY(-2px);
-  color: var(--accent-primary);
-  background: linear-gradient(135deg, rgba(11, 0, 207, 0.05) 0%, rgba(0, 210, 255, 0.05) 100%);
-  border-color: rgba(11, 0, 207, 0.1);
-  box-shadow: 0 4px 15px rgba(11, 0, 207, 0.08);
+  background-color: #ba399550;
+  color: #ba3995;
+  border-color: transparent;
+  transform: none;
+  box-shadow: none;
+  filter: none;
 }
 
 .btn-halo.active {
-  color: var(--accent-primary);
-  background: rgba(11, 0, 207, 0.08);
-  border-color: rgba(11, 0, 207, 0.2);
+  background-color: #ba399560;
+  color: #ba3995;
+  border-color: transparent;
+}
+
+:host-context(.dark-theme) .btn-halo {
+  background-color: #a955f71c;
+  color: #e879c4;
+}
+
+:host-context(.dark-theme) .btn-halo:hover {
+  background-color: #a955f728;
+  color: #e879c4;
+}
+
+:host-context(.dark-theme) .btn-halo.active {
+  background-color: #a955f734;
+  color: #e879c4;
 }
 
 .btn-back {
   background-color: transparent;
   border: none !important;
-  color: #625e5e7e;
+  /* Paleta de la marca: antes era un gris translucido (#625e5e7e), que sobre
+     el navbar claro daba 2,5:1 y no era ninguno de los colores del sitio. */
+  color: var(--accent-magenta, #ba3995);
   padding: 8px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  -webkit-text-stroke: 1.8px #625e5e7e;
+  -webkit-text-stroke: 1px var(--accent-magenta, #ba3995);
 }
 
 .btn-back:hover {
-  background-color: rgba(11, 0, 207, 0.05);
-  color: var(--accent-primary);
-  transform: translateY(-2px);
+  background-color: var(--wash-magenta, rgba(186, 57, 149, 0.18));
+  color: var(--accent-magenta-deep, #bf166d);
+  -webkit-text-stroke-color: var(--accent-magenta-deep, #bf166d);
+  transform: none;
+}
+
+/* Comparte la clase .btn-halo pero es un ícono: no lleva el lavado de los
+   enlaces. Se repite la regla oscura porque :host-context gana en especificidad. */
+.btn-back,
+:host-context(.dark-theme) .btn-back {
+  background-color: transparent;
+  border-color: transparent;
+  box-shadow: none;
+}
+
+:host-context(.dark-theme) .btn-back {
+  color: #e879c4;
+  -webkit-text-stroke: 1px #e879c4;
+}
+
+:host-context(.dark-theme) .btn-back:hover {
+  background-color: #a955f728;
+  color: #e879c4;
+  -webkit-text-stroke: 1px #e879c4;
 }
 
 
@@ -578,27 +617,34 @@ html, body {
 .btn-account {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 4px;
+  min-height: 38px;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   color: var(--text-main);
   cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 50px;
-  transition: all 0.3s ease;
+  padding: 0 10px;
+  border-radius: 0;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
 
 .btn-account:hover {
-  background: rgba(11, 0, 207, 0.05);
-  color: var(--accent-primary);
+  background-color: #ba399530;
+  border-color: transparent;
+  color: #ba3995;
+}
+
+:host-context(.dark-theme) .btn-account:hover {
+  background-color: #a955f71c;
+  color: #e879c4;
 }
 
 .btn-account .material-icons-outlined {
-  font-size: 28px;
+  font-size: 24px;
 }
 
 .btn-account .arrow {
-  font-size: 20px;
+  font-size: 18px;
   transition: transform 0.3s ease;
 }
 
@@ -611,6 +657,12 @@ html, body {
   background: var(--border-color);
   margin: 8px 0;
   opacity: 0.5;
+}
+
+/* Cierre de sesion suelto: solo existe en el menu de hamburguesa, donde el
+   desplegable de la cuenta queda anidado y no deja salir del menu. */
+.nav-links .nav-item-logout {
+  display: none;
 }
 
 /*boton de cerrar sesion*/
@@ -1314,6 +1366,11 @@ html, body {
     align-items: stretch;
     padding: 80px 20px 40px 20px;
     gap: 10px;
+    /* Con el cierre de sesion suelto la lista es mas larga: en pantallas bajas
+       (o en horizontal) el menu tiene que poder desplazarse hasta el final.
+       !important porque arriba .nav-links declara overflow: visible !important. */
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
     transition: right 0.4s ease-in-out;
     box-shadow: -5px 0 15px rgba(0, 0, 0, 0.2);
     z-index: 9999;
@@ -1340,19 +1397,34 @@ html, body {
     width: 100%;
   }
 
-  .btn-halo,
-  .cerrar-sesion {
+  /* Solo los enlaces del menu lateral. Sin el .nav-links delante, esta regla
+     tambien alcanzaba a la flecha "volver" del navbar y la convertia en una caja
+     gris con esquinas de 8px. */
+  .nav-links .btn-halo,
+  .nav-links .cerrar-sesion {
     width: 100%;
     padding: 12px 15px;
     justify-content: flex-start;
-    border-radius: 8px;
+    border-radius: 0;
     border-bottom: none !important;
     background-color: var(--bg-secondary) !important;
   }
 
-  :host-context(.dark-theme) .btn-halo,
-  :host-context(.dark-theme) .cerrar-sesion {
+  :host-context(.dark-theme) .nav-links .btn-halo,
+  :host-context(.dark-theme) .nav-links .cerrar-sesion {
     background-color: var(--card-bg) !important;
+  }
+
+  /* La flecha sigue siendo un icono suelto, en la paleta. */
+  .btn-back,
+  .btn-back:hover,
+  :host-context(.dark-theme) .btn-back,
+  :host-context(.dark-theme) .btn-back:hover {
+    width: auto;
+    padding: 8px;
+    border-radius: 50%;
+    justify-content: center;
+    background-color: transparent !important;
   }
 
   .dropdown-menu {
@@ -1380,6 +1452,16 @@ html, body {
   .dropdown-menu li a {
     padding: 10px;
     font-size: 0.9rem;
+  }
+
+  /* En el menu lateral el cierre de sesion sale del desplegable. */
+  .nav-links .nav-item-logout {
+    display: flex;
+  }
+
+  .account-dropdown .li-cerrar-sesion,
+  .account-dropdown .divider {
+    display: none;
   }
 
   /* SOLO LA X DEL MÓVIL */

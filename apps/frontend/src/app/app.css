@@ -11,18 +11,19 @@
   --navbar-border: #e4e4e7;
   --navbar-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
   --accent-primary: #B23A8C;
-  --accent-secondary: #f59e0b;
+  --accent-secondary: #e879c4;
   /* Violeta de la paleta para destacar palabras dentro de un título.
      Contraste sobre blanco: 4.23:1 (texto grande, AA). */
   --accent-violet: #8b5cf6;
   --bg-split: linear-gradient(to right, #e8e8e8 50%, #e1dde0 50%);
-  --accent-secondary: #f59e0b;
   --danger-primary: #a00c0c;
-  --match-col: #C4B5F4;
-  --match-badge: #FFD166;
-  --match-btn: #FFD166;
-  --tags: #ecfdf5;
-  --tags-seniority: #fef3c7;
+  /* Estados en la paleta nueva: el amarillo y el verde salieron del sistema.
+     Los chips son lavados translúcidos y llevan texto de marca encima. */
+  --match-col: #c4b5f4;
+  --match-badge: #c4b5f4;
+  --match-btn: #8b5cf6;
+  --tags: rgba(139, 92, 246, 0.14);
+  --tags-seniority: rgba(186, 57, 149, 0.16);
 }
 
 .dark-theme {
@@ -40,11 +41,11 @@
   --accent-primary: #a855f7;
   /* En oscuro el violeta sube un paso: 5.31:1 sobre negro. */
   --accent-violet: #a855f7;
-  --match-col: #67309b;
-  --match-badge: #D946EF;
-  --match-btn: #8b5cf6;
-  --tags: #e5d7ff;
-  --tags-seniority: #fed67a;
+  --match-col: rgba(139, 92, 246, 0.22);
+  --match-badge: #c4b5f4;
+  --match-btn: #a855f7;
+  --tags: rgba(168, 85, 247, 0.22);
+  --tags-seniority: rgba(232, 121, 196, 0.22);
   --bg-split: linear-gradient(to right, #111111 50%, #000000 50%);
 }
 
@@ -343,22 +344,6 @@ h4,
   .hero.hero-v2::before {
     animation: none;
   }
-}
-
-.hero-logo-circle {
-  position: absolute;
-  top: 24px;
-  left: 5%;
-  z-index: 2;
-  display: block;
-  width: 108px;
-  height: 108px;
-  padding: 8px;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  border-radius: 50%;
-  background-color: #b63a95;
-  box-shadow: 0 6px 20px rgba(15, 23, 42, 0.2);
-  object-fit: contain;
 }
 
 .hero-v2-container {
@@ -1267,6 +1252,158 @@ button:disabled {
   margin-bottom: 25px;
 }
 
+/* MODAL DE AUTENTICACIÓN: la mitad de tamaño que la versión original
+   (480×665 → 360×~380). Va todo con .modal-card por delante para no tocar
+   la tarjeta de la página de login, que comparte las clases .card e input. */
+.modal-card {
+  max-width: 360px;
+  padding: 20px;
+  border-radius: 0;
+  border: none;
+}
+
+.modal-card .card-section {
+  padding: 4px 0;
+}
+
+.modal-card h2 {
+  font-size: 1.15rem;
+  /* El margen superior del h2 por defecto dejaba 39px arriba y 12px abajo. */
+  margin: 0 0 12px;
+  letter-spacing: -0.01em;
+}
+
+.modal-card .modal-subtitle {
+  margin-top: -8px;
+  margin-bottom: 12px;
+  font-size: 0.78rem;
+}
+
+.modal-card .input-group {
+  margin-bottom: 10px;
+}
+
+.modal-card .input-group label {
+  font-size: 0.75rem;
+  margin-bottom: 3px;
+  margin-left: 2px;
+}
+
+.modal-card .input-group input {
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border-width: 1px;
+  border-radius: 0;
+  font-size: 0.85rem;
+}
+
+.modal-card .forgot-password {
+  font-size: 0.75rem;
+  margin-bottom: 8px;
+}
+
+.modal-card button[type='submit'],
+.modal-card .btn-submit {
+  margin-top: 6px;
+  padding: 9px;
+  border-radius: 0;
+  font-size: 0.88rem;
+  letter-spacing: 0.2px;
+  box-shadow: none;
+}
+
+.modal-card button[type='submit']:hover {
+  transform: none;
+  box-shadow: none;
+  filter: none;
+  background: var(--accent-magenta-deep, #bf166d);
+}
+
+.modal-card .divider {
+  margin: 16px 0;
+  font-size: 0.75rem;
+  /* El #888 original daba 3,5:1; a 12px necesita 4,5:1. */
+  color: var(--text-muted);
+}
+
+/* El contenedor social trae gap y margen en el atributo style del template. */
+.modal-card .social-login-container {
+  gap: 6px !important;
+  margin-bottom: 8px !important;
+}
+
+.modal-card .btn-secondary {
+  padding: 7px 12px;
+  border-radius: 0;
+  border-width: 1px;
+  border-color: var(--accent-magenta, #ba3995);
+  font-size: 0.8rem;
+}
+
+.modal-card .btn-primary {
+  padding: 9px 16px;
+  border-radius: 0;
+  font-size: 0.85rem;
+}
+
+.modal-card h3 {
+  font-size: 1rem;
+  margin: 0 0 6px;
+}
+
+.modal-card .btn-close {
+  top: 10px;
+  right: 10px;
+  width: 26px;
+  height: 26px;
+  background: transparent;
+  color: var(--text-main);
+  border-radius: 0;
+  font-size: 17px;
+}
+
+/* Área clickeable de 42px sin agrandar el glifo. */
+.modal-card .btn-close::before {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+
+.modal-card .btn-close:hover {
+  background: var(--wash-violet-soft, rgba(139, 92, 246, 0.08));
+  color: var(--accent-magenta, #ba3995);
+  transform: none;
+}
+
+.modal-card .confirmacion-box {
+  padding: 10px 0;
+}
+
+.modal-card .confirmacion-icon {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+.modal-card .email-badge {
+  padding: 5px 10px;
+  margin: 8px 0;
+  border-radius: 0;
+  font-size: 0.8rem;
+}
+
+.modal-card .confirmacion-hint {
+  font-size: 0.75rem;
+  margin-bottom: 12px;
+}
+
+.modal-card .modal-footer {
+  margin-top: 8px;
+}
+
+.modal-card .back-to-login {
+  font-size: 0.75rem;
+}
+
 .hero-illustration {
   width: 100%;
   height: 100%;
@@ -2136,9 +2273,10 @@ button:disabled {
 
 @media (max-width: 576px) {
   .modal-card {
-    padding: 35px 20px 20px 20px;
-    border-radius: 20px;
-    width: 95%;
+    /* Misma escala reducida que en escritorio. */
+    padding: 24px 16px 16px;
+    border-radius: 0;
+    width: 92%;
   }
 
   .btn-close {
@@ -2231,14 +2369,6 @@ button:disabled {
     justify-content: flex-start;
   }
 
-  .hero-logo-circle {
-    top: 14px;
-    left: 6%;
-    width: 82px;
-    height: 82px;
-    padding: 6px;
-  }
-
   .hero-v2-container {
     flex-direction: column !important;
     align-items: flex-start !important;
@@ -2255,8 +2385,8 @@ button:disabled {
     min-height: 460px;
     padding: 48px 6% 48px;
     margin-bottom: 40px;
-    /* En mobile el hero usa otra foto (aula) y otro velo; el patrón es el mismo. */
-    --hero-photo: image-set(url('/aula-universidad.webp') type('image/webp'), url('/aula-universidad.png') type('image/png'));
+    /* En mobile se mantiene la misma foto que en escritorio (--hero-photo de la
+       regla base); antes se cambiaba por la ilustracion del aula. Solo cambia el velo. */
     --hero-overlay: linear-gradient(90deg, rgba(248, 249, 252, 0.94), rgba(248, 249, 252, 0.72));
   }
 

@@ -63,9 +63,29 @@ ngOnInit(): void {
     filter(data => !!data),
     tap(data => {
       this.rolActual = data.rol || '';
+      // Cada rol entra directo a su espacio: una empresa no aterriza en el
+      // instructivo de estudiantes ni al revés. Sin rol conocido se mantiene
+      // la pestaña de estudiantes y la barra de pestañas visible.
+      if (this.rolActual) {
+        this.activeTab = this.rolActual === 'estudiante' ? 'estudiantes' : 'empresas';
+      }
     })
   ).subscribe();
 }
+
+  /** El rol se conoce recién cuando llega el perfil: hasta entonces no se pinta nada atado a él. */
+  get esGerente(): boolean {
+    return this.rolActual === 'gerente';
+  }
+
+  get esEstudiante(): boolean {
+    return this.rolActual === 'estudiante';
+  }
+
+  /** Gerente e institución educativa comparten el espacio de empresas. */
+  get esEmpresa(): boolean {
+    return this.rolActual === 'gerente' || this.rolActual === 'institucion_educativa';
+  }
 
   setActiveTab(tab: 'estudiantes' | 'empresas'): void {
     this.activeTab = tab;
@@ -86,23 +106,18 @@ ngOnInit(): void {
     this.openFaq = this.openFaq === index ? null : index;
   }
 
-  irAlSitioOficial(): void {
-    window.open('https://www.udelaciudad.edu.ar/', '_blank');
+  /* Cada acción existe para un solo rol y la plantilla solo muestra la que
+     corresponde: ya no hay alert() de "sección exclusiva". */
+  irABuscarEmpleo(): void {
+    this.router.navigate(['/contratos']);
   }
 
-  irAContratos() {
-  if (this.rolActual === 'gerente') {
-    this.router.navigate(['/profile']);
-  } else {
-    alert('Esta sección es exclusiva para empresas. Registrate como empresa para acceder.');
+  irAPublicarOferta(): void {
+    this.router.navigate(['/formcreatecontract']);
   }
-}
-irAlPerfil(): void {
-  if (this.rolActual === 'estudiante') {
+
+  irAlPerfil(): void {
     this.router.navigate(['/profile']);
-  } else {
-    alert('Esta sección es exclusiva para estudiantes y graduados. Registrate como estudiante / graduado para acceder.');
   }
-}
 
 }

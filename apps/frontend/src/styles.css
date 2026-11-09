@@ -1,26 +1,119 @@
+/* ==========================================================================
+   CAPA DE TOKENS — sistema visual de la página de inicio
+   Rectangular, plano y translúcido: radios en 0, sin sombras, separación por
+   hairline y lavados de color translúcidos. Es la fuente de verdad del sitio;
+   los CSS de cada componente deberían consumir estas variables en lugar de
+   valores literales.
+   ========================================================================== */
+
+:root {
+  /* --- Marca --- */
+  --accent-magenta: #ba3995; /* acento principal; 3.9:1 sobre blanco */
+  --accent-magenta-deep: #bf166d; /* wordmark del logo */
+  --accent-violet: #8b5cf6; /* 4.23:1 sobre blanco */
+  --accent-pink: #e879c4; /* rosa de marca sobre fondos con foto */
+
+  /* --- Lavados translúcidos: reemplazan los rellenos sólidos --- */
+  --wash-magenta: rgba(186, 57, 149, 0.18);
+  --wash-magenta-soft: rgba(186, 57, 149, 0.08);
+  --wash-violet: rgba(139, 92, 246, 0.16);
+  --wash-violet-soft: rgba(139, 92, 246, 0.08);
+  --wash-violet-strong: rgba(139, 92, 246, 0.28);
+
+  /* --- Forma: nada redondeado --- */
+  --radius-xs: 0;
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
+  --radius-xl: 0;
+  --radius-full: 0;
+  --radius-circle: 50%; /* única excepción: avatares e íconos */
+
+  /* --- Profundidad: sin sombras --- */
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-green: none;
+  --shadow-green-hover: none;
+
+  /* --- Separación por línea de 1px --- */
+  --hairline: 1px solid var(--border-color, #e4e4e7);
+
+  /* --- Estados, recoloreados a la paleta (verde→violeta, ámbar→magenta) --- */
+  --state-success: #8b5cf6;
+  --state-success-wash: rgba(139, 92, 246, 0.16);
+  --state-warning: #ba3995;
+  --state-warning-wash: rgba(186, 57, 149, 0.16);
+  --state-danger: #a00c0c;
+  --state-danger-wash: rgba(160, 12, 12, 0.1);
+
+  /* --- Alias heredados: sostienen el CSS viejo mientras se migra página por página --- */
+  --color-primary: var(--accent-primary, #ba3995);
+  --color-text: var(--text-main, #09090b);
+  --color-text-muted: var(--text-muted, #52525b);
+  --color-bg: var(--bg-primary, #ffffff);
+  --color-bg-light: var(--bg-secondary, #f3f3f3);
+  --color-border: var(--border-color, #e4e4e7);
+  --color-card: var(--card-bg, #ffffff);
+  --green-bg-light: var(--wash-violet-soft);
+  --green-bg-mid: var(--wash-violet);
+  --green-border: rgba(139, 92, 246, 0.22);
+  --green-border-strong: rgba(139, 92, 246, 0.42);
+  --green-shadow: transparent;
+}
+
+.dark-theme {
+  /* Sobre fondo oscuro los lavados suben de opacidad para seguir leyéndose. */
+  --wash-magenta: rgba(186, 57, 149, 0.26);
+  --wash-magenta-soft: rgba(186, 57, 149, 0.14);
+  --wash-violet: rgba(168, 85, 247, 0.24);
+  --wash-violet-soft: rgba(168, 85, 247, 0.12);
+  --wash-violet-strong: rgba(168, 85, 247, 0.34);
+  --hairline: 1px solid var(--border-color, #2a2a2f);
+  --state-success: #a78bfa;
+  --state-success-wash: rgba(167, 139, 250, 0.18);
+  --state-warning: #e879c4;
+  --state-warning-wash: rgba(232, 121, 196, 0.18);
+  --state-danger: #f87171;
+  --state-danger-wash: rgba(248, 113, 113, 0.12);
+
+  /* Los alias se resuelven en el nodo donde se declaran (html), que nunca
+     tiene la clase .dark-theme: si no se repiten acá quedan con los valores
+     claros y el texto oscuro se pierde sobre el fondo negro. */
+  --color-primary: var(--accent-primary, #a855f7);
+  --color-text: #ffffff;
+  --color-text-muted: #aaaaaa;
+  --color-bg: #000000;
+  --color-bg-light: #111111;
+  --color-border: #333333;
+  --color-card: #111111;
+  --green-bg-light: var(--wash-violet-soft);
+  --green-bg-mid: var(--wash-violet);
+}
+
 ::selection {
-    background: #7f5af0;
-    color: white;
+  background: var(--accent-magenta);
+  color: #ffffff;
 }
 
 html {
-    background: transparent;
+  background: transparent;
 }
 
 a {
-    text-decoration: none;
+  text-decoration: none;
 }
 
 a {
-    color: inherit;
+  color: inherit;
 }
 
 button {
-    color: inherit;
+  color: inherit;
 }
 
 select {
-    color: var(--text-main, #09090b);
+  color: var(--text-main, #09090b);
 }
 
 h1,
@@ -28,81 +121,90 @@ h2,
 h3,
 h4,
 h5 {
-    font-weight: 400;
+  font-weight: 400;
 }
 
 img {
-    -webkit-user-drag: none;
+  -webkit-user-drag: none;
 }
 
 ::placeholder {
-    color: var(--text-muted, #52525b);
+  color: var(--text-muted, #52525b);
 }
 
 section {
-    margin: 0;
-    padding: 0;
+  margin: 0;
+  padding: 0;
 }
 
-/* ######## BOTONES */
+/* ######## BOTONES
+   Sin redondeo, sin sombra, sin movimiento: el hover solo cambia el relleno
+   translúcido o el color del borde. */
 
 button {
-    font-family: inherit;
-    font-size: 0.95rem;
-    padding: 0.6em 1.2em;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    color: #fff;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.6em 1.2em;
+  border-radius: 0;
+  border: none;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+  color: #ffffff;
 }
 
 .btn {
-    background-color: #2a2a2f;
-    border: 1px solid #2a2a2f;
+  background-color: var(--wash-violet);
+  border: 1px solid rgba(139, 92, 246, 0.35);
+  color: var(--text-main, #09090b);
 }
 
 .btn:hover {
-    background-color: #3a3a40;
+  background-color: var(--wash-violet-strong);
 }
 
 .btn-add {
-    background-color: #7f5af0;
+  background-color: var(--wash-magenta);
+  border: 1px solid rgba(186, 57, 149, 0.35);
+  color: var(--accent-magenta);
 }
 
 .btn-add:hover {
-    background-color: #9677f5;
+  background-color: rgba(186, 57, 149, 0.28);
 }
 
 .btn-edit {
-    background-color: #444;
-    border: 1px solid #7f5af0;
+  background-color: transparent;
+  border: 1px solid rgba(139, 92, 246, 0.45);
+  color: var(--accent-violet);
 }
 
 .btn-edit:hover {
-    background-color: #555;
+  background-color: var(--wash-violet);
 }
 
 .btn-delete {
-    background-color: transparent;
-    border: 1px solid #ff0562;
-    color: #ff0562;
+  background-color: transparent;
+  border: 1px solid rgba(160, 12, 12, 0.45);
+  color: var(--state-danger);
 }
 
 .btn-delete:hover {
-    background-color: #ff056220;
+  background-color: var(--state-danger-wash);
 }
 
 .btn-signup {
-    background-color: #143447;
-    border: 1px solid #2b6180;
-    color: #fff;
+  background-color: var(--wash-magenta);
+  border: 1px solid rgba(186, 57, 149, 0.35);
+  color: var(--accent-magenta);
 }
 
 .btn-signup:hover {
-    background-color: #2b6180;
+  background-color: rgba(186, 57, 149, 0.28);
 }
-
 
 /* @media (min-width: 768px) {
     section {
@@ -111,29 +213,30 @@ button {
         width: 80%;
     }
 } */
-/*select del rol a elegir */
+
+/* select del rol a elegir */
 select {
-    background-color: #2a2a2f;
-    color: white;
-    border: 1px solid #7f5af0;
-    border-radius: 6px;
-    padding: 0.6em 1em;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.25s ease;
-    outline: none;
+  background-color: var(--bg-primary, #ffffff);
+  color: var(--text-main, #09090b);
+  border: var(--hairline);
+  border-radius: 0;
+  padding: 0.6em 1em;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  outline: none;
 }
 
 select:hover {
-    background-color: #3a3a40;
+  background-color: var(--bg-secondary, #f3f3f3);
 }
 
-    select:focus {
-    border-color: #9677f5;
-    box-shadow: 0 0 5px #7f5af0;
+select:focus {
+  border-color: var(--accent-violet);
+  box-shadow: none;
 }
 
 option {
-    background-color: #2a2a2f;
-    color: white;
+  background-color: var(--bg-primary, #ffffff);
+  color: var(--text-main, #09090b);
 }
