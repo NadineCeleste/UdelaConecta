@@ -7,16 +7,12 @@
       </a>
       }
       <div class="logo-container-desktop">
-        <a class="logo" routerLink="/">
-          <div class="logo-with-pulse">
-            <span class="logo-text">Udela Conecta</span>
-            <span class="status-pulse"></span>
-          </div>
-        </a>
+        <!-- El logo es decorativo: sin routerLink, sin cursor de link y sin hover -->
+        <div class="logo">
+          <img src="/logo_udela_navbar.png" alt="Udela Conecta" class="logo-navbar-img" />
+        </div>
       </div>
     </div>
-
-    <hr class="header-divider" />
 
     <div class="menu-toggle" (click)="toggleMenu()">
       <span class="bar"></span>
@@ -131,8 +127,8 @@
 
         <!-- BOTONES LOGIN Y REGISTRO uno al lado del otro -->
         <li class="guest-btns-row">
-          <button class="btn-login-nav" (click)="onLogin.emit(); closeMenu()">Iniciar Sesión</button>
-          <button class="btn-registro-nav" (click)="onRegister.emit(); closeMenu()">Registrate</button>
+          <button class="btn-login-nav" (click)="onLogin.emit(); closeMenu()">Inicia sesión</button>
+          <button class="btn-registro-nav" (click)="onRegister.emit(); closeMenu()">Regístrate</button>
         </li>
 
         <!-- ICONOS PARA GUESTS uno al lado del otro -->

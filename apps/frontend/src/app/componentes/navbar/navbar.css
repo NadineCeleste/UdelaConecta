@@ -1,3 +1,9 @@
+/* Altura única de la navbar: la usan la barra fija y el espacio que reserva el <main>.
+   Los breakpoints solo cambian esta variable (ver media queries al final). */
+:host {
+  --nav-h: 85px;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -11,7 +17,7 @@ html, body {
   top: 0;
   left: 0;
   width: 100%;
-  height: 85px;
+  height: var(--nav-h);
   background-color: var(--navbar-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
@@ -19,12 +25,12 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 0 5%;
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--navbar-shadow);
   z-index: 2000;
   box-sizing: border-box;
   overflow: visible;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border-bottom: 1px solid var(--border-color);
+  transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease; 
+  border-bottom: 1px solid var(--navbar-border);
 }
 
 .navbar-left {
@@ -39,8 +45,20 @@ html, body {
   z-index: 2100;
 }
 
+/* El logo es decorativo (no navega): sin cursor de link, sin hover ni transición. */
 .logo {
-  text-decoration: none;
+  display: flex;
+  align-items: center;
+  cursor: default;
+}
+
+
+.logo-navbar-img {
+  height: 55px;
+  max-height: 55px;
+  width: auto;
+  object-fit: contain;
+  display: block;
 }
 
 .logo-text {
@@ -49,7 +67,7 @@ html, body {
   color: var(--text-main);
   letter-spacing: 1px;
   text-transform: uppercase;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   margin-right: 12px;
 }
 
@@ -232,7 +250,7 @@ html, body {
     justify-content: center;
     padding: 6px 14px;
     border-radius: 8px;
-    font-family: "Plus Jakarta Sans", "Inter", sans-serif; /* ← Tipografía actualizada */
+    font-family: 'Montserrat', sans-serif; /* ← Tipografía actualizada */
     font-weight: 700;
     font-size: 0.75rem;
     letter-spacing: 0.5px;
@@ -288,7 +306,7 @@ html, body {
   padding: 10px 20px;
   color: var(--text-main);
   text-decoration: none;
-  font-family: 'Outfit', 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 500;
   font-size: 1rem;
   letter-spacing: 0.3px;
@@ -333,28 +351,44 @@ html, body {
 }
 
 
+
 .btn-theme-toggle-nav {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
+  background: #ba399530;
+  border: 1px solid rgba(9, 9, 11, 0);
+  color: #ba3995;  
+  width: 38px;
+  height: 38px;
+  border-radius: 0;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   font-size: 1.2rem;
-  transition: all 0.3s ease;
   padding: 0;
+  box-shadow: none;
+  transform: none;
+  filter: none;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
 
 .btn-theme-toggle-nav:hover {
-  transform: scale(1.1) rotate(15deg);
-  background: var(--card-bg);
-  box-shadow: 0 6px 15px rgba(11, 0, 207, 0.15);
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
+  background: #ba399550; 
+  border-color: rgba(9, 9, 11, 0);
+  color: #ba3995;
+  box-shadow: none;
+  transform: none;
+  filter: none;
+}
+
+:host-context(.dark-theme) .btn-theme-toggle-nav {
+  background: #a955f71c;
+  border-color: rgba(255, 255, 255, 0);
+}
+
+:host-context(.dark-theme) .btn-theme-toggle-nav:hover {
+  background: #a955f728;
+  border-color: rgba(255, 255, 255, 0);
 }
 
 .btn-theme-toggle-nav .material-icons-outlined {
@@ -388,44 +422,89 @@ html, body {
   font-size: 20px;
 }
 
-/* botones de registro y login para usuarios no logueados */
-.btn-login-nav {
-  background: transparent;
-  color: var(--accent-primary);
-  border: 1.5px solid var(--accent-primary);
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.85rem;
+.btn-login-nav,
+.btn-registro-nav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 16px;
+  border-radius: 0;
+  border: 1px solid transparent;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   cursor: pointer;
-  transition: all 0.3s ease;
+  box-shadow: none;
+  transform: none;
+  filter: none;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
+}
+
+.btn-login-nav {
+  background-color: #ba399530;
+  border-color: rgba(9, 9, 11, 0);
+  color:#ba3995; 
 }
 
 .btn-login-nav:hover {
-  background: var(--accent-primary);
-  color: white;
-  border-color: var(--accent-primary);
+  background-color: #ba399550;
+  border-color: rgba(9, 9, 11, 0);
+  color: #ba3995; 
+  transform: none;
+  filter: none;
 }
 
 .btn-registro-nav {
-  background: var(--accent-primary);
-  color: white;
-  border: 1.5px solid var(--accent-primary);
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  font-size: 0.85rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px rgba(11, 0, 207, 0.2);
+  background-color: #ba399530;
+  border-color: rgba(138, 92, 246, 0);
+  color:#ba3995; 
 }
 
-
 .btn-registro-nav:hover {
-  background: var(--bg-primary);
-  color: var(--accent-primary);
-  box-shadow: 0 6px 15px rgba(11, 0, 207, 0.3);
-  transform: translateY(-2px);
+  background-color: #ba399550;
+  border-color: rgba(138, 92, 246, 0);
+  color: #ba3995; 
+  transform: none;
+  filter: none;
+}
+
+:host-context(.dark-theme) .btn-login-nav {
+  background-color: #a955f71c;
+  border-color: rgba(255, 255, 255, 0);
+  color: #e879c4;
+}
+
+:host-context(.dark-theme) .btn-login-nav:hover {
+  background-color: #a955f728;
+  border-color: rgba(255, 255, 255, 0);
+  color: #e879c4;
+}
+
+:host-context(.dark-theme) .btn-registro-nav {
+  background-color: #a955f71c;
+  border-color: rgba(169, 85, 247, 0);
+  color: #e879c4;
+}
+
+:host-context(.dark-theme) .btn-registro-nav:hover {
+  background-color: #a955f728;
+  border-color: rgba(169, 85, 247, 0);
+  color: #e879c4;
+}
+
+.btn-login-nav:focus-visible,
+.btn-registro-nav:focus-visible,
+.btn-theme-toggle-nav:focus-visible {
+  outline: 1px solid #09090b;
+  outline-offset: 3px;
+}
+
+:host-context(.dark-theme) .btn-login-nav:focus-visible,
+:host-context(.dark-theme) .btn-registro-nav:focus-visible,
+:host-context(.dark-theme) .btn-theme-toggle-nav:focus-visible {
+  outline-color: #fafafa;
 }
 
 .nav-item-with-dropdown {
@@ -470,7 +549,7 @@ html, body {
   padding: 12px 20px;
   color: var(--text-muted);
   text-decoration: none;
-  font-family: 'Outfit', 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 500;
   font-size: 0.95rem;
   letter-spacing: 0.2px;
@@ -1364,9 +1443,23 @@ html, body {
 }
 
 @media (max-width: 768px) {
+  :host {
+    --nav-h: 70px;
+  }
+
   .navbar {
     padding: 0 4%;
-    height: 70px;
+  }
+
+  .logo-navbar-img {
+    height: 43px;
+    max-height: 43px;
+  }
+
+  /* En el menú apilado el toggle pasa a ser un target táctil de 44px. */
+  .btn-theme-toggle-nav {
+    width: 44px;
+    height: 44px;
   }
 
   .logo-text {
@@ -1380,14 +1473,24 @@ html, body {
   .guest-btns-row .btn-login-nav,
   .guest-btns-row .btn-registro-nav {
     width: 100%;
+    /* Apilados en el menú mobile: 44px de alto para que sean cómodos al tacto. */
+    min-height: 44px;
     text-align: center;
   }
 }
 
 @media (max-width: 480px) {
+  :host {
+    --nav-h: 65px;
+  }
+
   .navbar {
     padding: 0 3%;
-    height: 65px;
+  }
+
+  .logo-navbar-img {
+    height: 41px;
+    max-height: 41px;
   }
 
   .logo-text {
@@ -1404,5 +1507,8 @@ html, body {
 }
 
 main {
-  padding-top: 100px;
+  /* Reserva exactamente el alto de la navbar fija. Antes eran 100px fijos contra
+     una barra de 85px: esos 15px de diferencia dejaban una franja pintada solo con
+     el fondo del body (blanca en claro, negra en oscuro). */
+  padding-top: var(--nav-h);
 }

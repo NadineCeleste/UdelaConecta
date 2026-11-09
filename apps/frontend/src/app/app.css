@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300..800;1,300..800&display=swap');
 
 :root {
   --bg-primary: #ffffff;
@@ -8,8 +8,13 @@
   --card-bg: #ffffff;
   --border-color: #e4e4e7;
   --navbar-bg: rgba(246, 244, 255, 0.85);
+  --navbar-border: #e4e4e7;
+  --navbar-shadow: 0 4px 30px rgba(0, 0, 0, 0.05);
   --accent-primary: #B23A8C;
   --accent-secondary: #f59e0b;
+  /* Violeta de la paleta para destacar palabras dentro de un título.
+     Contraste sobre blanco: 4.23:1 (texto grande, AA). */
+  --accent-violet: #8b5cf6;
   --bg-split: linear-gradient(to right, #e8e8e8 50%, #e1dde0 50%);
   --accent-secondary: #f59e0b;
   --danger-primary: #a00c0c;
@@ -28,7 +33,13 @@
   --card-bg: #111111;
   --border-color: #333333;
   --navbar-bg: rgba(20, 10, 40, 0.85);
+  /* En oscuro el borde de 1px (#333) se leía como una línea gris pegada al navbar:
+     se reemplaza por una sombra suave, que separa sin dibujar una línea. */
+  --navbar-border: transparent;
+  --navbar-shadow: 0 8px 26px rgba(0, 0, 0, 0.55);
   --accent-primary: #a855f7;
+  /* En oscuro el violeta sube un paso: 5.31:1 sobre negro. */
+  --accent-violet: #a855f7;
   --match-col: #67309b;
   --match-badge: #D946EF;
   --match-btn: #8b5cf6;
@@ -43,7 +54,7 @@ body {
   padding: 0;
   min-height: 100vh;
   width: 100%;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.6;
@@ -74,7 +85,7 @@ h4,
 .hero h1,
 .hero-left h1,
 .feature-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   letter-spacing: -0.03em;
   color: var(--text-main) !important;
 }
@@ -105,7 +116,7 @@ h4,
   color: var(--text-main);
   letter-spacing: 2px;
   text-transform: uppercase;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   display: block;
   margin-bottom: 5px;
 }
@@ -261,136 +272,9 @@ h4,
   color: #ffffff;
 }
 
-.navbar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  padding: 30px 50px;
-  z-index: 10;
-  gap: 60px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
-  padding: 25px 50px 10px 50px;
-}
-
-.nav-links {
-  display: flex;
-  list-style: none;
-  gap: 30px;
-  margin: 0 auto;
-  padding: 0;
-  justify-content: flex-end;
-  width: 60%;
-}
-
-.nav-links a {
-  text-decoration: none;
-  color: #1a1a1b;
-  font-family: 'Inter', sans-serif;
-  letter-spacing: -0.02em;
-  font-size: 1.1rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  transition: all 0.3s ease;
-  position: relative;
-}
 
 
-.nav-links a::after {
-  content: '';
-  position: absolute;
-  width: 0;
-  height: 2px;
-  bottom: -5px;
-  left: 0;
-  background-color: var(--accent-primary);
-  transition: width 0.3s ease;
-}
 
-.nav-links a:hover {
-  color: #000;
-}
-
-.nav-links a:hover::after {
-  width: 100%;
-}
-
-.logo {
-  font-size: 1.6rem;
-  font-weight: 900;
-  letter-spacing: 2.5px;
-  color: var(--text-main);
-  font-family: 'Inter', sans-serif;
-}
-
-.nav-links {
-  display: flex;
-  list-style: none;
-  gap: 30px;
-}
-
-.nav-links a {
-  text-decoration: none;
-  color: #1a1a1b;
-  font-weight: 500;
-  font-size: 0.9rem;
-  transition: opacity 0.3s;
-}
-
-.nav-links a:hover {
-  opacity: 0.7;
-}
-
-
-.btn-theme-toggle {
-  background: var(--card-bg);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 1.2rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-  padding: 0;
-  margin-right: 12px;
-}
-
-.btn-theme-toggle:hover {
-  transform: translateY(-2px) rotate(15deg);
-  background: var(--bg-secondary);
-  border-color: var(--accent-primary);
-}
-
-.guest-nav {
-  justify-content: space-between !important;
-  background-color: var(--navbar-bg);
-  backdrop-filter: blur(12px);
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  width: 100%;
-  box-sizing: border-box;
-  z-index: 1000;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.nav-auth-buttons {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-}
-
-.nav-btn {
-  cursor: pointer;
-}
 
 .card-section {
   padding-top: 20px;
@@ -399,20 +283,66 @@ h4,
 .hero.hero-v2 {
   position: relative;
   width: 100%;
-  min-height: 680px;
+  min-height: 480px;
   margin-bottom: 64px;
   background-color: var(--bg-secondary);
-  background-image:
-    linear-gradient(90deg, rgba(248, 249, 252, 0.94) 0%, rgba(248, 249, 252, 0.82) 34%, rgba(248, 249, 252, 0.24) 68%, rgba(248, 249, 252, 0.08) 100%),
-    url('/aula-universidad.png');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  padding: 125px 5% 70px;
+  
+  --hero-photo: image-set(url('/acceso.webp') type('image/webp'), url('/acceso.png') type('image/png'));
+  --hero-overlay: linear-gradient(90deg, rgba(248, 249, 252, 0.94) 0%, rgba(248, 249, 252, 0.82) 34%, rgba(248, 249, 252, 0.24) 68%, rgba(248, 249, 252, 0.08) 100%);
+  isolation: isolate; 
+  overflow: hidden;   
+  
+  padding: 64px 5% 70px;
   box-sizing: border-box;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: flex-start;
+}
+
+
+.hero.hero-v2::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: var(--hero-photo);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  transform-origin: 50% 45%;
+  /* 2800ms = el doble que la primera versión (1400ms): el recorrido de escala se
+     ve el doble de lento. Si hay que afinarlo, este número es el único mando. */
+  animation: hero-reveal 2800ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+
+.hero.hero-v2::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background-image: var(--hero-overlay);
+  pointer-events: none;
+}
+
+@keyframes hero-reveal {
+  from {
+    opacity: 0.7;
+    /* 5px (no 8) para que el overscan del scale cubra el translate con margen en
+       el hero más bajo (460px): 0.04 x 45% x 480 = 8,6px arriba, menos 5 = 3,6px
+       de colchón. Con 8px quedaban 0,6px y podía asomar una línea del fondo. */
+    transform: scale(1.04) translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero.hero-v2::before {
+    animation: none;
+  }
 }
 
 .hero-logo-circle {
@@ -437,6 +367,9 @@ h4,
   display: flex;
   justify-content: flex-start;
   align-items: center;
+  /* Por encima de las capas ::before (foto, 0) y ::after (velo, 1). */
+  position: relative;
+  z-index: 2;
 }
 
 .guest-container .hero.hero-v2 .hero-v2-container .hero-v2-content {
@@ -448,7 +381,9 @@ h4,
 }
 
 .hero-v2-badge {
-  display: inline-flex;
+  /* block-level con ancho a contenido: evita el leading que agrega una caja
+     inline en el flujo del bloque y deja el margin-bottom limpio. */
+  display: flex;
   align-items: center;
   gap: 10px;
   background-color: rgba(255, 255, 255, 0.84);
@@ -460,7 +395,7 @@ h4,
   font-weight: 600;
   letter-spacing: 0.03em;
   text-transform: uppercase;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   width: fit-content;
   margin-bottom: 24px;
   box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08);
@@ -478,7 +413,7 @@ h4,
 }
 
 .hero-v2-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: clamp(3.2rem, 5vw, 4.5rem);
   font-weight: 800;
   line-height: 1.08;
@@ -499,14 +434,13 @@ h4,
   color: #e879c4;
 }
 
+/* Sólo cambia el velo: la foto y su image-set se heredan de `.hero.hero-v2`. */
 .dark-theme .hero.hero-v2 {
-  background-image:
-    linear-gradient(90deg, rgba(8, 10, 18, 0.9) 0%, rgba(8, 10, 18, 0.75) 34%, rgba(8, 10, 18, 0.35) 68%, rgba(8, 10, 18, 0.18) 100%),
-    url('/aula-universidad.png');
+  --hero-overlay: linear-gradient(90deg, rgba(8, 10, 18, 0.9) 0%, rgba(8, 10, 18, 0.75) 34%, rgba(8, 10, 18, 0.35) 68%, rgba(8, 10, 18, 0.18) 100%);
 }
 
 .hero-v2-subtitle {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: clamp(1.15rem, 1.8vw, 1.45rem);
   line-height: 1.45;
   color: #111827;
@@ -522,53 +456,72 @@ h4,
 .hero-v2-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: 12px;
 }
+
 
 button.hero-cta-primary,
 button.hero-cta-secondary {
-  min-height: 54px;
-  padding: 0 28px;
-  border-radius: 10px;
-  font-family: 'Inter', sans-serif;
-  font-size: 1rem;
+  min-height: 52px;
+  min-width: 185px;
+  padding: 0 26px;
+  border-radius: 0;
+  border: 1px solid transparent;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 0.95rem;
   font-weight: 600;
-  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
+  letter-spacing: 0.01em;
+  box-shadow: none;
+  -webkit-backdrop-filter: blur(10px) saturate(1.15);
+  backdrop-filter: blur(10px) saturate(1.15);
+  
+  background-color: #ba399530;  
+  border-color: rgba(9, 9, 11, 0);
+  color: #ba3995;  /* Color de texto base oscuro */
+  
+  transform: none;
+  filter: none;
+  transition: background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease;
 }
-
-button.hero-cta-primary {
-  background: #a32276;
-  border: 2px solid #a32276;
-  color: #ffffff;
-}
-
-button.hero-cta-primary:hover:not(:disabled) {
-  background: #881c63;
-  border-color: #881c63;
-  color: #ffffff;
-}
-
-button.hero-cta-secondary {
-  background: rgba(255, 255, 255, 0.86);
-  border: 2px solid #71345f;
-  color: #71345f;
-}
-
+button.hero-cta-primary:hover:not(:disabled),
 button.hero-cta-secondary:hover:not(:disabled) {
-  background: #ffffff;
-  border-color: #a32276;
-  color: #a32276;
+  background-color:  #ba399550;
+  border-color: rgba(9, 9, 11, 0);
+  color: #ba3995;
+  transform: none;
+  filter: none;
 }
 
+button.hero-cta-primary:active:not(:disabled),
+button.hero-cta-secondary:active:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+.dark-theme button.hero-cta-primary,
 .dark-theme button.hero-cta-secondary {
-  background: rgba(17, 17, 19, 0.82);
-  border-color: #e879c4;
-  color: #f8fafc;
+  background-color:  #a955f71c;
+  border-color: rgba(255, 255, 255, 0);
+  color: #e879c4;
 }
 
+.dark-theme button.hero-cta-primary:hover:not(:disabled),
 .dark-theme button.hero-cta-secondary:hover:not(:disabled) {
-  background: #271322;
-  color: #ffffff;
+  background-color: #a955f728;
+  border-color: rgba(255, 255, 255, 0);
+  color: #e879c4;
+  transform: none;
+  filter: none;
+}
+
+.dark-theme button.hero-cta-primary:active:not(:disabled),
+.dark-theme button.hero-cta-secondary:active:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.19);
+}
+
+button.hero-cta-primary:focus-visible,
+button.hero-cta-secondary:focus-visible {
+  outline: 1px solid currentColor;
+  outline-offset: 3px;
 }
 
 /* Tarjeta Buscador */
@@ -623,7 +576,7 @@ button.hero-cta-secondary:hover:not(:disabled) {
   margin: 0 !important;
   font-size: 0.96rem !important;
   color: var(--text-main) !important;
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'Montserrat', sans-serif !important;
   box-shadow: none !important;
   border-radius: 0 !important;
 }
@@ -668,7 +621,7 @@ button.hero-cta-secondary:hover:not(:disabled) {
   padding: 12px 28px !important;
   font-size: 0.95rem !important;
   font-weight: 700 !important;
-  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  font-family: 'Montserrat', sans-serif !important;
   cursor: pointer !important;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
   box-shadow: 0 4px 14px rgba(178, 58, 140, 0.35) !important;
@@ -704,7 +657,7 @@ button.hero-cta-secondary:hover:not(:disabled) {
   font-size: 0.88rem;
   font-weight: 500;
   color: #64748b;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .dark-theme .frequent-label {
@@ -728,7 +681,7 @@ button.hero-cta-secondary:hover:not(:disabled) {
   color: #334155 !important;
   cursor: pointer !important;
   transition: all 0.2s ease !important;
-  font-family: 'Inter', sans-serif !important;
+  font-family: 'Montserrat', sans-serif !important;
   outline: none !important;
   margin: 0 !important;
   width: auto !important;
@@ -780,7 +733,7 @@ button.hero-cta-secondary:hover:not(:disabled) {
 }
 
 .hiw-sidebar-title {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 0.85rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -819,7 +772,7 @@ button.hero-cta-secondary:hover:not(:disabled) {
   flex-shrink: 0;
   margin-top: 2px;
   box-shadow: 0 3px 10px rgba(178, 58, 140, 0.35);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .hiw-sidebar-text {
@@ -828,7 +781,7 @@ button.hero-cta-secondary:hover:not(:disabled) {
 }
 
 .hiw-sidebar-heading {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 1rem;
   font-weight: 700;
   color: var(--text-main);
@@ -836,7 +789,7 @@ button.hero-cta-secondary:hover:not(:disabled) {
 }
 
 .hiw-sidebar-desc {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 0.88rem;
   line-height: 1.45;
   color: #64748b;
@@ -903,7 +856,7 @@ button.hero-cta-secondary:hover:not(:disabled) {
 .ticker-item {
   display: inline-block;
   padding-right: 100vw;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 0.9rem;
   font-weight: 700;
   color: var(--accent-secondary);
@@ -924,7 +877,9 @@ button.hero-cta-secondary:hover:not(:disabled) {
 
 
 .hero-badge {
-  display: inline-flex;
+  /* block-level con ancho a contenido: evita el leading que agrega una caja
+     inline en el flujo del bloque y deja el margin-bottom limpio. */
+  display: flex;
   align-items: center;
   gap: 8px;
   background: var(--accent-secondary);
@@ -937,7 +892,7 @@ button.hero-cta-secondary:hover:not(:disabled) {
   width: fit-content;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   box-shadow: 0 10px 20px rgba(168, 85, 247, 0.2);
   margin-left: 0;
 }
@@ -966,12 +921,23 @@ button.hero-cta-secondary:hover:not(:disabled) {
   max-width: 600px;
   font-weight: 400;
   letter-spacing: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 
+/* Palabras destacadas dentro de un título ("oportunidad", "necesita").
+   Antes bajaban a weight 700 y, al lado del 800 del título, se leían como otra
+   tipografía. Ahora heredan familia y peso (misma letra que el resto) y se
+   distinguen por color violeta + 8% de tamaño. line-height:0 hace que el span
+   no aporte alto a la línea: el interlineado lo sigue fijando el h2, así que el
+   ritmo vertical queda idéntico al de antes. */
 .text-highlight {
-  color: var(--text-main);
-  font-weight: 700;
+  color: var(--accent-violet);
+  font-family: 'Montserrat', sans-serif;
+  font-style: normal;
+  font-weight: inherit;
+  font-size: 1.08em;
+  line-height: 0;
+  letter-spacing: inherit;
 }
 
 .hero-left .highlight {
@@ -993,7 +959,7 @@ button.hero-cta-secondary:hover:not(:disabled) {
 }
 
 .beneficios li {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 0.95rem;
   padding: 12px 20px;
   background: var(--card-bg);
@@ -1046,7 +1012,7 @@ button.hero-cta-secondary:hover:not(:disabled) {
   margin-bottom: 25px;
   color: #0f172a;
   font-weight: 800;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .card h2 {
@@ -1056,7 +1022,7 @@ button.hero-cta-secondary:hover:not(:disabled) {
   color: var(--text-main);
   text-align: center;
   letter-spacing: -0.02em;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .card-section {
@@ -1424,12 +1390,24 @@ button:disabled {
 .features-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  /* Filas compartidas por las dos columnas: rótulo, título y una fila por cada
+     ítem. Así cada par (izquierda/derecha) arranca a la misma altura aunque los
+     textos midan distinto: el ítem más alto fija el alto de su fila.
+     Ojo: si alguna columna suma un ítem, hay que agregar otra fila acá. */
+  grid-template-rows: auto auto repeat(3, auto);
   gap: 0;
   position: relative;
 }
 
 .feature-columna {
   padding: 80px 10%;
+  /* Cada columna se cuelga de esas cinco filas (subgrid) en vez de apilar sus
+     hijos por su cuenta: es lo que mantiene alineados título y párrafos. */
+  display: grid;
+  grid-row: span 5;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+  align-content: start;
 }
 
 .features-grid::after {
@@ -1448,21 +1426,38 @@ button:disabled {
   flex-direction: column;
 }
 
+/* Etiquetas "¿Sos estudiante?" / "¿Buscás talento?".
+   Son etiquetas, no botones: mismo lenguaje que los CTA del hero (rectángulo
+   sin radio, veladura del acento, texto del acento, sin sombra) pero sin hover,
+   active ni focus, porque no son interactivas. */
 .feature-tag {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-weight: 700;
+  font-family: 'Montserrat', sans-serif;
+  font-weight: 600;
   font-size: 0.85rem;
-  color: var(--text-main);
-  margin-bottom: 24px;
-  display: block;
+  color: #ba3995;
+  background-color: #ba399530;
+  border: 1px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+  /* block-level con ancho a contenido: evita el leading que agrega una caja
+     inline en el flujo del bloque y deja el margin-bottom limpio. */
+  display: flex;
+  align-items: center;
+  /* Sin min-width: el CTA iguala sus dos botones porque van lado a lado, estos
+     rótulos viven en columnas distintas y el ancho fijo sólo dejaba aire muerto. */
+  justify-content: center;
+  min-height: 52px;
+  padding: 0 26px;
+  width: fit-content;
+  margin-bottom: 0;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  background: var(--card-bg);
-  width: fit-content;
-  padding: 10px 24px;
-  border-radius: 50px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-color);
+}
+
+.dark-theme .feature-tag {
+  background-color: #a955f71c;
+  border-color: rgba(255, 255, 255, 0);
+  color: #e879c4;
 }
 
 .feature-title {
@@ -1470,15 +1465,21 @@ button:disabled {
   font-weight: 800;
   line-height: 1.1;
   color: var(--text-main);
-  margin-bottom: 48px;
+  /* El margen superior va explícito: en el subgrid los márgenes ya no colapsan
+     con el del rótulo, así que el 0.83em del h2 se sumaría en vez de fundirse. */
+  margin: 40px 0 48px;
   letter-spacing: -0.04em;
   max-width: 500px;
 }
 
 .feature-list {
-  display: flex;
-  flex-direction: column;
+  /* La lista también hereda las filas de la columna (subgrid anidado): cada
+     ítem cae en su propia fila compartida con el ítem de la otra columna. */
+  display: grid;
+  grid-row: span 3;
+  grid-template-rows: subgrid;
   gap: 30px;
+  align-content: start;
 }
 
 .feature-item {
@@ -1487,6 +1488,11 @@ button:disabled {
   align-items: flex-start;
 }
 
+/* Iconos de los ítems: planos. Sin borde, sin sombra, sin transición ni hover
+   (no son interactivos: el cursor queda por defecto y nada se mueve).
+   El fondo es una veladura lisa: en claro, blanco sobre el gris de la columna;
+   en oscuro, violeta translúcido, porque `--card-bg` (#111111) se confundía con
+   el fondo de la columna y el gris neutro seguía leyéndose como un parche. */
 .feature-icon {
   width: 52px;
   height: 52px;
@@ -1496,27 +1502,16 @@ button:disabled {
   justify-content: center;
   font-size: 1.2rem;
   flex-shrink: 0;
-  background: var(--card-bg);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-  border: 1px solid var(--border-color);
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  cursor: pointer;
+  background: #ffffff;
+  border: none;
+  box-shadow: none;
+  transition: none;
+  cursor: default;
   color: var(--text-main);
 }
 
-.feature-icon:hover {
-  transform: scale(1.25) rotate(8deg);
-  box-shadow: 0 15px 35px color-mix(in srgb, var(--accent-primary) 35%, transparent);
-  z-index: 2;
-}
-
-.empresa-columna .feature-icon:hover {
-  box-shadow: 0 15px 35px rgba(245, 158, 11, 0.4);
-}
-
-.empresa-columna .feature-icon {
-  box-shadow: 0 10px 25px rgba(245, 158, 11, 0.25);
-  border: 1px solid rgba(245, 158, 11, 0.1);
+.dark-theme .feature-icon {
+  background: rgba(168, 85, 247, 0.28);
 }
 
 .fi-1 span {
@@ -1544,7 +1539,7 @@ button:disabled {
 }
 
 .feature-text p {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 1rem;
   line-height: 1.6;
   color: var(--text-muted);
@@ -1672,7 +1667,7 @@ button:disabled {
 .hiw-card h3 {
   font-size: 1.5rem;
   font-weight: 800;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   color: white;
   letter-spacing: -0.02em;
   margin: 0;
@@ -1683,7 +1678,7 @@ button:disabled {
 .hiw-card p {
   font-size: 1.05rem;
   color: rgba(255, 255, 255, 0.8);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   line-height: 1.7;
   margin: 0;
   position: relative;
@@ -1693,13 +1688,17 @@ button:disabled {
 /* FOOTER */
 .udela-footer {
   background-color: #111827;
+  /* Igual que el hero: velo en variable + PNG de fallback y WebP vía image-set. */
+  --footer-overlay: linear-gradient(rgba(15, 23, 42, 0.66), rgba(15, 23, 42, 0.76));
+  background-image: var(--footer-overlay), url('/aula-universidad.png');
   background-image:
-    linear-gradient(rgba(15, 23, 42, 0.58), rgba(15, 23, 42, 0.72)),
-    url('/aula-universidad.png');
+    var(--footer-overlay),
+    image-set(url('/aula-universidad.webp') type('image/webp'), url('/aula-universidad.png') type('image/png'));
   background-size: cover;
-  background-position: center 58%;
+  /* Banda baja: la foto se recorta a lo ancho y se ve la franja de pupitres. */
+  background-position: center 55%;
   background-repeat: no-repeat;
-  padding: 120px 40px 40px 40px;
+  padding: 48px 40px 32px 40px;
   position: relative;
   z-index: 1;
 }
@@ -1717,49 +1716,99 @@ button:disabled {
 
 
 .footer-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 4rem;
+  /* Dos bloques en paralelo, con las filas compartidas: los títulos arrancan a la
+     misma altura y las dos cajas de cristal también, aunque uno de los títulos
+     ocupe dos líneas y el otro una. */
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  align-items: start;
+  gap: 0 3rem;
   max-width: 1200px;
   margin: 0 auto;
   text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
 }
 
-.footer-brand {
-  max-width: 450px;
+.footer-col {
+  display: grid;
+  grid-row: span 2;
+  grid-template-rows: subgrid;
+  row-gap: 0;
+  min-width: 0;
 }
 
+/* El bloque de la Universidad entra a su sitio: es un enlace, pero sin subrayado,
+   sin color de link y sin ningún efecto de movimiento. */
+.footer-col-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.footer-col-link:focus-visible {
+  outline: 2px solid #e879c4;
+  outline-offset: 4px;
+}
+
+/* Mismo estilo que el wordmark del navbar (logo_udela_navbar.png = #bf166d):
+   texto suelto sobre la foto, sin pastilla, sin blur ni radio. El rosado va un
+   paso más claro porque #bf166d sobre la foto da 1.5:1; #e879c4 da 3.3:1 (misma
+   variante que ya usa `.dark-theme .feature-tag` sobre fondos oscuros). */
 .footer-logo {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 2rem;
+  font-family: 'Montserrat', sans-serif;
+  font-size: 1.9rem;
   font-weight: 800;
   letter-spacing: -0.5px;
-  margin: 0 0 1rem 0;
-  color: #ffffff !important;
-  backdrop-filter: blur(16px);
-  border-radius: 16px;
+  margin: 0 0 10px 0;
+  color: #e879c4 !important;
+  background: none;
+  backdrop-filter: none;
+  border-radius: 0;
   width: fit-content;
-  padding: 4px 10px;
+  padding: 0;
+}
+
+/* El bloque de marca lleva la veladura rosada del wordmark. */
+.footer-col-brand .footer-desc {
+  background: rgba(191, 22, 109, 0.2);
+}
+
+/* Ícono de "compartir" al final de cada título: marca que el bloque es un enlace.
+   Va inline, hereda el color del título y no se mueve ni cambia en hover. */
+.footer-logo-icon {
+  /* Tamaño fijo: los dos títulos tienen escalas distintas y, heredando el em,
+     los íconos quedaban de 18px y 13px. */
+  font-size: 18px;
+  vertical-align: middle;
+  margin-left: 10px;
+  line-height: 1;
+}
+
+/* Segundo título: mismo criterio, más chico porque el nombre es largo. */
+.footer-logo-alt {
+  font-size: 1.35rem;
+  line-height: 1.25;
+  letter-spacing: -0.2px;
+  color: rgba(138, 92, 246, 0.897) !important;
+  max-width: 420px;
 }
 
 .footer-desc {
-  color: #e2e8f0;
-  font-family: 'Inter', sans-serif;
+  color: #f5f0f8;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 400;
-  font-size: 0.95rem;
-  line-height: 1.7;
+  font-size: 0.9rem;
+  line-height: 1.65;
   margin: 0;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(16px) saturate(1.4);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 16px;
-  padding: 16px 24px;
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  /* Caja de cristal: veladura de la paleta (antes blanco al 10%), esquinas
+     rectas, sin borde ni sombra. El blur queda para que el texto se lea sobre la foto.
+     Violeta para la Universidad; el bloque de marca usa el rosado (más abajo). */
+  background: rgba(139, 92, 246, 0.22);
+  backdrop-filter: blur(18px) saturate(1.25);
+  border: none;
+  border-radius: 0;
+  padding: 16px 20px;
+  box-shadow: none;
 }
 
 /* ENLACES EN PARALELO (Nosotros y legales)*/
@@ -1796,7 +1845,7 @@ button:disabled {
 
 .footer-column h4 {
   color: #dedede !important;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 700;
   font-size: 1.1rem;
   margin: 0 0 0.3rem 0;
@@ -1809,7 +1858,7 @@ button:disabled {
   color: #e2e8f0;
   text-decoration: none;
   font-size: 0.95rem;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   transition: all 0.3s ease;
   position: relative;
   width: fit-content;
@@ -1834,47 +1883,6 @@ button:disabled {
 .footer-column a:hover::after {
   width: 100%;
 } */
-
-/* --- BARRA INFERIOR (Redes) --- */
-.footer-bottom {
-  max-width: 1200px;
-  margin: 4rem auto 0 auto;
-  padding-top: 1.5rem;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #000000;
-  font-size: 0.85rem;
-  font-family: 'Inter', sans-serif;
-  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(15%);
-}
-
-.social-links {
-  display: flex;
-  gap: 1.5rem;
-}
-
-.social-links a {
-  color: #ffffff;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.social-links a:hover {
-  color: #000000;
-  transform: translateY(-2px);
-}
-
-.social-icon {
-  width: 24px;
-  height: 24px;
-  display: inline-block;
-  vertical-align: middle;
-}
 
 /* RESPONSIVE */
 
@@ -1904,7 +1912,22 @@ button:disabled {
 
   .features-grid {
     grid-template-columns: 1fr;
+    /* Una sola columna: se deshacen las filas compartidas para que el gap
+       de 60px quede entre las dos columnas y no dentro de cada una. */
+    grid-template-rows: none;
     gap: 60px;
+  }
+
+  .feature-columna {
+    display: block;
+    grid-row: auto;
+  }
+
+  /* Sin columnas que alinear, la lista vuelve a apilarse como antes. */
+  .feature-list {
+    display: flex;
+    flex-direction: column;
+    grid-row: auto;
   }
 
   .features-grid::after {
@@ -2084,24 +2107,30 @@ button:disabled {
   }
 
   .udela-footer {
-    padding: 60px 20px 30px 20px !important;
+    padding: 40px 20px 28px 20px !important;
   }
 
   .footer-top {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2.5rem;
+    /* Una sola columna: se deshacen las filas compartidas y los bloques se apilan. */
+    grid-template-columns: 1fr;
+    grid-template-rows: none;
+    gap: 1.75rem;
+    align-items: start;
+  }
+
+  .footer-col {
+    display: block;
+    grid-row: auto;
+  }
+
+  .footer-logo-alt {
+    font-size: 1.2rem;
+    max-width: none;
   }
 
   .footer-links {
     gap: 2.5rem;
     width: 100%;
-  }
-
-  .footer-bottom {
-    flex-direction: column-reverse;
-    gap: 1.5rem;
-    text-align: center;
   }
 }
 
@@ -2148,25 +2177,16 @@ button:disabled {
 
 /* MODO OSCURO: FOOTER */
 .dark-theme .udela-footer {
-  background-image:
-    linear-gradient(rgba(15, 23, 42, 0.72), rgba(15, 23, 42, 0.82)),
-    url('/aula-universidad.png');
+  --footer-overlay: linear-gradient(rgba(15, 23, 42, 0.78), rgba(15, 23, 42, 0.88));
 }
 
-.dark-theme .footer-logo,
-.dark-theme .footer-column h4,
-.dark-theme .social-links a {
+.dark-theme .footer-column h4 {
   color: #ffffff !important;
 }
 
 .dark-theme .footer-desc,
 .dark-theme .footer-column a {
-  color: #94a3b8;
-}
-
-.dark-theme .footer-bottom {
-  border-top: 1px solid rgba(218, 214, 214, 0.1);
-  color: #64748b;
+  color: #f2ecf7;
 }
 
 /* MODO OSCURO: COMO FUNCIONA UDELA CONECTA */
@@ -2201,9 +2221,14 @@ button:disabled {
 /* RESPONSIVE: HERO V2 */
 @media (max-width: 992px) {
   .hero.hero-v2 {
-    min-height: 640px;
-    padding: 120px 6% 60px;
+    min-height: 470px;
+    padding: 56px 6% 60px;
     margin-bottom: 48px;
+    /* A partir de acá el bloque legacy `.hero` (app.css:1812) fuerza
+       flex-direction: column !important, así que justify-content pasa a repartir
+       en vertical: con `center` el contenido quedaba flotando a media altura
+       (181px de aire bajo la navbar a 900px de ancho). */
+    justify-content: flex-start;
   }
 
   .hero-logo-circle {
@@ -2227,19 +2252,21 @@ button:disabled {
 
 @media (max-width: 600px) {
   .hero.hero-v2 {
-    min-height: 620px;
-    padding: 120px 6% 48px;
+    min-height: 460px;
+    padding: 48px 6% 48px;
     margin-bottom: 40px;
+    /* En mobile el hero usa otra foto (aula) y otro velo; el patrón es el mismo. */
+    --hero-photo: image-set(url('/aula-universidad.webp') type('image/webp'), url('/aula-universidad.png') type('image/png'));
+    --hero-overlay: linear-gradient(90deg, rgba(248, 249, 252, 0.94), rgba(248, 249, 252, 0.72));
+  }
+
+  /* El encuadre en mobile va desplazado: ahora la foto vive en ::before. */
+  .hero.hero-v2::before {
     background-position: 58% center;
-    background-image:
-      linear-gradient(90deg, rgba(248, 249, 252, 0.94), rgba(248, 249, 252, 0.72)),
-      url('/aula-universidad.png');
   }
 
   .dark-theme .hero.hero-v2 {
-    background-image:
-      linear-gradient(90deg, rgba(8, 10, 18, 0.9), rgba(8, 10, 18, 0.66)),
-      url('/aula-universidad.png');
+    --hero-overlay: linear-gradient(90deg, rgba(8, 10, 18, 0.9), rgba(8, 10, 18, 0.66));
   }
 
   .hero-v2-badge {
