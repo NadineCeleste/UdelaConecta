@@ -9,7 +9,7 @@
   flex-direction: column;
   align-items: flex-end;
   gap: 14px;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 
 button {
@@ -86,7 +86,7 @@ button {
   display: grid;
   place-items: center;
   background: rgba(255, 255, 255, 0.2);
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-weight: 800;
 }
 
@@ -97,7 +97,7 @@ button {
 
 .chat-titulo h2 {
   margin: 0;
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 1rem;
   font-weight: 700;
 }

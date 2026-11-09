@@ -8,7 +8,7 @@
       color-mix(in srgb, var(--accent-primary) 8%, var(--card-bg)) 0%,
       color-mix(in srgb, var(--accent-primary) 4%, var(--card-bg)) 100%) !important;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.02);
-  font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  font-family: 'Montserrat', system-ui, -apple-system, sans-serif;
   color: var(--text-main, #1f2937);
   position: relative;
   overflow: hidden;

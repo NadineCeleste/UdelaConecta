@@ -38,7 +38,12 @@
 .home-hero {
   position: relative;
   background-color: var(--bg-secondary);
-  background-image: url('/aula-universidad.png');
+  /* PNG como fallback; WebP (575 KB vs 6,15 MB) cuando el navegador lo soporta */
+  background-image: url('/acceso.png');
+  background-image: image-set(
+    url('/acceso.webp') type('image/webp'),
+    url('/acceso.png') type('image/png')
+  );
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -264,7 +269,7 @@ button.btn-cta-outline:hover {
 }
 
 .instituto-text h3 {
-  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 15px;
   font-weight: 800;
   color: #1a3d2b;
@@ -509,7 +514,7 @@ button.btn-cta-outline:hover {
 }
 
 .infografia-card-title {
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 1rem;
   font-weight: 800;
   color: #1a2e1a;
@@ -691,7 +696,7 @@ button.btn-cta-outline:hover {
 }
 
 .inst-titulo {
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 2.5rem;
   font-weight: 800;
   color: var(--color-text);
@@ -765,7 +770,7 @@ button.btn-cta-outline:hover {
 }
 
 .inst-card-titulo {
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 1rem;
   font-weight: 800;
   color: var(--color-text);
@@ -839,7 +844,7 @@ button.btn-cta-outline:hover {
 }
 
 .beneficios-titulo {
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 2.4rem;
   font-weight: 800;
   color: var(--text-main);
@@ -1044,7 +1049,7 @@ button.btn-cta-outline:hover {
 }
 
 .cf-card-content h3 {
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 1.3rem;
   font-weight: 800;
   color: var(--color-text);
@@ -1109,7 +1114,7 @@ button.btn-cta-outline:hover {
 
 .cf-pill-counter {
   color: #000000;
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.05em;
@@ -1156,7 +1161,7 @@ button.btn-cta-outline:hover {
 }
 
 .match-text-card h2 {
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: 2rem;
   font-weight: 800;
   line-height: 1.2;
@@ -1250,7 +1255,7 @@ button.btn-cta-outline:hover {
   align-items: center;
   gap: 8px;
   transform: rotate(5deg);
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   z-index: 10;
 }
 
@@ -1289,7 +1294,7 @@ button.btn-cta-outline:hover {
   font-size: 1.25rem;
   font-weight: 800;
   color: #111;
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .match-company {
@@ -1329,7 +1334,7 @@ button.btn-cta-outline:hover {
   border-radius: 12px;
   font-weight: 700;
   transition: opacity 0.2s, transform 0.2s;
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .m-btn-primary:hover {
@@ -1347,7 +1352,7 @@ button.btn-cta-outline:hover {
   cursor: default;
   font-weight: 600;
   transition: background 0.2s, transform 0.2s;
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
 }
 
 .m-btn-secondary:hover {
@@ -1806,7 +1811,7 @@ button.btn-cta-outline:hover {
 }
 
 .ft-udela-text {
-  font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  font-family: 'Montserrat', sans-serif;
   font-size: clamp(60px, 15vw, 160px);
   font-weight: 900;
   color: rgba(255, 255, 255, 0.06);

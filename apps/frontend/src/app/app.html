@@ -67,32 +67,22 @@
 
     <!-- HERO DE BIENVENIDA -->
     <section class="hero hero-v2">
-      <img
-        class="hero-logo-circle"
-        src="/logo-udela-ciudad.png"
-        alt="Logo de la Universidad de la Ciudad de Buenos Aires"
-      />
       <div class="hero-v2-container">
         <div class="hero-v2-content">
-          <div class="hero-v2-badge">
-            <span class="material-icons-outlined" aria-hidden="true">school</span>
-            UNIVERSIDAD DE LA CIUDAD DE BUENOS AIRES
-          </div>
-
           <h1 class="hero-v2-title">
             Bienvenido a<br><span>Udela Conecta</span>
           </h1>
 
           <p class="hero-v2-subtitle">
-            Conectando talento universitario con<br class="hero-desktop-break"> oportunidades reales.
+            Conectando talento universitario <br class="hero-desktop-break"> con oportunidades reales.
           </p>
 
           <div class="hero-v2-actions">
             <button type="button" class="hero-cta-primary" (click)="toggleRegisterModal()">
-              Soy estudiante / graduado
+              Etudiante  <br> graduado
             </button>
             <button type="button" class="hero-cta-secondary" (click)="toggleRegisterModal()">
-              Soy Empresa
+              Empresa <br>reclutador
             </button>
           </div>
         </div>
@@ -102,9 +92,12 @@
     <!-- SECCIÓN DE CARACTERÍSTICAS (TALENTO) -->
 
     <section class="features-section">
+      <!--
       <div class="circulo-flecha">
         <span class="flecha-icon">↓</span>
       </div>
+      -->
+
       <div class="features-container">
         <div class="features-grid">
 
@@ -181,22 +174,26 @@
     <!-- FOOTER -->
     <footer class="udela-footer">
       <div class="footer-top">
-        <div class="footer-brand">
+        <!-- Bloque de marca: enlace al inicio de la página (fragmento "top"). -->
+        <a class="footer-col footer-col-link footer-col-brand" href="#top">
           <div class="logo-container">
-            <h3 class="footer-logo">Udela Conecta</h3>
+            <h3 class="footer-logo">Udela Conecta<span class="material-icons-outlined footer-logo-icon"
+                aria-hidden="true">share</span></h3>
           </div>
           <p class="footer-desc">El puente entre tu talento y tu primer trabajo IT. Oportunidades exclusivas para
             estudiantes de la Universidad de la Ciudad de Buenos Aires.</p>
-        </div>
+        </a>
 
-      </div>
-
-      <div class="footer-bottom">
-        <div class="social-links">
-          <a href="https://www.udelaciudad.edu.ar/" target="_blank" rel="noopener noreferrer" aria-label="Sitio web de la Universidad de la Ciudad de Buenos Aires">
-            <span class="material-icons-outlined">share</span>
-          </a>
-        </div>
+        <!-- El bloque de la Universidad es el acceso a su sitio: reemplaza al ícono
+             de "compartir" que estaba en la barra inferior. -->
+        <a class="footer-col footer-col-link"
+           href="https://www.udelaciudad.edu.ar/"
+           target="_blank"
+           rel="noopener noreferrer">
+          <h3 class="footer-logo footer-logo-alt">Universidad de la Ciudad de Buenos Aires<span
+              class="material-icons-outlined footer-logo-icon" aria-hidden="true">share</span></h3>
+          <p class="footer-desc">Educación pública orientada al desarrollo de software, la inteligencia artificial y las nuevas tecnologías.</p>
+        </a>
       </div>
     </footer>
 
