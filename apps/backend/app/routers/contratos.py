@@ -4,6 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 from app.core.security import CurrentUser, get_current_user, normalizar_email
+from app.dominio.compatibilidad import comparar, sanitizar_requisitos
 from app.models import Contrato, Estudiante, Proyecto
 from app.schemas.auth import AsignarRequest
 from app.schemas.serializacion import a_dict, aplicar_cambios
@@ -39,6 +40,17 @@ async def _exigir_dueno(db: AsyncSession, contrato: Contrato, user: CurrentUser)
         raise HTTPException(status.HTTP_403_FORBIDDEN, "Solo el gerente del proyecto puede hacer esto")
 
 
+def _nombre_estudiante(estudiante: Estudiante) -> str:
+    return f"{estudiante.nombre or ''} {estudiante.apellido or ''}".strip() or estudiante.name or ""
+
+
+def _normalizar_requisitos(body: dict) -> dict:
+    """Copia el body con los requisitos validados (sin tocar el diccionario original)."""
+    if "requisitos" not in body:
+        return body
+    return {**body, "requisitos": sanitizar_requisitos(body.get("requisitos"))}
+
+
 @router.get("/contratos")
 async def get_contratos(db: AsyncSession = Depends(get_db)):
     contratos = (await db.scalars(select(Contrato).order_by(Contrato.id))).all()
@@ -46,20 +58,59 @@ async def get_contratos(db: AsyncSession = Depends(get_db)):
 
 
 @router.get("/contratoslibres")
-async def get_contratos_libres(db: AsyncSession = Depends(get_db)):
+async def get_contratos_libres(
+    db: AsyncSession = Depends(get_db), user: CurrentUser = Depends(get_current_user)
+):
     consulta = select(Contrato).where(Contrato.esta_ocupado.is_(False)).order_by(Contrato.id)
-    return _respuesta_lista("Contratos libres", list((await db.scalars(consulta)).all()))
+    contratos = list((await db.scalars(consulta)).all())
+    perfil = await db.scalar(select(Estudiante).where(Estudiante.email == user.email))
+    datos = []
+    for contrato in contratos:
+        fila = a_dict(contrato)
+        if perfil is not None:
+            # Cada estudiante ve su propio resultado calculado al vuelo con su perfil actual.
+            fila["mi_resultado"] = comparar(perfil, contrato.requisitos)
+        datos.append(fila)
+    return {"message": "Contratos libres", "count": len(datos), "data": datos}
 
 
 @router.get("/contratos/{email_gerente}")
-async def get_contratos_de_gerente(email_gerente: str, db: AsyncSession = Depends(get_db)):
+async def get_contratos_de_gerente(
+    email_gerente: str,
+    db: AsyncSession = Depends(get_db),
+    user: CurrentUser = Depends(get_current_user),
+):
+    email_gerente = normalizar_email(email_gerente)
     consulta = (
         select(Contrato)
         .join(Proyecto, Contrato.proyecto_id == Proyecto.id)
-        .where(Proyecto.email_gerente == normalizar_email(email_gerente))
+        .where(Proyecto.email_gerente == email_gerente)
         .order_by(Contrato.id)
     )
-    return _respuesta_lista("Contratos del gerente", list((await db.scalars(consulta)).all()))
+    contratos = list((await db.scalars(consulta)).all())
+    datos = [a_dict(c) for c in contratos]
+
+    # El informe determinista de postulantes solo lo ve la empresa dueña de la oferta.
+    if user.email == email_gerente:
+        emails = {e for c in contratos for e in (c.postulaciones or []) if e}
+        estudiantes: dict[str, Estudiante] = {}
+        if emails:
+            filas = (await db.scalars(select(Estudiante).where(Estudiante.email.in_(emails)))).all()
+            estudiantes = {e.email: e for e in filas}
+        for contrato, fila in zip(contratos, datos):
+            resultados = []
+            for email in contrato.postulaciones or []:
+                estudiante = estudiantes.get(email)
+                if estudiante is None:
+                    continue
+                resultados.append({
+                    "email": email,
+                    "nombre": _nombre_estudiante(estudiante),
+                    "resultado": comparar(estudiante, contrato.requisitos),
+                })
+            fila["resultados_postulantes"] = resultados
+
+    return {"message": "Contratos del gerente", "count": len(datos), "data": datos}
 
 
 @router.post("/contrato", status_code=status.HTTP_201_CREATED)
@@ -79,8 +130,10 @@ async def crear_contrato(
     if not str(body.get("titulo") or "").strip():
         raise HTTPException(status.HTTP_400_BAD_REQUEST, "El contrato necesita un título")
 
-    contrato = Contrato(proyecto_id=proyecto.id, titulo="", postulaciones=[], seniority_deseado=[])
-    aplicar_cambios(contrato, body, CAMPOS_DE_ESTADO)
+    contrato = Contrato(
+        proyecto_id=proyecto.id, titulo="", postulaciones=[], seniority_deseado=[], requisitos=[]
+    )
+    aplicar_cambios(contrato, _normalizar_requisitos(body), CAMPOS_DE_ESTADO)
     db.add(contrato)
     await db.flush()
     return _respuesta_lista("Contrato creado", [contrato])
@@ -138,7 +191,7 @@ async def actualizar_contrato(
     otros = {k: v for k, v in body.items() if k not in CAMPOS_DE_ESTADO}
     if otros:
         await _exigir_dueno(db, contrato, user)
-        aplicar_cambios(contrato, otros, CAMPOS_DE_ESTADO)
+        aplicar_cambios(contrato, _normalizar_requisitos(otros), CAMPOS_DE_ESTADO)
     contrato.tiene_postulaciones = bool(contrato.postulaciones)
     await db.flush()
     return {"message": mensaje, "data": a_dict(contrato)}

@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     # Vacía: el asistente responde solo con la guía, sin leer datos de la plataforma.
     CHAT_DATOS_URL: str = ""
     CHAT_TOKEN_MINUTOS: int = 5
+    # Orientación de postulaciones: webhook del workflow de n8n y secreto compartido.
+    # Si el webhook o el secreto faltan, el backend guarda el fallback determinista.
+    N8N_ORIENTACION_WEBHOOK_URL: str = ""
+    N8N_AUTOMATION_SECRET: str = ""
+    N8N_ORIENTACION_TIMEOUT_SEGUNDOS: float = 30
 
     @field_validator("JWT_SECRET_KEY")
     @classmethod
