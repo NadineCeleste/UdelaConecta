@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import AsyncSessionLocal
 from app.core.security import hash_password
+from app.dominio.compatibilidad import sanitizar_requisitos
 from app.models import AuthUser, Contrato, Estudiante, Gerente, Portfolio, Proyecto
 
 PASSWORD_DEMO = "Udela1234!"
@@ -451,11 +452,19 @@ async def _empresa(db: AsyncSession, datos: dict) -> None:
         await db.flush()
     gerente.id_proyecto = proyecto.id
 
-    existentes = set(
-        (await db.scalars(select(Contrato.titulo).where(Contrato.proyecto_id == proyecto.id))).all()
-    )
+    existentes = {
+        contrato.titulo: contrato
+        for contrato in (
+            await db.scalars(select(Contrato).where(Contrato.proyecto_id == proyecto.id))
+        ).all()
+    }
     for oferta in ofertas:
-        if oferta["titulo"] in existentes:
+        contrato = existentes.get(oferta["titulo"])
+        if contrato is not None:
+            # Backfill para bases creadas antes de la migración 0004: la oferta ya
+            # existe pero quedó sin requisitos. No se pisan los que cargó la empresa.
+            if not contrato.requisitos and oferta.get("requisitos"):
+                contrato.requisitos = sanitizar_requisitos(oferta["requisitos"])
             continue
         postulaciones = oferta.get("postulaciones", [])
         db.add(Contrato(
