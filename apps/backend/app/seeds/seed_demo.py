@@ -35,6 +35,14 @@ def _idiomas(*pares: tuple[str, str]) -> list[dict]:
     return [{"nombre_idioma": nombre, "nivel_idioma": nivel} for nombre, nivel in pares]
 
 
+def _requisitos(*items: tuple[str, str, str, str]) -> list[dict]:
+    """Requisitos de una oferta: (nombre, nivel_minimo, exigencia, tipo)."""
+    return [
+        {"nombre": nombre, "nivel_minimo": nivel, "exigencia": exigencia, "tipo": tipo}
+        for nombre, nivel, exigencia, tipo in items
+    ]
+
+
 ESPANOL = ("Español", "C2 - Nativo")
 
 ESTUDIANTES = [
@@ -178,6 +186,14 @@ EMPRESAS = [
                 "seniority_deseado": ["Trainee", "Junior"],
                 "start_date": "2026-11-01",
                 "end_date": "2027-04-30",
+                "requisitos": _requisitos(
+                    ("Angular", "intermedio", "excluyente", "tecnica"),
+                    ("TypeScript", "intermedio", "excluyente", "tecnica"),
+                    ("CSS", "avanzado", "deseable", "tecnica"),
+                    ("Testing", "principiante", "deseable", "tecnica"),
+                    ("Docker", "principiante", "se_aprende", "tecnica"),
+                    ("Trabajo en equipo", "principiante", "deseable", "blanda"),
+                ),
             },
             {
                 "tipo": "Pasantía",
@@ -188,6 +204,13 @@ EMPRESAS = [
                 "postulaciones": [EMAIL_DEV],
                 "start_date": "2026-11-15",
                 "end_date": "2027-05-15",
+                "requisitos": _requisitos(
+                    ("Python", "intermedio", "excluyente", "tecnica"),
+                    ("FastAPI", "intermedio", "excluyente", "tecnica"),
+                    ("SQL", "intermedio", "deseable", "tecnica"),
+                    ("PostgreSQL", "principiante", "deseable", "tecnica"),
+                    ("Docker", "principiante", "se_aprende", "tecnica"),
+                ),
             },
             {
                 "tipo": "Contrato",
@@ -199,6 +222,11 @@ EMPRESAS = [
                 "pasante_email": EMAIL_DEV,
                 "start_date": "2026-10-01",
                 "end_date": "2027-03-31",
+                "requisitos": _requisitos(
+                    ("Testing manual", "intermedio", "excluyente", "tecnica"),
+                    ("Playwright", "principiante", "deseable", "tecnica"),
+                    ("Comunicación", "principiante", "deseable", "blanda"),
+                ),
             },
             {
                 "tipo": "Pasantía",
@@ -210,6 +238,12 @@ EMPRESAS = [
                 "postulaciones": [CAMILA],
                 "start_date": "2026-12-01",
                 "end_date": "2027-05-31",
+                "requisitos": _requisitos(
+                    ("Python", "intermedio", "excluyente", "tecnica"),
+                    ("SQL", "intermedio", "excluyente", "tecnica"),
+                    ("Pandas", "principiante", "deseable", "tecnica"),
+                    ("Power BI", "principiante", "deseable", "tecnica"),
+                ),
             },
         ],
     },
@@ -237,6 +271,12 @@ EMPRESAS = [
                 "postulaciones": [JULIETA],
                 "start_date": "2026-11-15",
                 "end_date": "2027-05-15",
+                "requisitos": _requisitos(
+                    ("Python", "intermedio", "excluyente", "tecnica"),
+                    ("PostgreSQL", "principiante", "deseable", "tecnica"),
+                    ("Docker", "principiante", "se_aprende", "tecnica"),
+                    ("MQTT", "principiante", "se_aprende", "tecnica"),
+                ),
             },
             {
                 "tipo": "Contrato",
@@ -248,6 +288,12 @@ EMPRESAS = [
                 "postulaciones": [CAMILA],
                 "start_date": "2027-01-05",
                 "end_date": "2027-12-20",
+                "requisitos": _requisitos(
+                    ("Python", "intermedio", "excluyente", "tecnica"),
+                    ("SQL", "intermedio", "excluyente", "tecnica"),
+                    ("Inglés B1", "principiante", "deseable", "tecnica"),
+                    ("Docker", "principiante", "se_aprende", "tecnica"),
+                ),
             },
         ],
     },
@@ -274,6 +320,12 @@ EMPRESAS = [
                 "postulaciones": [LUCAS, EMAIL_DEV],
                 "start_date": "2026-11-10",
                 "end_date": "2027-11-10",
+                "requisitos": _requisitos(
+                    ("React", "intermedio", "excluyente", "tecnica"),
+                    ("TypeScript", "intermedio", "excluyente", "tecnica"),
+                    ("CSS", "intermedio", "deseable", "tecnica"),
+                    ("Accesibilidad", "principiante", "deseable", "tecnica"),
+                ),
             },
             {
                 "tipo": "Pasantía",
@@ -284,6 +336,11 @@ EMPRESAS = [
                 "seniority_deseado": ["Trainee"],
                 "start_date": "2026-11-01",
                 "end_date": "2027-04-30",
+                "requisitos": _requisitos(
+                    ("Testing manual", "principiante", "excluyente", "tecnica"),
+                    ("Comunicación", "principiante", "deseable", "blanda"),
+                    ("Inglés B1", "principiante", "deseable", "tecnica"),
+                ),
             },
         ],
     },
@@ -309,6 +366,11 @@ EMPRESAS = [
                 "postulaciones": [TOMAS],
                 "start_date": "2026-12-01",
                 "end_date": "2027-06-30",
+                "requisitos": _requisitos(
+                    ("Flutter", "intermedio", "excluyente", "tecnica"),
+                    ("Dart", "intermedio", "deseable", "tecnica"),
+                    ("Firebase", "principiante", "se_aprende", "tecnica"),
+                ),
             },
             {
                 "tipo": "Contrato",
@@ -320,6 +382,12 @@ EMPRESAS = [
                 "postulaciones": [JULIETA],
                 "start_date": "2026-11-20",
                 "end_date": "2027-11-20",
+                "requisitos": _requisitos(
+                    ("Docker", "intermedio", "excluyente", "tecnica"),
+                    ("Linux", "intermedio", "excluyente", "tecnica"),
+                    ("GitHub Actions", "principiante", "deseable", "tecnica"),
+                    ("Python", "principiante", "deseable", "tecnica"),
+                ),
             },
             {
                 "tipo": "Contrato",
@@ -331,6 +399,12 @@ EMPRESAS = [
                 "pasante_email": MARTINA,
                 "start_date": "2026-09-01",
                 "end_date": "2027-02-28",
+                "requisitos": _requisitos(
+                    ("UML", "principiante", "excluyente", "tecnica"),
+                    ("Testing manual", "principiante", "deseable", "tecnica"),
+                    ("Comunicación", "principiante", "deseable", "blanda"),
+                    ("Inglés B1", "principiante", "deseable", "tecnica"),
+                ),
             },
         ],
     },
