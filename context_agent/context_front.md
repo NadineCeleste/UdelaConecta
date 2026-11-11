@@ -6,7 +6,9 @@
 
 
 > Documento de referencia para agentes de IA y desarrolladores. Describe **cómo está hecho hoy** el frontend, no cómo debería estar. Para problemas y mejoras, ver [`audit_front.md`](./audit_front.md).
-> Última revisión: 2026-10-29 · commit base `2cc9f54`.
+> Última revisión: 2026-11-11. Las secciones marcadas “estado anterior” conservan el contexto histórico; el backend ya existe (ver [`backend.md`](./backend.md)).
+
+> **Actualización 2026-11-11 — compatibilidad:** el formulario de oferta carga requisitos, el detalle muestra checklist e informe de tres secciones, “Mis postulaciones” incluye la orientación y la empresa ve el informe determinista por postulante. Modelos nuevos: `Requisito`, `ResultadoCompatibilidad`, `Orientacion`, `ResultadoPostulante`. Endpoints: `mis-postulaciones` y `postulaciones/:id/orientacion`. El detalle está en las secciones 6 y 9.
 
 ---
 
@@ -17,10 +19,10 @@
 | **Qué es** | Bolsa de trabajo que conecta estudiantes y graduados IT de la Universidad de la Ciudad de Buenos Aires con empresas. Marca visible: **Udela Conecta**. |
 | **Stack** | Angular **20.3** (standalone components, control flow `@if`/`@for` mezclado con `*ngIf`/`*ngFor`), RxJS 7.8, zone.js 0.15, TypeScript 5.9 en modo `strict`, `strictTemplates`. |
 | **Build** | `@angular/build:application` (esbuild + Vite dev server). |
-| **Tests** | Karma + Jasmine (hoy no compilan, ver auditoría). |
-| **Backend** | **No existe todavía.** El front espera una API REST en `http://127.0.0.1:3000/api/`. |
-| **Auth** | `AuthService` **simulado** (mock). Los comentarios del código sugieren que originalmente se usó Supabase, pero no hay dependencia ni configuración. |
-| **Storage de imágenes** | Bucket tipo S3 vía `fetch` directo (`environment.bucketUrl`, hoy vacío). |
+| **Tests** | Karma + Jasmine. |
+| **Backend** | FastAPI real en `http://127.0.0.1:3000/api/` (ver [`backend.md`](./backend.md)). |
+| **Auth** | `AuthService` real contra `/api/auth/*`; token en `localStorage` y `authInterceptor`. |
+| **Storage de imágenes** | `/storage` del backend, con `fetch` y token. |
 | **Idioma** | Código, comentarios y UI en español (rioplatense). |
 
 ---
@@ -165,11 +167,15 @@ No hay ruta comodín (`**`) ni página 404. Query params usados: `contratos?id=<
   - `contratosDisponibles` — el resto
 - Filtros: texto (`busqueda` sobre `titulo`), `filtroModalidad`, `filtroSeniority`; `limpiarFiltros()`; drawer de filtros en mobile.
 - Mantiene el contrato seleccionado al recargar (por `id`); usa `?id=` para preselección.
+- **Compatibilidad (2026-11-11):** `informesPorContrato: Map<number, {resultado, orientacion?}>`; `cargarInformes()` pide `GET mis-postulaciones` si el rol es estudiante y arma el mapa; `onOrientacionActualizada()` actualiza la orientación sin recargar todo. En las tarjetas se muestra un `compatibilidad-tag` compacto (no un porcentaje grande ni rojo). Pasa `miResultado`, `orientacion` y `resultadosPostulantes` al detalle y escucha `orientacionActualizada`.
 
 ### `ContratoDetail` — `componentes/contrato-detail/`
-- **Inputs:** `contrato`, `email`, `rol`. **Output:** `contratoAssigned: Contrato | null`.
-- **Desarrollador:** `postularse(contrato, email)` → `PUT contrato/:id {postulaciones: email}` y luego `PUT contrato/:id {id, tiene_postulaciones: true}`.
-- **Gerente:** lista `postulacionesNormalizadas`, modal por postulante, `verPerfilPostulante()` → `/profile/:email`, `asignarPostulante()` → `PUT contrato/asignar/:id {pasante_email}`.
+- **Inputs:** `contrato`, `email`, `rol`, `miResultado`, `orientacion`, `resultadosPostulantes`. **Outputs:** `contratoAssigned: Contrato | null`, `orientacionActualizada`.
+- **Desarrollador:** `postularse(contrato, email)` → `PUT contrato/:id {postulaciones: email}` y luego `PUT contrato/:id {id, tiene_postulaciones: true}`. El botón **no** se deshabilita por requisitos faltantes.
+- **Gerente:** lista `postulacionesNormalizadas`, modal por postulante, `verPerfilPostulante()` → `/profile/:email`, `asignarPostulante()` → `PUT contrato/asignar/:id {pasante_email}`. El modal muestra `resultadoDePostulante()` (informe determinista); **no** muestra la orientación de IA.
+- **Requisitos y checklist:** `resumenRequisitos()`, `nivelCoincidencia()`, `etiquetaEstado()` (Cumple / A capacitar / A reforzar / Se aprende en el puesto / A evaluar en entrevista). Sección “Requisitos del puesto” con chips y ayuda.
+- **Informe propio:** tres secciones (nivel de coincidencia, aptitudes compatibles, aptitudes a capacitar), notas de “se aprende” y “blanda”, y botón **Generar/Regenerar orientación** (`generarOrientacion()` → `POST postulaciones/:id/orientacion`). Textos obligatorios: “Este análisis se basa en tu perfil declarado.”, “Podés postularte igual.”, “No es una evaluación ni un ranking.”, “La orientación es una sugerencia para prepararte, no una evaluación.”, “Esto no implica rechazo.”, “La empresa ve este mismo resumen; la orientación es solo para vos.”
+- `postulanteSeleccionadoInfo` centraliza el postulante abierto en el modal.
 
 ### `ProfileComponent` — `componentes/profile/`
 - **Perfil propio** (desde `userProfile$`) o **ajeno** (`/profile/:email` → `isOwnProfile = false`, consulta `checkUserExists` + `getUsuarioByEmailAndTable`).
@@ -193,6 +199,7 @@ No hay ruta comodín (`**`) ni página 404. Query params usados: `contratos?id=<
 
 ### `Formcreatecontract` — `views/formcreatecontract/`
 - Alta de contrato: `tipo`, `titulo`, `descripcion`, `modalidad` (`remoto | presencial | hibrido`), `seniority_deseado` (multi: `Trainee | Junior | Semisenior | Senior`), `start_date`, `end_date`. `POST contrato`. Cancelar → `/profile?tab=ofertas`.
+- **Requisitos (2026-11-11):** `requisitos: Requisito[]`; `nuevoRequisito` con `nombre`, `nivel_minimo`, `exigencia`, `tipo`; `agregarRequisito()`, `quitarRequisito()`, `etiquetaRequisito()`. Chips con el resumen y texto de ayuda; si no hay requisitos, se muestra una advertencia pero **se puede publicar**. En edición se precargan los requisitos existentes.
 
 ### `Alertas` — `componentes/alertas/`
 - Renderiza toasts y el modal de confirmación de `AlertService`. Se monta una vez en `app.html`.
@@ -215,7 +222,7 @@ Todos con `providedIn: 'root'`. Base URL: `environment.apiUrl`.
 | Servicio | Archivo | Métodos |
 |---|---|---|
 | `Users` | `users.ts` | `checkUserExists`, `getUsuarioByEmailAndTable`, `createUserByRole`, `updateUserByRole`, `getAllDesarrolladores`, `setUserProfile`, `getUserProfileValue`, `userProfile$` |
-| `ContratoService` | `contrato.ts` | `getContratos`, `getContratosLibres`, `getContratosByEmailGerente`, `postContrato`, `updateContrato`, `postularseAContrato`, `asignarPostulante`, `deleteContrato` |
+| `ContratoService` | `contrato.ts` | `getContratos`, `getContratosLibres`, `getContratosByEmailGerente`, `postContrato`, `updateContrato`, `postularseAContrato`, `asignarPostulante`, `deleteContrato`, `getMisPostulaciones`, `getOrientacion`, `pedirOrientacion` |
 | `ProyectoService` | `miproyecto.ts` | `getProyectoPorEmail`, `postProyecto`, `editProyecto` |
 | `PortfolioService` | `portfolioService.ts` | `getPortfolioByEmail`, `existsPortfolio`, `createPortfolio`, `updatePortfolio`, `deletePortfolio`, `uploadImage`, `deleteImage`, `deleteAllImagesFromPortfolio` |
 | `AlertService` | `alertService.ts` | `success`, `error`, `info`, `warning` (toasts con timeout), `confirm(msg, title): Promise<boolean>` |
@@ -235,7 +242,10 @@ Todos con `providedIn: 'root'`. Base URL: `environment.apiUrl`.
   - **`Gerente`** extends: `id_proyecto`
   - **`InstitucionEducativa`** extends: (sin campos)
 - **`userExistsByEmailResponse`**: `{ message, data: { existe: 0|1, tabla } }`
-- **`Contrato`**: `id:number, tipo, titulo, descripcion, tiene_postulaciones, postulaciones:string[], esta_ocupado, pasante_email, proyecto_id:string, start_date, end_date, modalidad, seniority_deseado:string[]`
+- **`Contrato`**: `id:number, tipo, titulo, descripcion, tiene_postulaciones, postulaciones:string[], esta_ocupado, pasante_email, proyecto_id:string, start_date, end_date, modalidad, seniority_deseado:string[], requisitos: Requisito[], mi_resultado?: ResultadoCompatibilidad, resultados_postulantes?: ResultadoPostulante[]`
+- **`Requisito`** (`models/contrato.ts`): `nombre`, `nivel_minimo`, `exigencia`, `tipo`
+- **`ResultadoCompatibilidad`**: `coincidencia`, `nivel`, `total_requisitos`, `total_compatibles`, `compatibles[]`, `a_capacitar[]`, `se_aprenden[]`, `blandas[]`, `checklist[]`, `sin_requisitos`
+- **`Orientacion`**: `{contrato_id, texto, modelo, estado, actualizado_en}`; **`ResultadoPostulante`**: `{email, nombre, resultado}`
 - **`ContratoResponse`**: `{ message, count, data: Contrato[] }` · **`PostulacionResponse`**: `{ message, data: Contrato }`
 - **`Proyecto`**: `id, nombre, description, info_link, buscando_devs (default true), contratos[], id_gerente, email_gerente`
 - **`ProyectoResponse`**: `{ message, count, data: Proyecto[] }`
@@ -261,7 +271,7 @@ Niveles: habilidades `principiante | …` (default `principiante`); idiomas `A1 
 
 ## 9. Contrato de API esperado
 
-Base: `environment.apiUrl` = `http://127.0.0.1:3000/api/`. Sin headers de autenticación. Los emails van en el path **sin codificar**.
+Base: `environment.apiUrl` = `http://127.0.0.1:3000/api/`. El `authInterceptor` agrega `Authorization: Bearer` a las llamadas autenticadas. Los emails van en el path codificados con `encodeURIComponent`.
 
 | Método | Path | Body | Respuesta esperada | Llamado desde |
 |---|---|---|---|---|
@@ -288,6 +298,9 @@ Base: `environment.apiUrl` = `http://127.0.0.1:3000/api/`. Sin headers de autent
 | PUT | `${bucketUrl}/portfolios/<timestamp>_<nombre>` | archivo binario | 2xx | `PortfolioService.uploadImage` |
 | DELETE | `<url de imagen>` | — | 2xx | `PortfolioService.deleteImage` |
 | POST | `chat` | `{mensaje, session_id}` | `{message, data: {respuesta}}` | `ChatService.enviar` (Chatbot) |
+| GET | `mis-postulaciones` | — | `{count, data: [{contrato, resultado, orientacion\|null}]}` | `ContratoService.getMisPostulaciones` (Contratos) |
+| GET | `postulaciones/:contrato_id/orientacion` | — | `{data: Orientacion \| null}` | `ContratoService.getOrientacion` |
+| POST | `postulaciones/:contrato_id/orientacion` | — | `{data: Orientacion}`; 400 si la oferta no tiene requisitos | `ContratoService.pedirOrientacion` (ContratoDetail) |
 
 ---
 

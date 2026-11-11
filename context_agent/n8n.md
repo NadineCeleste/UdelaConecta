@@ -1,7 +1,7 @@
-# Asistente con n8n — Udela Conecta
+# n8n — Udela Conecta
 
-> Cómo está armado el asistente (chatbot) de Udela Conecta: el widget del front, la puerta del backend, el workflow de n8n, las herramientas de datos y la configuración en local y en producción.
-> Relacionado: [`backend.md`](./backend.md) (endpoints `/api/chat` y `/api/chat/datos`), [`orquestacion.md`](./orquestacion.md) (variables y deploy), [`context_front.md`](./context_front.md) (widget).
+> Cómo están armados los tres workflows de n8n: el asistente (chatbot), la orientación de postulación y el digest semanal. Incluye el widget del front, la puerta del backend, los nodos, las herramientas de datos, las credenciales y la configuración en local y en producción.
+> Relacionado: [`backend.md`](./backend.md) (endpoints `/api/chat`, `/api/chat/datos`, `/api/postulaciones/*` y `/api/automatizacion/*`), [`orquestacion.md`](./orquestacion.md) (variables y deploy), [`context_front.md`](./context_front.md) (widget), [`../docs/ARQUITECTURA.md`](../docs/ARQUITECTURA.md) (flujo de compatibilidad).
 
 ---
 
@@ -9,11 +9,11 @@
 
 | | |
 |---|---|
-| **Qué hace** | Responde preguntas sobre la plataforma, muestra ofertas libres y, con sesión iniciada, lee los datos propios del usuario (perfil, postulaciones, ofertas, postulantes y candidatos) para orientarlo y ayudarlo a redactar textos |
-| **Qué no hace** | No escribe nada: no postula, no publica, no edita ni asigna. Indica en qué sección hacerlo |
-| **Modelo** | DeepSeek (`deepseek-flash`) desde n8n, con memoria de 10 mensajes por conversación |
-| **Instancia de n8n** | `https://n8n.jorgespinola.com`, en el mismo VPS (contenedor en `127.0.0.1:5678`) |
-| **Workflow** | "Udela Conecta – Chatbot", id `9Ljcps2reBKSc8Af`. Copia versionada en [`infra/n8n/udela-chatbot.json`](../infra/n8n/udela-chatbot.json) |
+| **Qué hace** | Chatbot: responde preguntas, muestra ofertas libres y, con sesión, lee los datos propios del usuario. Orientación: redacta un texto breve para el estudiante a partir del informe determinista. Digest: prepara un mensaje semanal con oportunidades compatibles |
+| **Qué no hace** | No escribe en la base por sí mismo, no postula, no publica, no edita, no asigna y **no calcula el porcentaje de compatibilidad** |
+| **Modelos** | Chatbot: DeepSeek (`deepseek-flash`), memoria de 10 mensajes. Orientación: DeepSeek (`deepseek-chat`). Digest: sin modelo |
+| **Instancia de n8n** | Producción: `https://n8n.jorgespinola.com`, en el mismo VPS. Local: `http://localhost:5678` (servicio `n8n` del compose) |
+| **Workflows** | “Udela Conecta – Chatbot”, “Udela Conecta – Orientación de postulación” y “Udela Conecta – Digest de oportunidades”. Copias versionadas en [`infra/n8n/`](../infra/n8n/) |
 
 ## 2. Arquitectura
 
@@ -118,8 +118,9 @@ Los tres agentes comparten estas reglas:
 
 | Credencial | Tipo | Uso |
 |---|---|---|
-| `Udela-Secret` | Header Auth: nombre `X-Udela-Secret`, valor = `N8N_CHAT_SECRET` | Protege el webhook. Sin el header correcto, n8n responde 403 |
-| `DeepSeek account` | DeepSeek API | Los dos modelos |
+| `Udela-Secret` | Header Auth: nombre `X-Udela-Secret`, valor = `N8N_AUTOMATION_SECRET` (local) o el secreto de producción | Protege el webhook de chat, el de orientación y el GET de digests. Sin el header correcto, n8n responde 403 |
+| `DeepSeek account` | DeepSeek API | Chatbot y orientación de postulación |
+| `Udela SMTP` | SMTP | Opcional: nodo `Enviar` del digest. Deshabilitado por defecto |
 
 Los valores se cargan **solo** en la interfaz de n8n y en `.env.vps` / `.env.chat`. Nunca van al repo ni al chat. Para generar un secreto: `openssl rand -hex 32`.
 
@@ -133,6 +134,9 @@ Los valores se cargan **solo** en la interfaz de n8n y en `.env.vps` / `.env.cha
 | `CHAT_MENSAJES_POR_MINUTO` | 20 | Límite por usuario o IP, por worker |
 | `CHAT_DATOS_URL` | vacía | URL pública de `/api/chat/datos` que se pasa a n8n. Vacía: n8n usa la de producción |
 | `CHAT_TOKEN_MINUTOS` | 5 | Duración del token de las herramientas |
+| `N8N_ORIENTACION_WEBHOOK_URL` | vacía | URL del webhook `udela-orientacion`. Vacía: el backend guarda fallback |
+| `N8N_AUTOMATION_SECRET` | vacía | Secreto `X-Udela-Secret` para orientación y digests. Vacío: los endpoints de automatización responden 503 |
+| `N8N_ORIENTACION_TIMEOUT_SEGUNDOS` | 30 | Espera máxima de la orientación |
 
 - **Local:** se crea `infra/local/.env.chat` (fuera de git; el compose lo carga si existe) con `N8N_CHAT_WEBHOOK_URL` y `N8N_CHAT_SECRET`. El n8n del VPS no llega a `localhost`, así que en local el asistente responde pero las herramientas leen los datos de producción (o fallan si `CHAT_DATOS_URL` apunta a local).
 - **Producción:** `infra/vps/setup-env.sh` pide la URL y el secreto (oculto) y arma `CHAT_DATOS_URL` con el subdominio. `docker-compose.prod.yml` pasa las tres variables al backend.
@@ -150,7 +154,14 @@ Los valores se cargan **solo** en la interfaz de n8n y en `.env.vps` / `.env.cha
 
 ## 10. Importar, probar y publicar
 
-**Importar en otra instancia:** Workflows → Import from file → `infra/n8n/udela-chatbot.json`. Asignar las credenciales `Udela-Secret` y `DeepSeek account` a los nodos que las piden y activar.
+**Importar en otra instancia:** Workflows → Import from file → `infra/n8n/udela-chatbot.json`, `udela-orientacion.json` y `udela-digest.json`. Asignar las credenciales `Udela-Secret`, `DeepSeek account` y (opcional) `Udela SMTP` a los nodos que las piden y activar.
+
+**Importar los tres por CLI (n8n 1.70):**
+```bash
+docker compose -f infra/local/docker-compose.yml exec n8n \
+  n8n import:workflow --separate --input=/workflows
+```
+Cada JSON debe tener `"active"` en el nivel superior; el CLI espera un archivo por workflow con `--separate`. No envolverlos en un array.
 
 **Probar el webhook** (desde el VPS, con el secreto en una variable de entorno para que no quede en el historial):
 ```bash
@@ -178,7 +189,62 @@ Sin el header → 403. Con el header → `{"respuesta": "..."}`.
 | `salud@` | "Mejorame la descripción de la oferta de soporte" | Una propuesta de texto, sin publicarla |
 | `empresa@` | "Mostrame los postulantes de la oferta 99" | Que no la encontró entre sus ofertas |
 
-## 11. Problemas frecuentes
+## 11. Workflow de orientación (`udela-orientacion.json`)
+
+Genera la orientación breve que ve **solo el estudiante** en “Mis postulaciones”. El backend calcula primero el informe determinista y le manda a n8n las listas ya resueltas; n8n no calcula porcentajes.
+
+```
+Webhook Orientación (POST udela-orientacion, Header Auth)
+  └─ Normalizar (Set)
+       └─ ¿Hay brechas? (IF sobre tiene_brechas)
+            ├─ sí ─► Prompt Orientación (Code) ─► Modelo (LangChain agent)
+            │                                      ↕ DeepSeek Orientación (deepseek-chat)
+            │                                      └─► Validar (Code)
+            │                                            └─► ¿Texto válido? (IF)
+            │                                                  ├─ sí ─► Responder Orientación
+            │                                                  └─ no ─► Fallback
+            └─ no ─► Sin brechas (Set: modelo "sin-brechas")
+                        └─► Responder Orientación (mismo nodo)
+```
+
+- **Webhook:** `POST /webhook/udela-orientacion`; si falta `X-Udela-Secret`, 403. Responde con `responseNode`.
+- **Normalizar:** arma `tiene_brechas` (hay al menos un ítem en `a_capacitar`), `oferta`, `compatibles`, `a_capacitar`, `se_aprenden`, `blandas` y `coincidencia`.
+- **Prompt Orientación:** reglas explícitas: no decir que la persona no califica, no será rechazada o no es apta; no inventar requisitos; no evaluar blandas; no prometer resultados; empezar por la brecha más importante; sugerir un paso concreto; aclarar que es una orientación y no una evaluación; máximo 600 caracteres, texto plano, español rioplatense.
+- **Validar:** rechaza texto vacío, de más de 600 caracteres o con frases de rechazo (`no calificás`, `rechazado`, `no sos apto`, `no cumple`, `no sirve`). Si no pasa, va a **Fallback**.
+- **Fallback:** usa un texto determinista y `modelo: "fallback"`.
+- **Sin brechas:** no llama al modelo; responde un mensaje corto y positivo con `modelo: "sin-brechas"`.
+- **Respuesta:** `{ "texto": "...", "modelo": "..." }`. El backend valida de nuevo y guarda `estado = "generado"` o `"fallback"`.
+
+Prueba manual:
+
+```bash
+curl -X POST http://localhost:5678/webhook/udela-orientacion \
+  -H 'Content-Type: application/json' -H 'X-Udela-Secret: udela-local-secret' \
+  -d '{"contrato_id":1,"email":"dev@udelaconecta.edu.ar","oferta":"Backend Trainee","compatibles":["Python"],"a_capacitar":["SQL"],"se_aprenden":["Docker"],"blandas":["Comunicación"],"coincidencia":67}'
+```
+
+Si n8n está apagado, el backend no falla: guarda el texto de `texto_fallback()` y el informe determinista sigue disponible.
+
+## 12. Workflow de digest (`udela-digest.json`)
+
+Comunicación semanal de oportunidades. No es un ranking de personas: para cada estudiante ordena **sus** ofertas compatibles.
+
+```
+Schedule (lunes 9:00)
+  └─ Obtener digests (HTTP GET /api/automatizacion/digests + X-Udela-Secret)
+       └─ Preparar mensajes (Code: un item por estudiante)
+            └─ ¿Hay novedades? (IF ofertas.length > 0)
+                 ├─ sí ─► Enviar (emailSend, deshabilitado por defecto)
+                 └─ no ─► Sin novedades (NoOp)
+```
+
+- **Endpoint:** `GET {{ $env.UDELA_BACKEND_URL || 'http://backend:3000' }}/api/automatizacion/digests`. En local, `UDELA_BACKEND_URL=http://backend:3000` lo pone el compose.
+- **Respuesta:** `{data: [{email, nombre, ofertas: [{contrato_id, titulo, coincidencia, faltantes}]}]}`; solo ofertas libres a las que no se postuló y con `coincidencia > 60`, top 3.
+- **Preparar mensajes:** un mensaje por estudiante con sus ofertas y un texto de orientación, sin exponer datos de otros.
+- **Enviar:** nodo `emailSend` **deshabilitado** hasta configurar `Udela SMTP` y el remitente `UDELA_DIGEST_FROM`. Sin SMTP, el workflow se puede ejecutar manualmente y los mensajes se ven en la salida de n8n.
+- **Secreto:** el HTTP Request usa la credencial Header Auth `Udela-Secret`; el backend responde 503 si `N8N_AUTOMATION_SECRET` está vacío.
+
+## 13. Problemas frecuentes
 
 | Síntoma | Causa y solución |
 |---|---|
@@ -191,3 +257,10 @@ Sin el header → 403. Con el header → `{"respuesta": "..."}`.
 | El agente responde con asteriscos o `#` | El prompt perdió la regla de texto plano |
 | Los cambios no se ven en producción | El workflow quedó como borrador: publicarlo |
 | `Cannot modify workflow while it is being edited` (MCP) | El workflow está abierto en el editor de n8n; cerrar la pestaña |
+| La orientación siempre queda en `fallback` | `N8N_ORIENTACION_WEBHOOK_URL` vacía, n8n apagado, credencial DeepSeek mal configurada o el texto no pasó **Validar**. Revisar ejecuciones y el estado en `informe_postulacion` |
+| El webhook de orientación responde 403 | La credencial `Udela-Secret` no coincide con `N8N_AUTOMATION_SECRET` del backend |
+| El digest responde 503 | Falta `N8N_AUTOMATION_SECRET` en el backend (el endpoint de automatización lo exige) |
+| `n8n import:workflow` dice `workflows.map is not a function` | El JSON no es un array y se pasó sin `--separate`. Usar `--separate --input=/workflows` (un archivo por workflow) |
+| `SQLITE_CONSTRAINT: NOT NULL constraint failed: workflow_entity.active` | Falta `"active": false` en el nivel superior del JSON. Agregarlo antes de importar |
+| El Schedule no se guarda / `triggerAtDay` inválido | `triggerAtDay` es multiselección: debe ser `[1]` (lunes), no `1` |
+| El nodo `Enviar` del digest no manda nada | Está deshabilitado a propósito hasta configurar `Udela SMTP` y `UDELA_DIGEST_FROM` |

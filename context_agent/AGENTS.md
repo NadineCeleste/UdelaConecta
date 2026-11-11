@@ -15,7 +15,7 @@ Leer según la tarea:
 | [`context_front.md`](./context_front.md) | Contexto completo del frontend (componentes, servicios, modelos, API). Antes de tocar código del front |
 | [`audit_front.md`](./audit_front.md) | Auditoría general con hallazgos priorizados (S-, B-, Q-, P-, A-, T-, D-), su estado y el plan de arreglo. Antes de corregir un error o refactorizar |
 | [`endpoint.md`](./endpoint.md) | Auditoría detallada de los endpoints: inventario, flujos, hallazgos E-xx y API propuesta. Antes de tocar servicios HTTP o el backend |
-| [`n8n.md`](./n8n.md) | Asistente (chatbot): arquitectura widget → backend → n8n, nodos del workflow, herramientas de datos, prompts, credenciales, variables y problemas frecuentes. Antes de tocar `routers/chat*.py`, `componentes/chatbot` o el workflow |
+| [`n8n.md`](./n8n.md) | n8n: chatbot, orientación de postulación y digest semanal. Arquitectura widget → backend → n8n, nodos, prompts, credenciales, variables, importación y problemas frecuentes. Antes de tocar `routers/chat*.py`, `routers/postulaciones.py`, `componentes/chatbot`, `componentes/contrato-detail` o los workflows |
 | [`backend.md`](./backend.md) | Contexto completo del backend: ciclo de un request, modelo de datos, migraciones, cada endpoint con sus reglas de autorización, utilidades a reutilizar, tests y cómo extender. Antes de tocar `apps/backend` |
 | [`orquestacion.md`](./orquestacion.md) | Nx (proyectos, targets, cache, comandos), Docker local con hot-reload, producción en VPS (DuckDNS, Caddy, workers, backups) y problemas frecuentes. Antes de tocar `nx.json`, `project.json`, `package.json` o `infra/` |
 | [`../apps/backend/README.md`](../apps/backend/README.md) | Backend: estructura, variables de entorno, reglas de autorización, migraciones y usuarios demo |
@@ -36,11 +36,12 @@ npm run build          # nx build frontend --configuration=production -> dist/ap
 npm run test:front     # Karma/Jasmine en ChromeHeadless
 npm run test:back      # pytest (requiere: cd apps/backend && poetry install)
 npx nx run backend:migrate  # alembic upgrade head (también backend:seed y backend:serve; no usar "nx migrate", que actualiza Nx)
+docker compose -f infra/local/docker-compose.yml exec n8n n8n import:workflow --separate --input=/workflows  # importa los 3 workflows
 infra/vps/setup-env.sh # producción: genera infra/vps/.env.vps (DuckDNS, secretos, modo detrás de un Caddy del host)
 infra/vps/deploy.sh    # producción: git pull + build + up (también npm run vps:up / vps:down / vps:logs)
 ```
 
-Stack local: front `http://localhost:4200`, API `http://localhost:3000/api/`, Swagger `http://localhost:3000/docs`, Adminer `http://localhost:8080`, Postgres `localhost:5432` (Postgres y Adminer solo escuchan en `127.0.0.1`). Los puertos del host se cambian con `FRONTEND_PORT`, `POSTGRES_HOST_PORT` y `ADMINER_PORT`. Si se cambia `package.json`, recrear el volumen de `node_modules` con `docker compose -f infra/local/docker-compose.yml down -v`.
+Stack local: front `http://localhost:4200`, API `http://localhost:3000/api/`, Swagger `http://localhost:3000/docs`, Adminer `http://localhost:8080`, n8n `http://localhost:5678`, Postgres `localhost:5432` (Postgres y Adminer solo escuchan en `127.0.0.1`). Los puertos del host se cambian con `FRONTEND_PORT`, `N8N_HOST_PORT`, `POSTGRES_HOST_PORT` y `ADMINER_PORT`. Si se cambia `package.json`, recrear el volumen de `node_modules` con `docker compose -f infra/local/docker-compose.yml down -v`.
 
 Usuarios demo (los crea el seed cuando `AUTO_SEED=true`), contraseña `Udela1234!`: `dev@udelaconecta.edu.ar` y `empresa@udelaconecta.edu.ar`, más 5 estudiantes y 3 empresas con 11 ofertas en total (tabla en `backend.md`, sección Seed).
 
@@ -56,6 +57,7 @@ Usuarios demo (los crea el seed cuando `AUTO_SEED=true`), contraseña `Udela1234
 - **Producción:** sin nginx. Caddy (`Dockerfile.caddy`) sirve el build de Angular y hace de proxy a `/api` y `/storage`; el servicio `duckdns` mantiene la IP del subdominio. Si el servidor ya tiene un Caddy en 80/443, el de Udela queda en `127.0.0.1:8081` y el del host termina el HTTPS. Detalle en `orquestacion.md`.
 - **Fin de línea:** `.gitattributes` fuerza LF en los `*.sh`; con CRLF los contenedores no arrancan.
 - **Asistente (chatbot):** widget `componentes/chatbot` (visible con y sin sesión) → `POST /api/chat` → workflow de n8n "Udela Conecta – Chatbot" (DeepSeek) con tres agentes: invitados, estudiantes y empresas. El modo y el rol los decide el backend por el JWT; el secreto del webhook (`N8N_CHAT_SECRET`, header `X-Udela-Secret`) solo lo conocen el backend y n8n. Las herramientas de los agentes de estudiante y empresa leen `GET /api/chat/datos/*` con un JWT de 5 minutos (`aud=udela-chat`) que no sirve para el resto de la API. Sin configurar, el chat responde 503. El workflow está exportado en `infra/n8n/udela-chatbot.json`. Detalle en `n8n.md`.
+- **Compatibilidad y orientación:** las ofertas guardan `requisitos` (JSONB) y cada postulación puede tener un `informe_postulacion`. El cálculo vive en `app/dominio/compatibilidad.py` (Python puro) y se ejecuta al vuelo: no se persiste el porcentaje ni hay ranking. La empresa ve el informe determinista; la orientación de IA (n8n + DeepSeek) es solo para el estudiante, con fallback si n8n/IA fallan. “Postularme” nunca se bloquea por requisitos. Migración `0004`. Detalle en `docs/ARQUITECTURA.md` y `docs/DEMO.md`.
 
 ## Estructura del frontend (`apps/frontend/src/app`)
 
@@ -73,13 +75,15 @@ Públicas: `''` y `home` (Home). Con `authGuard` (requiere sesión): `contratos`
 
 ## Roles y modelo de datos
 
-Hay tres tipos de usuario, cada uno en su propia tabla: `estudiante`, `gerente`, `institucion_educativa`. En pantalla el rol `estudiante` se muestra como "Estudiante / graduado"; antes se llamaba `desarrollador` (migración `0003`). Las credenciales están aparte, en `auth_users`. Tras el login, `Users.checkUserExists(email)` consulta `GET usuario/:email`, que devuelve `{ data: { existe: 1, tabla } }` o un 404 que el front traduce a "no existe". Con la tabla, `getUsuarioByEmailAndTable` trae el perfil completo y `createUserByRole` lo crea. Las tablas restantes son `proyecto` (uno por gerente), `contrato` y `portfolio`. Los modelos están en `apps/backend/app/models/entities.py`.
+Hay tres tipos de usuario, cada uno en su propia tabla: `estudiante`, `gerente`, `institucion_educativa`. En pantalla el rol `estudiante` se muestra como "Estudiante / graduado"; antes se llamaba `desarrollador` (migración `0003`). Las credenciales están aparte, en `auth_users`. Tras el login, `Users.checkUserExists(email)` consulta `GET usuario/:email`, que devuelve `{ data: { existe: 1, tabla } }` o un 404 que el front traduce a "no existe". Con la tabla, `getUsuarioByEmailAndTable` trae el perfil completo y `createUserByRole` lo crea. Las tablas son `proyecto` (uno por gerente), `contrato` (con `requisitos` JSONB), `portfolio` e `informe_postulacion` (texto de orientación, único por contrato + email). Los modelos están en `apps/backend/app/models/entities.py`.
 
 ## API (relativa a `environment.apiUrl`)
 
 - Auth: `POST auth/login`, `POST auth/register`, `POST auth/social`, `POST auth/reset-password`
 - Usuarios: `GET usuario/:email`, `GET usuario/:email/:tabla`, `PUT usuario/:email`, `POST :rol` (estudiante | gerente | institucion_educativa), `GET estudiantes`
-- Contratos: `GET contratos`, `GET contratoslibres`, `GET contratos/:emailGerente`, `POST contrato`, `PUT contrato/:id` (postulaciones), `PUT contrato/asignar/:idContrato`, `DELETE contrato/:id`
+- Contratos: `GET contratos`, `GET contratoslibres` (agrega `mi_resultado` si el token es de estudiante), `GET contratos/:emailGerente` (agrega `resultados_postulantes` solo al gerente dueño), `POST contrato`, `PUT contrato/:id` (postulaciones), `PUT contrato/asignar/:idContrato`, `DELETE contrato/:id`
+- Informe y orientación (solo estudiante postulado): `GET mis-postulaciones`, `GET postulaciones/:contrato_id/orientacion`, `POST postulaciones/:contrato_id/orientacion`
+- Automatización n8n (header `X-Udela-Secret`): `POST automatizacion/postulaciones/:contrato_id/:email/orientacion`, `GET automatizacion/digests`
 - Proyectos: `GET proyecto/:email`, `POST proyecto`, `PUT proyecto/:email_gerente`
 - Portfolio: `GET portfolio/:email`, `POST createportfolio/:email`, `PUT updateportfolio/:email`, `DELETE deleteportfolio/:email`
 - Chat: `POST chat` `{mensaje, session_id}` (token opcional) → `{data: {respuesta}}`
@@ -92,4 +96,4 @@ Hay tres tipos de usuario, cada uno en su propia tabla: `estudiante`, `gerente`,
 - Notificaciones con `AlertService` (`success | error | info | warning | confirm`); `confirm` resuelve una promesa booleana. El spinner visible depende de `App.cargandoData`; `LoadingService` existe pero ningún template lo muestra.
 - Tema claro/oscuro guardado en `localStorage` (`theme`).
 - Prettier: `printWidth` 100, comillas simples.
-- Backend: un router por recurso en `app/routers/`. Las escrituras usan `aplicar_cambios` (`app/schemas/serializacion.py`), que aplica solo columnas conocidas y convierte tipos. Todo cambio de esquema va con una migración nueva en `alembic/versions/` (verificar con `alembic check`).
+- Backend: un router por recurso en `app/routers/`. Las escrituras usan `aplicar_cambios` (`app/schemas/serializacion.py`), que aplica solo columnas conocidas y convierte tipos. Todo cambio de esquema va con una migración nueva en `alembic/versions/` (verificar con `alembic check`). La lógica de compatibilidad va en `app/dominio/` y no debe importar routers, n8n ni clientes de IA.
