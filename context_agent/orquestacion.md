@@ -16,7 +16,7 @@ UdelaConecta/
   infra/
     local/      docker-compose.yml + Dockerfiles .dev + .env.local   (desarrollo, hot-reload)
     vps/        docker-compose.prod.yml + Caddy + scripts   (producción)
-    n8n/        udela-chatbot.json: export del workflow del asistente (sin credenciales)
+    n8n/        udela-chatbot.json, udela-orientacion.json y udela-digest.json (sin credenciales)
   context_agent/  documentación para agentes
 ```
 
@@ -94,6 +94,7 @@ El front llama a la API desde el **navegador** (`environment.ts` → `http://loc
 | `backend` | `Dockerfile.backend.dev` (python:3.13-slim + Poetry, dependencias en el sistema) | `3000` | `../../apps/backend:/app` (código), `storage:/data/storage` | Espera a que `postgres` esté *healthy*. `CORS_ORIGINS` se arma con `FRONTEND_PORT` |
 | `frontend` | `Dockerfile.frontend.dev` (node:24-alpine, usuario `node`, `npm ci` en la imagen) | `${FRONTEND_PORT:-4200}` | `../..:/workspace` (todo el repo), `frontend_node_modules:/workspace/node_modules` | `npx nx serve frontend --poll 2000`. El volumen de `node_modules` evita usar el del host |
 | `adminer` | `adminer:latest` | `127.0.0.1:${ADMINER_PORT:-8080}` | — | Servidor por defecto: `postgres` |
+| `n8n` | `n8nio/n8n:1.70.0` | `127.0.0.1:${N8N_HOST_PORT:-5678}` | `n8n_data` (base y cifrado), `../n8n:/workflows:ro` | `N8N_SECURE_COOKIE=false`, `N8N_BLOCK_ENV_ACCESS_IN_NODE=false`, zona horaria Argentina, `UDELA_BACKEND_URL=http://backend:3000` |
 
 Postgres y Adminer solo escuchan en `127.0.0.1` porque la contraseña de desarrollo es conocida.
 
@@ -107,7 +108,7 @@ Postgres y Adminer solo escuchan en `127.0.0.1` porque la contraseña de desarro
 
 `POSTGRES_USER/PASSWORD/DB`, `DATABASE_URL`, `JWT_SECRET_KEY` (de desarrollo, más de 32 caracteres), `STORAGE_DIR=/data/storage` (fuera de `/app` para que no aparezca dentro del código montado), `PUBLIC_STORAGE_BASE_URL`, `AUTO_SEED=true`.
 
-Para probar el asistente en local se crea `infra/local/.env.chat` (fuera de git, el compose lo carga solo si existe) con `N8N_CHAT_WEBHOOK_URL` y `N8N_CHAT_SECRET`. Sin ese archivo el chat responde "no disponible". El n8n del VPS no llega a `localhost`, así que las herramientas del asistente solo leen datos de producción. Detalle en [`n8n.md`](./n8n.md).
+n8n en local: el compose crea el servicio `n8n` con `N8N_ENCRYPTION_KEY`, `N8N_AUTOMATION_SECRET=udela-local-secret` y `UDELA_DIGEST_FROM` en `.env.local`. El backend apunta a `http://n8n:5678/webhook/udela-orientacion` y `http://n8n:5678/webhook/udela-chat`. Importar los workflows con `docker compose ... exec n8n n8n import:workflow --separate --input=/workflows`. El asistente también se puede probar contra el n8n del VPS creando `infra/local/.env.chat` (fuera de git) con `N8N_CHAT_WEBHOOK_URL` y `N8N_CHAT_SECRET`; sin ese archivo el chat responde "no disponible". Detalle en [`n8n.md`](./n8n.md).
 
 Los puertos del host se cambian con variables de entorno al levantar, no en `.env.local`:
 

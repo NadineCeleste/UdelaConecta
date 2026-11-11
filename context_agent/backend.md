@@ -1,7 +1,7 @@
 # Contexto del backend — Udela Conecta
 
 > Documento de referencia para agentes de IA y desarrolladores. Describe **cómo está hecho hoy** el backend (`apps/backend/`). Cómo se orquesta con Nx y Docker está en [`orquestacion.md`](./orquestacion.md). Cómo correrlo, en [`../apps/backend/README.md`](../apps/backend/README.md).
-> Fecha: 2026-10-29 · Última migración: `0003`.
+> Fecha: 2026-11-11 · Última migración: `0004`.
 
 ---
 
@@ -18,8 +18,9 @@ API REST en **FastAPI 0.115** + **SQLAlchemy 2.0 async** (driver `asyncpg`) sobr
 ```
 apps/backend/
   pyproject.toml / poetry.lock   dependencias (main + dev: pytest, pytest-asyncio, httpx)
+  requirements.txt               las mismas dependencias directas en formato pip
   project.json                   proyecto Nx "backend" (serve, migrate, seed, test)
-  alembic.ini, alembic/          env.py async + versions/0001..0003
+  alembic.ini, alembic/          env.py async + versions/0001..0004
   app/
     main.py                      FastAPI, CORS, routers, GET /api/health
     core/
@@ -27,12 +28,13 @@ apps/backend/
       database.py                engine async, AsyncSessionLocal, get_db (una transacción por request)
       security.py                bcrypt, JWT, CurrentUser, get_current_user(_optional), exigir_mismo_usuario
       storage.py                 rutas seguras, dueño de cada archivo, lista blanca de formatos
-    models/entities.py           las 7 tablas + TABLAS_PERFIL
+    dominio/compatibilidad.py    comparador determinista en Python puro (sin IA)
+    models/entities.py           las 8 tablas + TABLAS_PERFIL
     schemas/
       auth.py                    requests Pydantic (Credenciales, EmailRequest, AsignarRequest…)
       serializacion.py           a_dict (fila → dict) y aplicar_cambios (dict → fila, con coerción)
-    routers/                     auth, usuarios, proyectos, contratos, portfolio, storage, chat
-    seeds/seed_demo.py           datos demo idempotentes
+    routers/                     auth, usuarios, proyectos, contratos, postulaciones, portfolio, storage, chat
+    seeds/seed_demo.py           datos demo idempotentes (incluye requisitos)
   tests/                         pytest + httpx ASGITransport sobre SQLite en memoria
 ```
 
@@ -59,8 +61,9 @@ Las listas se guardan en **JSONB** en Postgres y en JSON en SQLite (los tests), 
 | `gerente` | `id` int | `email` único, mismos datos personales, `puesto_actual`, `id_proyecto`, `habilidades`, `idiomas` |
 | `institucion_educativa` | `id` int | `email` único, `nombre`, `apellido`, `name`, `descripcion`, `telefono` |
 | `proyecto` | `id` UUID (str) | `nombre`, `description`, `info_link`, `buscando_devs`, `id_gerente`, `email_gerente` **único** (un proyecto por gerente). Relación `contratos` con `cascade="all, delete-orphan"` |
-| `contrato` | `id` int | `tipo`, `titulo`, `descripcion`, `tiene_postulaciones`, `postulaciones` (lista de emails), `esta_ocupado`, `pasante_email`, `proyecto_id` (FK `ON DELETE CASCADE`), `start_date`, `end_date`, `modalidad`, `seniority_deseado` (lista) |
+| `contrato` | `id` int | `tipo`, `titulo`, `descripcion`, **`requisitos` (JSONB, lista de `{nombre, nivel_minimo, exigencia, tipo}`, NOT NULL default `[]`)**, `tiene_postulaciones`, `postulaciones` (lista de emails), `esta_ocupado`, `pasante_email`, `proyecto_id` (FK `ON DELETE CASCADE`), `start_date`, `end_date`, `modalidad`, `seniority_deseado` (lista) |
 | `portfolio` | `id` int | `email` único, `titulo1..3`, `descripcion1..3`, `repositorio1..3`, `imagenes1..3` (siempre 3 posiciones, `""` si están vacías) |
+| `informe_postulacion` | `id` int | `contrato_id` (FK `ON DELETE CASCADE`), `estudiante_email`, `texto` (Text), `modelo` (60), `estado` (`pendiente`/`generado`/`fallback`), `creado_en`, `actualizado_en`; **único** `(contrato_id, estudiante_email)`; índices por contrato y email |
 
 \* Campos privados: solo los recibe el dueño del perfil (`CAMPOS_PRIVADOS` en `routers/usuarios.py`).
 
@@ -74,8 +77,12 @@ Las listas se guardan en **JSONB** en Postgres y en JSON en SQLite (los tests), 
 | `0001` | Esquema inicial: las 7 tablas, índices únicos de email |
 | `0002` | `auth_users.is_admin`, `failed_logins`, `locked_until` |
 | `0003` | Renombra `desarrollador` → `estudiante` (tabla, índice, PK, secuencia y valores de `rol`); tiene `downgrade` |
+| `0004` | `contrato.requisitos` JSONB NOT NULL default `[]` y tabla `informe_postulacion` con unique `(contrato_id, estudiante_email)`; tiene `downgrade` |
 
 `alembic/env.py` es async y toma `DATABASE_URL` de `Settings`. Regla: **todo cambio en `entities.py` va con una migración nueva**. Después hay que correr `alembic check`, que debe decir "No new upgrade operations detected".
+
+- **Compatibilidad:** `app/dominio/compatibilidad.py` no importa nada del backend; recibe el perfil (`habilidades`/`skills`) y la lista `requisitos`. Solo cuentan técnicas `excluyente`/`deseable`; `se_aprende` y `blanda` se muestran aparte. El porcentaje no se persiste: se recalcula en cada request.
+- **Requisitos:** al crear o editar un contrato, `sanitizar_requisitos` normaliza nombres, niveles y exigencias y descarta ítems inválidos. La respuesta de `GET contratos*` incluye `requisitos`.
 
 ## 5. Endpoints
 
@@ -114,13 +121,27 @@ Todas las respuestas usan el sobre `{ message, data }` y, en listados, `count`. 
 
 | Método y ruta | Comportamiento |
 |---|---|
-| `GET contratos`, `GET contratoslibres` (`esta_ocupado = false`), `GET contratos/:emailGerente` | `data` es un array |
-| `POST contrato` | `proyecto_id` tiene que existir (404) y ser del gerente del token (403); `titulo` es obligatorio. Los campos de estado (`postulaciones`, `tiene_postulaciones`, `esta_ocupado`, `pasante_email`) se ignoran: el contrato nace libre |
-| `PUT contrato/:id` | Con `{postulaciones: email}`: postulación. Exige el propio email (403), perfil de **estudiante** (403) y contrato libre (409); no duplica (409). Cualquier otro campo, solo el gerente dueño. `tiene_postulaciones` lo deriva el servidor. Bloquea la fila (`SELECT … FOR UPDATE`). Devuelve un objeto, no un array |
+| `GET contratos`, `GET contratoslibres` (`esta_ocupado = false`), `GET contratos/:emailGerente` | `data` es un array. `contratoslibres` agrega `mi_resultado` si el token es de estudiante. `contratos/:emailGerente` agrega `resultados_postulantes` solo al gerente dueño |
+| `POST contrato` | `proyecto_id` tiene que existir (404) y ser del gerente del token (403); `titulo` es obligatorio. Los campos de estado (`postulaciones`, `tiene_postulaciones`, `esta_ocupado`, `pasante_email`) se ignoran: el contrato nace libre. `requisitos` se sanitiza |
+| `PUT contrato/:id` | Con `{postulaciones: email}`: postulación. Exige el propio email (403), perfil de **estudiante** (403) y contrato libre (409); no duplica (409). Cualquier otro campo, solo el gerente dueño. `tiene_postulaciones` lo deriva el servidor. Bloquea la fila (`SELECT … FOR UPDATE`). Devuelve un objeto, no un array. `requisitos` se sanitiza |
 | `PUT contrato/asignar/:id` `{pasante_email}` | Solo el dueño. El email tiene que estar en `postulaciones` (400) y el contrato libre (409). Marca `esta_ocupado`. Bloquea la fila. `data[0]` |
 | `DELETE contrato/:id` | Solo el dueño |
 
-La ruta `asignar/{id}` está declarada **antes** que `/{id}` para que no se tapen.
+La ruta `asignar/{id}` está declarada **antes** que `/{id}` para que no se tapen. El orden en `contratos.py` es `/contratos` → `/contratoslibres` → `/contratos/{email_gerente}` para que `contratoslibres` no se interprete como un email.
+
+### Informe de compatibilidad y orientación (`routers/postulaciones.py`, prefijo `/api`)
+
+| Método y ruta | Comportamiento |
+|---|---|
+| `GET mis-postulaciones` | Solo estudiante (403 si no tiene perfil). Devuelve `{message, count, data: [{contrato, resultado, orientacion|null}]}` ordenado por `Contrato.id.desc()` |
+| `GET postulaciones/:contrato_id/orientacion` | Solo el estudiante postulado. 404 si no existe el contrato, 403 si no se postuló. `orientacion` es `null` si todavía no se generó |
+| `POST postulaciones/:contrato_id/orientacion` | Genera/regenera. 400 si la oferta no tiene requisitos. Llama a n8n con `{contrato_id, email, oferta, compatibles, a_capacitar, se_aprenden, blandas, coincidencia}`. Valida el texto (no vacío, ≤600, sin frases de rechazo) y guarda fallback si n8n falla o responde inválido. Upsert por `(contrato_id, estudiante_email)` |
+| `POST automatizacion/postulaciones/:contrato_id/:email/orientacion` | Para n8n. Exige `X-Udela-Secret`; guarda un texto ya validado |
+| `GET automatizacion/digests` | Para n8n. Exige `X-Udela-Secret`. Por estudiante, ofertas libres no postuladas con `coincidencia > 60`, top 3: `{email, nombre, ofertas:[{contrato_id, titulo, coincidencia, faltantes}]}` |
+
+- El secreto se compara con `hmac.compare_digest`. Si `N8N_AUTOMATION_SECRET` está vacío, responde 503; si no coincide, 403.
+- `MAX_TEXTO_ORIENTACION = 600`; `ESTADOS_INFORME = {"pendiente", "generado", "fallback"}`; `FRASES_RECHAZO` incluye variantes de “no calificás”, “rechazado”, “no sos apto”, etc.
+- La empresa **no** recibe el texto de orientación: `resultados_postulantes` solo lleva el resultado determinista y datos mínimos (email, nombre). No incluye teléfono, fecha de nacimiento ni género.
 
 ### Portfolio
 
@@ -189,6 +210,9 @@ El agente invitado solo tiene la herramienta de ofertas; el de estudiante tiene 
 | `aplicar_cambios(obj, datos, excluir)` | `schemas/serializacion.py` | Aplica solo columnas conocidas. Convierte `"true"/"false"` a bool, strings a int y CSV o JSON a lista, y trunca strings al largo de la columna |
 | `a_dict(obj)` | `schemas/serializacion.py` | Fila → dict (fechas en ISO) |
 | `buscar_perfil(db, email)` | `routers/usuarios.py` | `(tabla, perfil)` en cualquiera de las tablas de perfil |
+| `comparar(perfil, requisitos)` | `dominio/compatibilidad.py` | Resultado determinista: coincidencia, nivel, listas y checklist. No toca la base ni la red |
+| `sanitizar_requisitos(lista)` | `dominio/compatibilidad.py` | Normaliza y descarta requisitos inválidos antes de guardar |
+| `texto_fallback(resultado)` | `dominio/compatibilidad.py` | Orientación determinista cuando n8n/IA no está disponible |
 | `ruta_segura`, `tipo_por_extension`, `borrar_por_url` | `core/storage.py` | Manejo seguro de archivos |
 
 ## 7. Configuración (`core/config.py`)
@@ -200,12 +224,15 @@ Se lee de variables de entorno (y de `.env` si existe). La tabla completa con va
 - `CORS_ORIGINS`: en Docker local la arma el compose a partir de `FRONTEND_PORT`. En el VPS front y API comparten dominio, así que casi no se usa.
 - `CHAT_DATOS_URL`: URL pública de `/api/chat/datos` para las herramientas de n8n; `setup-env.sh` la arma con el subdominio.
 - `N8N_CHAT_WEBHOOK_URL` / `N8N_CHAT_SECRET`: opcionales; sin ellas el asistente responde 503 y el resto de la API funciona igual. En local van en `infra/local/.env.chat` (fuera de git).
+- `N8N_ORIENTACION_WEBHOOK_URL`: opcional; sin ella `POST orientación` guarda fallback (no falla).
+- `N8N_AUTOMATION_SECRET`: secreto compartido con n8n para `X-Udela-Secret` en orientación y digests. En local, `udela-local-secret` (`.env.local`, solo desarrollo).
+- `N8N_ORIENTACION_TIMEOUT_SEGUNDOS`: timeout de la llamada a n8n (30 s por defecto).
 
 ## 8. Seed (`app/seeds/seed_demo.py`)
 
-Idempotente y basado en datos: las listas `ESTUDIANTES` y `EMPRESAS` describen cada cuenta con su perfil, su portfolio, su proyecto y sus ofertas. Cada registro se busca por su clave natural (email, email del gerente o título de la oferta dentro del proyecto) y solo se crea si falta. Así, sumar una oferta a la lista y volver a correrlo la agrega a una base existente sin tocar lo que los usuarios cambiaron. `esta_ocupado` y `tiene_postulaciones` se derivan de `pasante_email` y `postulaciones`.
+Idempotente y basado en datos: las listas `ESTUDIANTES` y `EMPRESAS` describen cada cuenta con su perfil, su portfolio, su proyecto y sus ofertas. Cada registro se busca por su clave natural (email, email del gerente o título de la oferta dentro del proyecto) y solo se crea si falta. Así, sumar una oferta a la lista y volver a correrlo la agrega a una base existente sin tocar lo que los usuarios cambiaron. Excepción deliberada: si una oferta existente quedó con `requisitos` vacíos (bases creadas antes de la migración `0004`), el seed los completa desde la lista sin pisar los requisitos que ya tenga cargados la empresa. `esta_ocupado` y `tiene_postulaciones` se derivan de `pasante_email` y `postulaciones`.
 
-Crea 6 estudiantes y 4 empresas con 11 ofertas (9 libres), pensadas para que el asistente tenga qué responder: modalidades remota, híbrida y presencial, seniority de Trainee a Semisenior, postulaciones cruzadas, dos ofertas asignadas y una estudiante no disponible y sin portfolio.
+Crea 6 estudiantes y 4 empresas con 11 ofertas (9 libres), pensadas para que el asistente tenga qué responder: modalidades remota, híbrida y presencial, seniority de Trainee a Semisenior, postulaciones cruzadas, dos ofertas asignadas y una estudiante no disponible y sin portfolio. **Las 11 ofertas tienen requisitos** cargados con `_requisitos(...)`; los perfiles tienen habilidades declaradas para que el comparador devuelva resultados variados (0–100 %).
 
 | Email | Rol | Qué tiene |
 |---|---|---|
@@ -227,16 +254,23 @@ Contraseña de todos: `Udela1234!`. Corre en el arranque si `AUTO_SEED=true` (lo
 - **Herramientas:** pytest + `pytest-asyncio` (`asyncio_mode = auto`) + httpx `ASGITransport`.
 - **Base:** `conftest.py` crea una SQLite en memoria (`StaticPool`) por test, reemplaza `get_db` y apunta `STORAGE_DIR` a una carpeta temporal.
 - **Ayudante:** `registrar_usuario(email, rol)` devuelve los headers con el token.
-- **Contenido:** 58 tests en 6 archivos:
+- **Contenido:** 86 tests en 8 archivos:
   - `test_auth_usuarios.py`: registro, login, bloqueo, admin, privacidad y perfiles;
   - `test_proyectos_contratos.py`: dueño, postulación y asignación;
   - `test_portfolio_storage.py`: CRUD, imágenes y rechazo de archivos ejecutables;
   - `test_chat.py`: modo según el token (el body no lo cambia), secreto hacia n8n, validación, 502/503 y límite de mensajes. n8n se simula con `httpx.MockTransport` en `routers.chat._transporte`.
   - `test_chat_datos.py`: cada endpoint de `/api/chat/datos`, permisos por rol, 404 en ofertas ajenas, token vencido o con otra audiencia, y que no salgan `telefono` ni `fecha_nacimiento`.
-  - `test_seed.py`: el seed no duplica, completa ofertas que falten sin pisar las editadas, y sus ofertas sirven para la búsqueda del asistente (sin tildes ni palabras vacías).
+  - `test_compatibilidad.py`: 12 tests del dominio (0 %, 100 %, nivel parcial, sinónimos, `se_aprende`, blandas, sin requisitos, duplicados, sanitización y fallback).
+  - `test_postulaciones_informe.py`: 16 tests de API (historial, fallback, integración n8n, upsert, texto inválido/largo, 403 entre estudiantes y gerente, resultados de empresa, sin requisitos, privacidad, secreto y digests).
+  - `test_seed.py`: el seed no duplica, completa ofertas que falten y requisitos vacíos sin pisar los que editó la empresa, y sus ofertas sirven para la búsqueda del asistente (sin tildes ni palabras vacías).
 - **Límite:** SQLite ignora `FOR UPDATE`, así que los bloqueos de fila no se prueban acá. Sí se probaron contra Postgres en Docker.
 
-Comandos: `npx nx test backend` o `cd apps/backend && poetry run pytest -v`.
+Comandos: `npx nx test backend` o `cd apps/backend && poetry run pytest -v`. Sin dependencias locales, con la imagen ya construida:
+
+```bash
+docker run --rm -v "$PWD/apps/backend:/app" -w /app \
+  --entrypoint python udela-local-backend:latest -m pytest -q
+```
 
 ## 10. Cómo extender
 
