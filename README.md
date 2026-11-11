@@ -255,7 +255,12 @@ El stack local ya incluye n8n en `http://localhost:5678` (servicio `n8n` de `inf
 N8N_AUTOMATION_SECRET=udela-local-secret
 N8N_ENCRYPTION_KEY=udela-local-n8n-key
 UDELA_DIGEST_FROM=no-reply@udelaconecta.local
+N8N_CHAT_WEBHOOK_URL=http://n8n:5678/webhook/udela-chat
+N8N_ORIENTACION_WEBHOOK_URL=http://n8n:5678/webhook/udela-orientacion
+CHAT_DATOS_URL=http://backend:3000/api/chat/datos
 ```
+
+Esas URLs se pueden pisar desde `infra/local/.env.chat` para apuntar a otro n8n (ver más abajo).
 
 Importar los tres workflows (n8n 1.70 importa un directorio con `--separate`):
 
@@ -271,6 +276,27 @@ También se pueden importar de a uno desde la UI de n8n (**Workflows → Import 
 2. Crear/asignar la credencial **DeepSeek account** a los nodos `DeepSeek…`.
 3. Activar los workflows.
 4. Opcional: crear la credencial **SMTP** `Udela SMTP` y habilitar el nodo `Enviar` del digest.
+
+#### Usar un n8n propio en lugar del servicio local
+
+El backend no depende del contenedor `n8n`: solo necesita la URL de cada webhook y el secreto. Si ya tenés n8n en un servidor, no hace falta levantarlo en el compose local.
+
+1. Importá los tres workflows en tu n8n y creá las credenciales con **los mismos nombres** (`Udela-Secret`, `DeepSeek account`; `Udela SMTP` es opcional). Los JSON no incluyen secretos: las credenciales se cargan en la instancia.
+2. Creá `infra/local/.env.chat` (ignorado por git). Sus variables pisan las de `.env.local`:
+
+```dotenv
+N8N_CHAT_WEBHOOK_URL=https://n8n.tu-dominio.com/webhook/udela-chat
+N8N_ORIENTACION_WEBHOOK_URL=https://n8n.tu-dominio.com/webhook/udela-orientacion
+N8N_CHAT_SECRET=el-mismo-valor-de-Udela-Secret
+N8N_AUTOMATION_SECRET=el-mismo-valor-de-Udela-Secret
+# Solo si el backend también es público (lo necesita el digest y las herramientas del chat):
+CHAT_DATOS_URL=https://api.tu-dominio.com/api/chat/datos
+```
+
+3. En el servidor de n8n, configurá `UDELA_BACKEND_URL=https://api.tu-dominio.com` y `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` para que el workflow de digest consulte el backend. Si el backend corre en tu máquina y n8n está en un servidor remoto, el digest no puede llegar a `localhost`: usá una URL pública o ejecutá el digest contra el n8n local.
+4. Activá los workflows. Los webhooks de producción funcionan recién cuando el workflow está activo; si está inactivo, el backend guarda el fallback.
+
+El compose local mantiene `http://n8n:5678/...` como valor por defecto. Si preferís no usar el contenedor local, podés bajar solo ese servicio o dejar que falle: la orientación y el chat usan fallback y el resto del núcleo sigue funcionando.
 
 Prueba rápida del webhook de orientación (con el workflow activo):
 
