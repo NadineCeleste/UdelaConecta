@@ -1,5 +1,5 @@
 # Desarrollo local 100% en Docker:
-#   Puertos del host configurables con POSTGRES_HOST_PORT, FRONTEND_PORT y ADMINER_PORT
+#   Puertos del host configurables con POSTGRES_HOST_PORT, FRONTEND_PORT, ADMINER_PORT y N8N_HOST_PORT
 #   npm run local:up   (o: docker compose -f infra/local/docker-compose.yml --env-file infra/local/.env.local up -d --build)
 name: udela-local
 
@@ -35,6 +35,11 @@ services:
     environment:
       # El front corre en el puerto publicado de abajo: se habilita ese origen en CORS
       CORS_ORIGINS: http://localhost:${FRONTEND_PORT:-4200},http://127.0.0.1:${FRONTEND_PORT:-4200}
+      # n8n corre en la misma red de compose. Si no está disponible, el backend usa fallback.
+      N8N_CHAT_WEBHOOK_URL: http://n8n:5678/webhook/udela-chat
+      N8N_ORIENTACION_WEBHOOK_URL: http://n8n:5678/webhook/udela-orientacion
+      N8N_AUTOMATION_SECRET: ${N8N_AUTOMATION_SECRET:-udela-local-secret}
+      CHAT_DATOS_URL: http://backend:3000/api/chat/datos
     ports:
       - "3000:3000"
     volumes:
@@ -57,6 +62,32 @@ services:
     depends_on:
       - backend
 
+  n8n:
+    image: n8nio/n8n:1.70.0
+    container_name: udela-local-n8n
+    ports:
+      # Solo desde la máquina local; la UI de n8n queda en http://localhost:5678
+      - "127.0.0.1:${N8N_HOST_PORT:-5678}:5678"
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:${N8N_HOST_PORT:-5678}/
+      GENERIC_TIMEZONE: America/Argentina/Buenos_Aires
+      TZ: America/Argentina/Buenos_Aires
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:-udela-local-n8n-key}
+      N8N_SECURE_COOKIE: "false"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      # El workflow de digest lee la URL del backend y el remitente desde el entorno.
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
+      UDELA_BACKEND_URL: http://backend:3000
+      UDELA_DIGEST_FROM: ${UDELA_DIGEST_FROM:-no-reply@udelaconecta.local}
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ../n8n:/workflows:ro
+    depends_on:
+      - backend
+
   adminer:
     image: adminer:latest
     container_name: udela-local-adminer
@@ -71,3 +102,4 @@ volumes:
   pgdata:
   storage:
   frontend_node_modules:
+  n8n_data:
