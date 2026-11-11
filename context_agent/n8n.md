@@ -138,7 +138,7 @@ Los valores se cargan **solo** en la interfaz de n8n y en `.env.vps` / `.env.cha
 | `N8N_AUTOMATION_SECRET` | vacía | Secreto `X-Udela-Secret` para orientación y digests. Vacío: los endpoints de automatización responden 503 |
 | `N8N_ORIENTACION_TIMEOUT_SEGUNDOS` | 30 | Espera máxima de la orientación |
 
-- **Local:** se crea `infra/local/.env.chat` (fuera de git; el compose lo carga si existe) con `N8N_CHAT_WEBHOOK_URL` y `N8N_CHAT_SECRET`. El n8n del VPS no llega a `localhost`, así que en local el asistente responde pero las herramientas leen los datos de producción (o fallan si `CHAT_DATOS_URL` apunta a local).
+- **Local:** `.env.local` ya trae `N8N_CHAT_WEBHOOK_URL`, `N8N_ORIENTACION_WEBHOOK_URL` y `CHAT_DATOS_URL` apuntando al servicio `n8n` del compose. Para usar un n8n propio, crear `infra/local/.env.chat` (fuera de git; el compose lo carga después de `.env.local`, así que sus valores pisan a los locales) con las URLs públicas y los secretos. `N8N_CHAT_SECRET` y `N8N_AUTOMATION_SECRET` deben coincidir con la credencial `Udela-Secret` si ambos workflows usan esa misma credencial. En el servidor de n8n, `UDELA_BACKEND_URL` debe ser una URL pública alcanzable por el workflow de digest. Si el backend corre en local y n8n en un servidor remoto, el digest no puede llegar a `localhost`: usar un túnel/URL pública o ejecutar el digest contra el n8n local.
 - **Producción:** `infra/vps/setup-env.sh` pide la URL y el secreto (oculto) y arma `CHAT_DATOS_URL` con el subdominio. `docker-compose.prod.yml` pasa las tres variables al backend.
 - **Caddy:** `infra/vps/Caddyfile` declara `trusted_proxies static private_ranges`, para que detrás del Caddy del host el backend vea la IP real del cliente y el límite por IP funcione.
 

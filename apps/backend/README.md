@@ -44,7 +44,7 @@ Tests: `poetry run pytest -v` (o `npx nx test backend`). Usan SQLite en memoria,
 | `N8N_AUTOMATION_SECRET` | vacía | Secreto `X-Udela-Secret` de los endpoints de orientación y digests. Vacío: 503 |
 | `N8N_ORIENTACION_TIMEOUT_SEGUNDOS` | 30 | Espera máxima de la llamada a n8n |
 
-En local, las variables de n8n van en `infra/local/.env.local` (`N8N_AUTOMATION_SECRET`) y, para el chat contra el n8n del VPS, en `infra/local/.env.chat` (opcional y fuera de git), que el compose carga si existe.
+En local, `.env.local` trae las URLs de los webhooks apuntando al servicio `n8n` del compose. Para usar un n8n propio, `infra/local/.env.chat` (opcional y fuera de git) se carga después y permite pisar `N8N_CHAT_WEBHOOK_URL`, `N8N_ORIENTACION_WEBHOOK_URL`, `N8N_CHAT_SECRET` y `N8N_AUTOMATION_SECRET`.
 
 ## Estructura
 
