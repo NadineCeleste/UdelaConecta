@@ -50,6 +50,123 @@
       <p class="contrato-descripcion">{{ contrato.descripcion }}</p>
     </div>
 
+    <!-- Requisitos y checklist para estudiantes -->
+    @if (rol !== 'gerente') {
+    <div class="requisitos-report">
+      <div class="section-label">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="9 11 12 14 22 4" />
+          <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" />
+        </svg>
+        <span>Requisitos del puesto</span>
+      </div>
+
+      @if (miResultado?.sin_requisitos) {
+      <p class="sin-requisitos">La oferta no especificó requisitos.</p>
+      } @else if (miResultado) {
+      <p class="resumen-requisitos">
+        {{ resumenRequisitos(miResultado) }}
+        <span class="nivel-chip" [ngClass]="'nivel-' + miResultado.nivel">{{ nivelCoincidencia(miResultado) }}</span>
+      </p>
+      <ul class="checklist">
+        @for (item of miResultado.checklist; track item.nombre) {
+        <li class="check-item" [ngClass]="'estado-' + item.estado">
+          <span class="check-dot"></span>
+          <span class="check-nombre">{{ item.nombre }}</span>
+          <span class="check-estado">{{ etiquetaEstado(item.estado) }}</span>
+        </li>
+        }
+      </ul>
+      } @else {
+      <p class="sin-requisitos">Cargando el informe de compatibilidad…</p>
+      }
+
+      <p class="nota-perfil">
+        Este análisis se basa en tu perfil declarado. No es una evaluación ni un ranking.
+        <strong>Podés postularte igual.</strong>
+      </p>
+    </div>
+    }
+
+    <!-- Informe de la postulación (estudiante) -->
+    @if (rol !== 'gerente' && yaPostulado && miResultado) {
+    <div class="informe-postulacion">
+      <h4 class="section-title">Tu informe de postulación</h4>
+      <div class="informe-grid">
+        <section class="informe-seccion">
+          <h5>Nivel de coincidencia</h5>
+          <p class="informe-nivel">{{ nivelCoincidencia(miResultado) }}</p>
+          <p class="informe-detalle">
+            {{ miResultado.total_compatibles }} de {{ miResultado.total_requisitos }} requisitos
+            compatibles ({{ miResultado.coincidencia }}%)
+          </p>
+        </section>
+
+        <section class="informe-seccion">
+          <h5>Aptitudes compatibles</h5>
+          <div class="pill-lista">
+            @for (item of miResultado.compatibles; track item.nombre) {
+            <span class="pill pill-compatible">{{ item.nombre }}</span>
+            } @empty {
+            <p class="informe-vacio">Todavía no hay requisitos compatibles.</p>
+            }
+          </div>
+        </section>
+
+        <section class="informe-seccion">
+          <h5>Aptitudes a capacitar</h5>
+          <div class="pill-lista">
+            @for (item of miResultado.a_capacitar; track item.nombre) {
+            <span class="pill pill-capacitar" [title]="item.motivo === 'nivel_menor' ? 'Tenés un nivel menor al mínimo pedido' : 'Todavía no la declaraste en tu perfil'">
+              {{ item.nombre }}
+            </span>
+            } @empty {
+            <p class="informe-vacio">No hay brechas entre tu perfil y los requisitos.</p>
+            }
+          </div>
+        </section>
+      </div>
+
+      @if (miResultado.se_aprenden.length || miResultado.blandas.length) {
+      <div class="informe-notas">
+        @if (miResultado.se_aprenden.length) {
+        <p><strong>Se aprende en el puesto:</strong> {{ miResultado.se_aprenden.join(', ') }}</p>
+        }
+        @if (miResultado.blandas.length) {
+        <p><strong>A evaluar en entrevista:</strong> {{ miResultado.blandas.join(', ') }}</p>
+        }
+      </div>
+      }
+
+      <div class="orientacion-box">
+        <h5>Orientación</h5>
+        @if (orientacion?.texto) {
+        <p class="orientacion-texto">{{ orientacion!.texto }}</p>
+        <div class="orientacion-footer">
+          <span class="orientacion-etiqueta" [ngClass]="{ 'sin-ia': orientacion!.estado === 'fallback' }">
+            {{ orientacion!.estado === 'generado' ? 'Orientación generada por IA' : 'Orientación (sin IA disponible)' }}
+          </span>
+          <button type="button" class="btn-orientacion" (click)="generarOrientacion()"
+            [disabled]="generandoOrientacion">
+            {{ generandoOrientacion ? 'Generando…' : 'Regenerar' }}
+          </button>
+        </div>
+        } @else {
+        <p class="orientacion-texto">Podés pedir una orientación breve para prepararte para esta búsqueda.</p>
+        <button type="button" class="btn-orientacion" (click)="generarOrientacion()"
+          [disabled]="generandoOrientacion">
+          {{ generandoOrientacion ? 'Generando…' : 'Generar orientación' }}
+        </button>
+        }
+        <p class="nota-orientacion">
+          La orientación es una sugerencia para prepararte, no una evaluación. La empresa ve este
+          mismo resumen; la orientación es solo para vos. Esto no implica rechazo.
+        </p>
+      </div>
+    </div>
+    }
+
     <!-- Dates -->
     @if (contrato.start_date || contrato.end_date) {
     <div class="meta-section">
@@ -103,7 +220,15 @@
               'no-seleccionado': contrato.pasante_email && contrato.pasante_email !== postulante
             }" (click)="abrirModal(postulante)">
           <span class="avatar-placeholder">{{ postulante.charAt(0).toUpperCase() }}</span>
-          {{ postulante }}
+          <span class="postulante-email">{{ postulante }}</span>
+          @if (resultadoDePostulante(postulante); as resultado) {
+          <span class="postulacion-metrica">
+            {{ resultado.total_compatibles }}/{{ resultado.total_requisitos }} · {{ resultado.coincidencia }}%
+          </span>
+          <span class="postulacion-ver">Ver informe</span>
+          } @else {
+          <span class="postulacion-metrica">Sin requisitos</span>
+          }
         </button>
         }
         } @else {
@@ -113,7 +238,12 @@
               'no-seleccionado': contrato.pasante_email && contrato.pasante_email !== postulante
             }" disabled>
           <span class="avatar-placeholder">{{ postulante.charAt(0).toUpperCase() }}</span>
-          {{ postulante }}
+          <span class="postulante-email">{{ postulante }}</span>
+          @if (resultadoDePostulante(postulante); as resultado) {
+          <span class="postulacion-metrica">
+            {{ resultado.total_compatibles }}/{{ resultado.total_requisitos }} · {{ resultado.coincidencia }}%
+          </span>
+          }
         </button>
         }
         }
@@ -202,6 +332,59 @@
       <h3>¿Asignar contrato?</h3>
       <p class="modal-text">Estás por asignar este contrato a <strong>{{ emailSeleccionado }}</strong>. Esta acción no
         se puede deshacer fácilmente.</p>
+
+      @if (postulanteSeleccionadoInfo?.resultado; as resultado) {
+      <div class="modal-informe">
+        <p class="modal-resumen">
+          {{ resumenRequisitos(resultado) }}
+          <span class="nivel-chip" [ngClass]="'nivel-' + resultado.nivel">{{ nivelCoincidencia(resultado) }}</span>
+        </p>
+
+        @if (!resultado.sin_requisitos) {
+        <div class="modal-columnas">
+          <div>
+            <h6>Aptitudes compatibles</h6>
+            <div class="pill-lista">
+              @for (item of resultado.compatibles; track item.nombre) {
+              <span class="pill pill-compatible">{{ item.nombre }}</span>
+              } @empty {
+              <p class="informe-vacio">Sin coincidencias todavía.</p>
+              }
+            </div>
+          </div>
+          <div>
+            <h6>Aptitudes a capacitar</h6>
+            <div class="pill-lista">
+              @for (item of resultado.a_capacitar; track item.nombre) {
+              <span class="pill pill-capacitar">{{ item.nombre }}</span>
+              } @empty {
+              <p class="informe-vacio">Sin brechas.</p>
+              }
+            </div>
+          </div>
+        </div>
+        }
+
+        @if (resultado.se_aprenden.length || resultado.blandas.length) {
+        <div class="informe-notas">
+          @if (resultado.se_aprenden.length) {
+          <p><strong>Se aprende en el puesto:</strong> {{ resultado.se_aprenden.join(', ') }}</p>
+          }
+          @if (resultado.blandas.length) {
+          <p><strong>A evaluar en entrevista:</strong> {{ resultado.blandas.join(', ') }}</p>
+          }
+        </div>
+        }
+
+        <p class="modal-nota">
+          Este resumen se basa en el perfil declarado. No es una evaluación ni un ranking. La
+          decisión de asignación es de la empresa.
+        </p>
+      </div>
+      } @else {
+      <p class="modal-nota">La oferta no tiene requisitos cargados; no hay informe de compatibilidad.</p>
+      }
+
       <div class="modal-actions">
         <button class="btn" (click)="verPerfilPostulante()">Ver perfil del candidato</button>
         <button class="btn-add" (click)="asignarPostulante()">Confirmar asignación</button>

@@ -1,6 +1,11 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
-import { Contrato } from '../../models/contrato';
+import {
+  Contrato,
+  Orientacion,
+  ResultadoCompatibilidad,
+  ResultadoPostulante,
+} from '../../models/contrato';
 import { CommonModule } from '@angular/common';
 import { ContratoService } from '../../servicios/contrato';
 import { Router } from '@angular/router';
@@ -18,12 +23,20 @@ export class ContratoDetail {
   //@Output() contratoChange = new EventEmitter<Contrato>;
 
   @Output() contratoAssigned = new EventEmitter<Contrato | null>();
+  @Output() orientacionActualizada = new EventEmitter<{ contratoId: number; orientacion: Orientacion }>();
 
   @Input() email: string | undefined;
   @Input() rol: string | undefined;
 
+  // Informe determinista y orientación de la postulación del estudiante autenticado.
+  @Input() miResultado?: ResultadoCompatibilidad;
+  @Input() orientacion?: Orientacion;
+  // Informe determinista de cada postulante, solo para la empresa dueña de la oferta.
+  @Input() resultadosPostulantes?: ResultadoPostulante[];
+
   modalVisible = false;
   emailSeleccionado: string | null = null;
+  generandoOrientacion = false;
 
   constructor(
     private route: ActivatedRoute,
@@ -44,6 +57,67 @@ export class ContratoDetail {
 
   ngOnInit(): void {
 
+  }
+
+  get yaPostulado(): boolean {
+    if (!this.email) return false;
+    return this.postulacionesNormalizadas.includes(this.email);
+  }
+
+  get postulanteSeleccionadoInfo(): ResultadoPostulante | undefined {
+    if (!this.emailSeleccionado) return undefined;
+    return (this.resultadosPostulantes || []).find(p => p.email === this.emailSeleccionado);
+  }
+
+  resultadoDePostulante(email: string): ResultadoCompatibilidad | undefined {
+    return (this.resultadosPostulantes || []).find(p => p.email === email)?.resultado;
+  }
+
+  resumenRequisitos(resultado?: ResultadoCompatibilidad): string {
+    if (!resultado) return 'Sin requisitos cargados';
+    if (resultado.sin_requisitos) return 'La oferta no especificó requisitos';
+    return `Cumplís ${resultado.total_compatibles} de ${resultado.total_requisitos} requisitos (${resultado.coincidencia}%)`;
+  }
+
+  nivelCoincidencia(resultado?: ResultadoCompatibilidad): string {
+    const nivel = resultado?.nivel;
+    if (nivel === 'alta') return 'Coincidencia alta';
+    if (nivel === 'media') return 'Coincidencia media';
+    if (nivel === 'baja') return 'Coincidencia baja';
+    return 'Sin requisitos para comparar';
+  }
+
+  etiquetaEstado(estado: string): string {
+    const etiquetas: Record<string, string> = {
+      cumple: 'Cumple',
+      falta: 'A capacitar',
+      parcial: 'A reforzar',
+      se_aprende: 'Se aprende en el puesto',
+      blanda: 'A evaluar en entrevista',
+    };
+    return etiquetas[estado] || estado;
+  }
+
+  generarOrientacion(): void {
+    const contratoId = this.contrato?.id;
+    if (!contratoId || this.generandoOrientacion) return;
+    this.generandoOrientacion = true;
+    this._apiService.pedirOrientacion(contratoId).subscribe({
+      next: (res) => {
+        this.orientacion = res.data;
+        this.generandoOrientacion = false;
+        this.alertService.success('Orientación actualizada');
+        if (this.orientacion) {
+          this.orientacionActualizada.emit({ contratoId, orientacion: this.orientacion });
+        }
+      },
+      error: (err) => {
+        this.generandoOrientacion = false;
+        this.alertService.error(
+          err?.error?.detail || 'No se pudo generar la orientación. Probá de nuevo en unos minutos.'
+        );
+      }
+    });
   }
 
   asignarPostulante() {
