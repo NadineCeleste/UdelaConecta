@@ -60,4 +60,22 @@ export class ContratoService {
     return this._httpClient.delete(`${this._contratosUrl}contrato/${encodeURIComponent(id)}`);
   }
 
+  // Historial del estudiante: contrato + resultado determinista + orientación guardada
+  getMisPostulaciones(): Observable<any> {
+    return this._httpClient.get<any>(`${this._contratosUrl}mis-postulaciones`);
+  }
+
+  getOrientacion(contratoId: number): Observable<any> {
+    return this._httpClient.get<any>(
+      `${this._contratosUrl}postulaciones/${contratoId}/orientacion`
+    );
+  }
+
+  pedirOrientacion(contratoId: number): Observable<any> {
+    return this._httpClient.post<any>(
+      `${this._contratosUrl}postulaciones/${contratoId}/orientacion`,
+      {}
+    );
+  }
+
 }

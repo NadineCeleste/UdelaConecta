@@ -115,6 +115,71 @@
             }
         </div>
 
+        <!-- REQUISITOS DEL PUESTO -->
+        <div class="form-group mb-4 requisitos-section">
+            <label class="form-label d-block">Requisitos del puesto</label>
+            <p class="requisitos-ayuda">
+                Los requisitos excluyentes son los que la empresa necesita desde el inicio. Los
+                deseables suman. Los que se aprenden en el puesto no se cuentan como brecha. Las
+                habilidades blandas se evalúan en entrevista.
+            </p>
+
+            <div class="requisitos-grid">
+                <div class="input-with-icon requisito-nombre">
+                    <span class="material-icons-outlined input-icon">psychology</span>
+                    <input type="text" class="form-control" name="requisitoNombre"
+                        placeholder="ej. 'Angular', 'SQL', 'Trabajo en equipo'"
+                        [(ngModel)]="nuevoRequisito.nombre" maxlength="120" autocomplete="off"
+                        (keydown.enter)="$event.preventDefault(); agregarRequisito()">
+                </div>
+
+                <select class="form-select form-control" name="requisitoNivel"
+                    [(ngModel)]="nuevoRequisito.nivel_minimo" aria-label="Nivel mínimo">
+                    <option value="principiante">Principiante</option>
+                    <option value="intermedio">Intermedio</option>
+                    <option value="avanzado">Avanzado</option>
+                </select>
+
+                <select class="form-select form-control" name="requisitoExigencia"
+                    [(ngModel)]="nuevoRequisito.exigencia" aria-label="Exigencia">
+                    <option value="excluyente">Excluyente</option>
+                    <option value="deseable">Deseable</option>
+                    <option value="se_aprende">Se aprende en el puesto</option>
+                </select>
+
+                <select class="form-select form-control" name="requisitoTipo"
+                    [(ngModel)]="nuevoRequisito.tipo" aria-label="Tipo">
+                    <option value="tecnica">Técnica</option>
+                    <option value="blanda">Blanda</option>
+                </select>
+
+                <button type="button" class="btn-agregar-requisito" (click)="agregarRequisito()">
+                    <span class="material-icons-outlined">add</span> Agregar
+                </button>
+            </div>
+
+            @if (contrato.requisitos && contrato.requisitos.length > 0) {
+            <div class="requisitos-chips">
+                @for (requisito of contrato.requisitos; track $index) {
+                <span class="requisito-chip" [ngClass]="{
+                    'chip-excluyente': requisito.exigencia === 'excluyente',
+                    'chip-aprende': requisito.exigencia === 'se_aprende',
+                    'chip-blanda': requisito.tipo === 'blanda'
+                }">
+                    {{ etiquetaRequisito(requisito) }}
+                    <button type="button" class="chip-quitar" (click)="quitarRequisito($index)"
+                        aria-label="Quitar requisito">✕</button>
+                </span>
+                }
+            </div>
+            } @else {
+            <p class="aviso-requisitos">
+                Sin requisitos, los estudiantes no verán informe de compatibilidad. Podés publicar
+                igual.
+            </p>
+            }
+        </div>
+
         <!-- DESCRIPCIÓN COMPLETA DEL CONTRATO -->
         <div class="form-group mb-4">
             <label for="descripcion" class="form-label">Descripción completa del Contrato <span

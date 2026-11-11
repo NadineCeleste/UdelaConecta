@@ -51,6 +51,11 @@
             @if (card.seniority_deseado && card.seniority_deseado.length) {
             <span class="meta-tag tag-seniority">{{ card.seniority_deseado.join(', ') }}</span>
             }
+            @if (rolActual === 'estudiante' && card.mi_resultado && !card.mi_resultado.sin_requisitos) {
+            <span class="meta-tag compatibilidad-tag" [ngClass]="'compat-' + card.mi_resultado.nivel">
+              {{ card.mi_resultado.total_compatibles }}/{{ card.mi_resultado.total_requisitos }} · {{ card.mi_resultado.coincidencia }}%
+            </span>
+            }
             @if (card.start_date) {
             <span class="meta-tag">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
@@ -112,6 +117,11 @@
               @if (card.seniority_deseado && card.seniority_deseado.length) {
               <span class="meta-tag tag-seniority">{{ card.seniority_deseado.join(', ') }}</span>
               }
+              @if (rolActual === 'estudiante' && card.mi_resultado && !card.mi_resultado.sin_requisitos) {
+              <span class="meta-tag compatibilidad-tag" [ngClass]="'compat-' + card.mi_resultado.nivel">
+                {{ card.mi_resultado.total_compatibles }}/{{ card.mi_resultado.total_requisitos }} · {{ card.mi_resultado.coincidencia }}%
+              </span>
+              }
               @if (card.start_date) {
               <span class="meta-tag"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> {{ card.start_date }}</span>
               }
@@ -165,7 +175,15 @@
   <!-- Panel derecho: detalle del contrato seleccionado -->
   <section class="contrato-detail-panel">
     @if (mostrandoContratoDetail && contratoAMostrarDetail) {
-    <app-contrato-detail [contrato]="contratoAMostrarDetail!" [email]="perfil.email" [rol]="rolActual" (contratoAssigned)="onContratoAssigned($event)"/>
+    <app-contrato-detail
+      [contrato]="contratoAMostrarDetail!"
+      [email]="perfil.email"
+      [rol]="rolActual"
+      [miResultado]="contratoAMostrarDetail.mi_resultado || informesPorContrato.get(contratoAMostrarDetail.id!)?.resultado"
+      [orientacion]="informesPorContrato.get(contratoAMostrarDetail.id!)?.orientacion"
+      [resultadosPostulantes]="contratoAMostrarDetail.resultados_postulantes"
+      (contratoAssigned)="onContratoAssigned($event)"
+      (orientacionActualizada)="onOrientacionActualizada($event)" />
     } @else {
     <div class="detail-placeholder">
       <div class="placeholder-icon">📋</div>
