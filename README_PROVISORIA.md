@@ -76,7 +76,7 @@ La carpeta que debe leer la IA es `infra/n8n/provisoria/`:
 | `infra/n8n/provisoria/udela-orientacion.json` | Orientación con Gemini y `webhookId`. |
 | `infra/n8n/provisoria/udela-digest.json` | Digest semanal sin email. |
 
-Importá esos tres JSON. **No** importes `infra/n8n/udela-*.json` como si fueran la alternativa: son los workflows existentes de `main` (DeepSeek/SMTP) y se preservan.
+Importá esos tres JSON si vas a usar la variante Gemini. Si `main` usa DeepSeek, no los importes a ciegas: usá los `infra/n8n/udela-*.json` existentes y portá solo los cambios (`webhookId`, digest sin email), o reemplazá los nodos Gemini por los DeepSeek. En ningún caso pises los workflows existentes.
 
 ---
 
