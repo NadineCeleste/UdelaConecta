@@ -1,5 +1,7 @@
 # Udela Conecta
 
+> **Rama `provisoria`:** el handoff de despliegue independiente y workflows n8n está en [README_PROVISORIA.md](./README_PROVISORIA.md). Este README describe el proyecto; ese documento explica cómo portar la alternativa a `main` sin reemplazar la infraestructura existente.
+
 **La bolsa de trabajo IT de la Universidad de la Ciudad de Buenos Aires.** Una plataforma que conecta a estudiantes y graduados de la universidad con empresas que buscan talento para dar sus primeros pasos en el mundo laboral tecnológico.
 
 > *Una herramienta de Udela Ciudad, hecha por estudiantes para estudiantes.*
