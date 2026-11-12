@@ -4,6 +4,7 @@
 > **Base:** `feat/compatibilidad` (`79bf445`). La rama **no** se mergea a `main`.
 > **Estado:** alternativa independiente funcionando en el servidor `.79` y en el n8n existente, verificada el 2026-11-11.
 > **Este documento no reemplaza al [README.md](./README.md) principal.** El README principal describe el proyecto; este documento es el handoff técnico de la rama provisoria para que una IA pueda adaptar `main` sin romper la infraestructura, el servidor, el n8n ni los workflows existentes.
+> **Workflows de la alternativa:** [`infra/n8n/provisoria/`](./infra/n8n/provisoria/). Los `infra/n8n/*.json` existentes de `main` se preservan.
 
 ---
 
@@ -12,10 +13,10 @@
 Si se te pidió adaptar `main` a esta alternativa:
 
 1. Leé este documento completo, el [README.md](./README.md) y `context_agent/AGENTS.md`.
-2. Revisá `context_agent/n8n.md`, pero tené en cuenta que **quedó desactualizado**: describe DeepSeek y SMTP. El estado que funciona en esta rama usa **Gemini** y un digest **sin email**.
-3. Inspeccioná primero `main`, `infra/vps`, `infra/local`, `infra/n8n`, `apps/backend` y `apps/frontend`.
+2. Revisá `context_agent/n8n.md`, pero tené en cuenta que **quedó desactualizado**: describe DeepSeek y SMTP. La carpeta `infra/n8n/provisoria` usa **Gemini** y un digest **sin email**; los `infra/n8n/*.json` de `main` siguen en DeepSeek/SMTP.
+3. Inspeccioná primero `main`, `infra/vps`, `infra/local`, `infra/n8n` (workflows existentes de `main`), `infra/n8n/provisoria` (workflows de la alternativa), `apps/backend` y `apps/frontend`.
 4. Creá una rama nueva desde `main`; **no mergees `provisoria`** ni pises la infraestructura existente.
-5. Portá los cambios por archivo y por nodo, con backup previo de los workflows n8n. No importes nada sobre el n8n vivo sin exportar antes.
+5. Portá los cambios por archivo y por nodo, con backup previo de los workflows n8n. Los workflows de la alternativa están en `infra/n8n/provisoria/`; los `infra/n8n/*.json` existentes de `main` se preservan. No importes nada sobre el n8n vivo sin exportar antes.
 6. No commitees secretos, no borres volúmenes, no toques el túnel de Cloudflare y no ejecutes `docker compose down -v`.
 7. Verificá todo con la checklist de la sección 11 y reportá qué se preservó y qué se adaptó.
 
@@ -25,11 +26,12 @@ La rama `provisoria` es una **foto reproducible** de una alternativa que ya func
 
 ## 2. Resumen ejecutivo
 
-Esta rama agrega una alternativa de despliegue independiente y actualiza los workflows n8n al estado que está funcionando:
+Esta rama agrega una alternativa de despliegue independiente y deja los workflows n8n que funcionan en una carpeta aditiva, sin reemplazar los existentes de `main`:
 
 - Sitio propio con **Postgres propio**, **Caddy**, backend y storage, sin tocar el backend oficial.
 - n8n existente y externo al compose del sitio.
-- Chatbot y orientación con **Google Gemini** en lugar de DeepSeek.
+- Los workflows de la alternativa están en `infra/n8n/provisoria/`; los `infra/n8n/*.json` existentes de `main` no se reemplazan.
+- Chatbot y orientación de la carpeta `provisoria` con **Google Gemini**; los workflows existentes de `main` quedan en DeepSeek.
 - `webhookId` explícito en los webhooks para que las rutas sean estables (`udela-chat`, `udela-orientacion`).
 - Digest semanal **sin email y sin SMTP**: el nodo `emailSend` se eliminó y los mensajes quedan en el nodo `Reporte interno` de la ejecución de n8n.
 - Sin cambios de código en backend ni frontend: la rama usa el código de su base y solo cambia infraestructura/documentación/workflows n8n.
@@ -47,20 +49,34 @@ Los cambios funcionales propios de `provisoria` son estos:
 | `.gitignore` | Excepción para versionar `infra/udela-site/.env.example`. |
 | `infra/udela-site/docker-compose.yml` | Compose independiente: Caddy + backend + Postgres + volúmenes propios. |
 | `infra/udela-site/.env.example` | Variables necesarias, con placeholders; **sin secretos reales**. |
-| `infra/n8n/udela-chatbot.json` | DeepSeek → Gemini, credencial Gemini y `webhookId`. |
-| `infra/n8n/udela-orientacion.json` | DeepSeek → Gemini, `maxOutputTokens: 4096`, modelo `gemini-3.5-flash` en `Validar` y `webhookId`. |
-| `infra/n8n/udela-digest.json` | Sin `emailSend`; `Reporte interno` (`noOp`) en la rama “hay novedades”; nota sin SMTP. |
+| `infra/n8n/provisoria/udela-chatbot.json` | Workflow de la alternativa: Gemini, credencial Gemini y `webhookId`. |
+| `infra/n8n/provisoria/udela-orientacion.json` | Workflow de la alternativa: Gemini, `maxOutputTokens: 4096`, modelo `gemini-3.5-flash` en `Validar` y `webhookId`. |
+| `infra/n8n/provisoria/udela-digest.json` | Workflow de la alternativa: sin `emailSend`; `Reporte interno` (`noOp`) en la rama “hay novedades”; nota sin SMTP. |
+
+Los archivos `infra/n8n/udela-chatbot.json`, `infra/n8n/udela-orientacion.json` e `infra/n8n/udela-digest.json` **no cambian en esta rama**: son los workflows existentes de `main` (DeepSeek/SMTP) y se preservan. La carpeta `infra/n8n/provisoria/` es aditiva.
 
 Para ver exactamente lo propio de esta rama:
 
 ```bash
 git diff feat/compatibilidad...provisoria -- \
-  .gitignore infra/n8n infra/udela-site README.md README_PROVISORIA.md
+  .gitignore infra/n8n/provisoria infra/udela-site README.md README_PROVISORIA.md
 ```
 
 No uses `git diff main...provisoria` como si fueran solo estos archivos: la rama sale de `feat/compatibilidad`, así que el diff contra `main` incluye también el historial de esa base.
 
 **No hay cambios en `apps/backend` ni en `apps/frontend` respecto de la base `feat/compatibilidad`.** El compose nuevo usa los Dockerfiles existentes de `infra/vps/`.
+
+### 3.1 Carpeta canónica de workflows
+
+La carpeta que debe leer la IA es `infra/n8n/provisoria/`:
+
+| Archivo | Uso |
+|---|---|
+| `infra/n8n/provisoria/udela-chatbot.json` | Chatbot con Gemini y `webhookId`. |
+| `infra/n8n/provisoria/udela-orientacion.json` | Orientación con Gemini y `webhookId`. |
+| `infra/n8n/provisoria/udela-digest.json` | Digest semanal sin email. |
+
+Importá esos tres JSON. **No** importes `infra/n8n/udela-*.json` como si fueran la alternativa: son los workflows existentes de `main` (DeepSeek/SMTP) y se preservan.
 
 ---
 
@@ -99,7 +115,7 @@ El servidor `.79` también tiene otros servicios ajenos a este proyecto (n8n, n8
 | Schedule digest | Lunes 09:00, `America/Argentina/Buenos_Aires` |
 | API pública | `/api/v1`, header `X-N8N-API-KEY` |
 
-Los IDs de workflow y de credenciales son **referencias de esta instancia**, no secretos. En otra instancia hay que crear credenciales nuevas y ajustar los IDs; los JSON de la rama solo referencian las credenciales por ID/nombre.
+Los IDs de workflow y de credenciales son **referencias de esta instancia**, no secretos. En otra instancia hay que crear credenciales nuevas y ajustar los IDs; los JSON de `infra/n8n/provisoria/` solo referencian las credenciales por ID/nombre. Los `infra/n8n/*.json` del repo se preservan como están en `main` (DeepSeek/SMTP); la carpeta `provisoria` es la que aporta la variante Gemini/sin email.
 
 El compose de n8n vive fuera de este repo, en `/mnt/asustor_data/25-DOCKER/n8n/`. Tiene dos ajustes necesarios que **no** están en la rama:
 
@@ -145,7 +161,7 @@ Al adaptar `main`, preservar sin excepciones:
 1. **La infraestructura existente de `main`**: `infra/vps`, `infra/local`, sus compose, Caddy, Postgres, volúmenes y dominios. La carpeta `infra/udela-site` es **adicional/alternativa**, no un reemplazo.
 2. **El servidor `.79`**: no cambiar sus puertos, servicios, túnel ni `.env` mientras se prueba otra cosa. Para probar, usar otro proyecto/ puerto/entorno.
 3. **El n8n y su Postgres**: no borrar workflows, credenciales, ejecuciones ni la base. Exportar antes de importar.
-4. **Los workflows existentes en Git**: los JSON de `main` pueden ser distintos de los de esta rama. No sobrescribirlos a ciegas; comparar nodo por nodo y hacer merge.
+4. **Los workflows existentes en Git**: los `infra/n8n/*.json` de `main` no se tocan en esta rama y deben preservarse. Los workflows de la alternativa están en `infra/n8n/provisoria/`; importarlos/adaptarlos sin sobrescribir los existentes. Si `main` usa DeepSeek, se puede mantener DeepSeek reemplazando los nodos Gemini, o partir de los workflows de `main` y agregar solo los cambios (`webhookId`, digest sin email, conexiones).
 5. **Los secretos**: `.env`, credenciales de n8n, API keys de Gemini, JWT, passwords de Postgres y secretos de webhooks **no se versionan**.
 6. **Cloudflare**: el túnel y la ruta `udela.rsdev.dev` son externos al repo; no se tocan.
 7. **Los volúmenes**: `udela-site_pgdata`, `udela-site_storage` y la base de n8n contienen datos; no usar `down -v`, `docker volume rm` ni recrear la base sin backup.
@@ -153,6 +169,16 @@ Al adaptar `main`, preservar sin excepciones:
 ---
 
 ## 6. Receta para adaptar `main`
+
+### Paso 0 — Enfoque recomendado: reutilizar y ampliar la infraestructura de `main`
+
+La infraestructura de `main` ya maneja las variables de base de datos, n8n y DeepSeek. **No hace falta crear otra infraestructura completa**: usá esa base y amplíala.
+
+- Conservá el `.env`, Postgres, n8n, credenciales y variables existentes de `main`.
+- Agregá solo servicios, volúmenes, puertos o variables que falten; no dupliques DB ni n8n.
+- Tomá `infra/udela-site/` como **referencia** de la alternativa independiente, no como obligación de copiar todo.
+- Importá/adaptá los workflows de `infra/n8n/provisoria/`. Si `main` usa DeepSeek, mantené DeepSeek y reemplazá los nodos Gemini, o partí de los workflows de `main` y agregá solo los cambios. Si no hay DeepSeek, creá la credencial Gemini.
+- El objetivo es que `main` siga funcionando; esta rama es la referencia, no un reemplazo.
 
 ### Paso 1 — Rama de trabajo y diagnóstico
 
@@ -175,11 +201,13 @@ No continuar sin haber identificado qué infraestructura de `main` ya está en u
 
 ### Paso 2 — Portar la infraestructura sin pisar la existente
 
-La alternativa está en `infra/udela-site/`. Para llevarla a `main`:
+La referencia de infraestructura está en `infra/udela-site/` y los workflows en `infra/n8n/provisoria/`. Para llevarlos a `main`:
 
 ```bash
-git checkout provisoria -- infra/udela-site .gitignore
+git checkout provisoria -- infra/udela-site infra/n8n/provisoria .gitignore
 ```
+
+Los `infra/n8n/*.json` existentes no se copian ni se pisan; la carpeta `provisoria` es la que aporta los workflows de la alternativa.
 
 Después revisar y adaptar:
 
@@ -203,24 +231,26 @@ docker compose -f infra/udela-site/docker-compose.yml config >/dev/null
 
 1. Exportar/descargar los tres workflows actuales desde la UI de n8n (o con `n8n export:workflow` a un archivo) y guardar una copia fuera del repo.
 2. Exportar/ respaldar la base de n8n o al menos los workflows y credenciales.
-3. Comparar los nodos actuales de `main`/n8n con los de `provisoria`; no reemplazar a ciegas.
+3. Comparar los nodos actuales de `main`/n8n con los de `infra/n8n/provisoria/`; no reemplazar a ciegas.
 
-Para usar los JSON de esta rama:
+Para usar los JSON de `infra/n8n/provisoria/`:
 
 - Son **plantillas de un solo workflow**, con `active: false`, pensadas para importar.
+- Los `infra/n8n/*.json` existentes de `main` se preservan. Si `main` usa DeepSeek, podés mantener sus nodos LLM y portar solo los cambios (`webhookId`, digest sin email, conexiones); si preferís la variante Gemini, reemplazá los nodos DeepSeek por los Gemini de la carpeta.
 - Incluyen los `webhookId`, los IDs de nodos y las referencias a credenciales; **no** incluyen la API key de Gemini ni los valores de las credenciales.
 - Importar desde la UI (`Workflows → Import from file`) o con `n8n import:workflow --separate`; no importar el export crudo en array, porque el importador puede rechazarlo.
 - Después de importar, **publicar** desde la UI o con `POST /api/v1/workflows/{id}/publish` usando una API key temporal. **No usar `n8n publish:workflow` por CLI**: actualiza la base pero no refresca el caché de webhooks del proceso vivo y los webhooks responden 404 hasta reiniciar.
 - Verificar que el `webhookId` siga siendo el mismo y que las rutas `udela-chat`/`udela-orientacion` coincidan con las URLs del backend.
 - Crear o asignar las credenciales:
   - `Udela-Secret`: Header Auth, header `X-Udela-Secret`.
-  - `Google Gemini account`: `googlePalmApi`.
+  - `Google Gemini account`: `googlePalmApi`, si se usa la variante Gemini.
+  - Si `main` ya tiene DeepSeek, usar la credencial DeepSeek existente y ajustar el modelo en el nodo `Validar` de orientación.
 - En el entorno actual la misma credencial `Udela-Secret` la usan chat, orientación y digest. Asegurar que su valor coincida con `N8N_CHAT_SECRET` y `N8N_AUTOMATION_SECRET` del backend; si se usan secretos distintos, crear credenciales separadas o ajustar los workflows.
 - Mantener `N8N_BLOCK_ENV_ACCESS_IN_NODE=false` y `UDELA_BACKEND_URL` en el compose de n8n si el digest usa `$env.UDELA_BACKEND_URL`.
 
 ### Paso 4 — Variables de entorno
 
-El backend del compose lee `infra/udela-site/.env`. Completar, como mínimo:
+Si reutilizás la infraestructura de `main`, partí de su `.env` y agregá solo las variables que falten. El backend del compose de referencia lee `infra/udela-site/.env`; completar, como mínimo:
 
 - `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`.
 - `DATABASE_URL` con la misma password y host `postgres`.
@@ -231,9 +261,11 @@ El backend del compose lee `infra/udela-site/.env`. Completar, como mínimo:
 - `CHAT_DATOS_URL` con una URL públicamente alcanzable por n8n.
 - `CHAT_TOKEN_MINUTOS`, timeouts.
 
-No reutilizar el `.env` de `main` sin revisar; no commitear el `.env`; no imprimir sus valores en logs.
+No copies el `.env` de `main` sin revisar; no commitees el `.env`; no imprimas sus valores en logs.
 
 ### Paso 5 — Deploy y verificación
+
+Si reutilizás la infraestructura de `main`, ejecutá su compose y agregá solo los servicios nuevos. El comando siguiente es el del compose de referencia `infra/udela-site`:
 
 ```bash
 cd infra/udela-site
@@ -255,7 +287,7 @@ Luego:
 ### Paso 6 — Rollback
 
 - `docker compose -f infra/udela-site/docker-compose.yml down` (sin `-v`).
-- Restaurar los workflows n8n exportados antes del cambio.
+- Restaurar los workflows n8n exportados antes del cambio; los `infra/n8n/*.json` existentes no se modifican.
 - No borrar volúmenes ni la base; no tocar Cloudflare.
 - La instancia vieja de `main`/`.79` debe seguir funcionando si no se modificó.
 
@@ -263,26 +295,27 @@ Luego:
 
 ## 7. Detalle de los workflows n8n
 
-### 7.1 Chatbot (`infra/n8n/udela-chatbot.json`)
+### 7.1 Chatbot (`infra/n8n/provisoria/udela-chatbot.json`)
 
 - 22 nodos; tres agentes: invitado, estudiante y empresa.
 - Nodos LLM: `Gemini Invitado`, `Gemini Estudiante`, `Gemini Empresa` (`@n8n/n8n-nodes-langchain.lmChatGoogleGemini`).
 - Credencial `Google Gemini account` (`googlePalmApi`).
 - `maxOutputTokens`: 1200 invitado, 1600 estudiante y empresa en el estado actual.
 - Webhook `Webhook Chat Udela` con `webhookId = d86c2ab1-8053-4fbe-ba83-b3fafb590449`, path `udela-chat`.
-- No quedan nodos DeepSeek en el estado de la rama.
+- No quedan nodos DeepSeek en este workflow de la carpeta `provisoria`; los `infra/n8n/*.json` existentes de `main` sí usan DeepSeek.
 - Las herramientas HTTP siguen apuntando a `/api/chat/datos/*` con el token de 5 minutos.
 
-### 7.2 Orientación (`infra/n8n/udela-orientacion.json`)
+### 7.2 Orientación (`infra/n8n/provisoria/udela-orientacion.json`)
 
 - 12 nodos.
 - `Gemini Orientación` (`lmChatGoogleGemini`), `maxOutputTokens: 4096`.
 - El código del nodo `Validar` devuelve `modelo: 'gemini-3.5-flash'`.
 - Webhook `Webhook Orientación` con `webhookId = 61b49f04-dc99-43f1-9464-ed9edf675f7b`, path `udela-orientacion`.
-- No quedan nodos DeepSeek.
+- No quedan nodos DeepSeek en este workflow; los `infra/n8n/*.json` existentes de `main` sí usan DeepSeek.
+- Si se reutiliza DeepSeek en `main`, reemplazar `Gemini Orientación` por el nodo DeepSeek existente y actualizar el `Validar` con el modelo DeepSeek.
 - El backend guarda el texto y el modelo en `informe_postulacion`; si el modelo se cambia, actualizar el `Validar` para que el valor guardado sea correcto.
 
-### 7.3 Digest (`infra/n8n/udela-digest.json`)
+### 7.3 Digest (`infra/n8n/provisoria/udela-digest.json`)
 
 - 7 nodos.
 - `Schedule` → `Obtener digests` → `Preparar mensajes` → `¿Hay novedades?`.
@@ -295,9 +328,9 @@ Luego:
 
 ### 7.4 Importación y publicación
 
-- Los JSON de la rama tienen `active: false` y no tienen `id` de workflow; al importarlos se crean workflows nuevos.
-- Si querés conservar los IDs vivos, importá/adaptá sobre los workflows existentes desde la UI y publicá; no borres los originales.
-- La importación CLI `--separate` espera un workflow por archivo; los JSON de la rama cumplen eso.
+- Los JSON de `infra/n8n/provisoria/` tienen `active: false` y no tienen `id` de workflow; al importarlos se crean workflows nuevos.
+- Los `infra/n8n/*.json` existentes de `main` no se tocan. Si querés conservar los IDs vivos, importá/adaptá sobre esos workflows desde la UI y publicá; no borres los originales.
+- La importación CLI `--separate` espera un workflow por archivo; los JSON de la carpeta `provisoria` cumplen eso.
 - Publicar siempre por UI o API pública; el CLI de publish no refresca webhooks.
 - Tras publicar, probar `POST /webhook/udela-chat` y `POST /webhook/udela-orientacion` sin header: deben dar `403`, no `404`.
 
@@ -335,6 +368,8 @@ Si `CHAT_DATOS_URL` no es alcanzable desde n8n, el chat con sesión falla aunque
 - El túnel de Cloudflare es la única entrada pública; no se abren puertos entrantes.
 - Gemini reemplaza a DeepSeek por disponibilidad de cuota/API.
 - El digest no depende de una cuenta de correo: se eliminó el envío y se conserva el reporte interno.
+- La carpeta `infra/n8n/provisoria/` es aditiva: no reemplaza los `infra/n8n/*.json` de `main`; si se reutiliza DeepSeek, la IA adapta los nodos LLM.
+- La infraestructura de `main` se reutiliza y amplía; `infra/udela-site/` es la referencia de la alternativa independiente, no un reemplazo obligatorio.
 - La rama es **provisoria**: sirve para portar la alternativa a `main`, no para mergear directamente.
 
 ---
@@ -345,7 +380,8 @@ Si `CHAT_DATOS_URL` no es alcanzable desde n8n, el chat con sesión falla aunque
 - No hay backups automáticos de `udela-site_pgdata`, `udela-site_storage` ni de la base de n8n.
 - No hay monitoreo/alertas ni CI/CD para este despliegue.
 - No se hizo QA completo de todos los flujos (registro, portfolio, proyectos, storage, empresa).
-- Los JSON de n8n incluyen IDs de nodos/credenciales específicos de la instancia; al portarlos a otra instancia hay que recrear credenciales y revisar los IDs.
+- Los JSON de `infra/n8n/provisoria/` incluyen IDs de nodos/credenciales específicos de la instancia; al portarlos a otra instancia hay que recrear credenciales y revisar los IDs.
+- Los `infra/n8n/*.json` de `main` siguen en DeepSeek/SMTP; la carpeta `provisoria` no los reemplaza.
 - `context_agent/n8n.md` y el README principal todavía describen DeepSeek/SMTP; este documento es la referencia del estado provisorio.
 - La rama sale de `feat/compatibilidad`, no de `main`; para aislar los cambios propios usar el diff de la sección 3.
 - La autenticación de la API de n8n usada para publicar fue una key temporal; ya fue eliminada. Si hace falta, crear una nueva y borrarla al terminar.
@@ -358,10 +394,11 @@ Si `CHAT_DATOS_URL` no es alcanzable desde n8n, el chat con sesión falla aunque
 - [ ] Identifiqué la infraestructura existente de `main` y del servidor.
 - [ ] Exporté/backupeé los workflows y la base de n8n antes de tocar nada.
 - [ ] Creé una rama desde `main`; no mergeé `provisoria`.
-- [ ] Porté `infra/udela-site` sin reemplazar `infra/vps`/`infra/local`.
+- [ ] Porté `infra/udela-site` como referencia y amplié la infraestructura de `main` sin reemplazar `infra/vps`/`infra/local` ni duplicar DB/n8n.
 - [ ] Completé el `.env` con secretos reales, sin commitearlo.
-- [ ] Importé/adapté los workflows y preservé los existentes.
-- [ ] Creé/asigné `Udela-Secret` y `Google Gemini account`.
+- [ ] Importé/adapté los workflows de `infra/n8n/provisoria` y preservé los `infra/n8n/*.json` existentes.
+- [ ] Si `main` usa DeepSeek, mantuve DeepSeek y adapté los nodos LLM; si no, creé `Google Gemini account`.
+- [ ] Creé/asigné `Udela-Secret` y la credencial LLM que corresponda.
 - [ ] Publiqué desde UI/API, no con `n8n publish:workflow` CLI.
 - [ ] Los webhooks dan `403` sin header y funcionan con el backend.
 - [ ] Chat, orientación y digest responden.
@@ -381,5 +418,6 @@ Si `CHAT_DATOS_URL` no es alcanzable desde n8n, el chat con sesión falla aunque
 - `context_agent/context_front.md`, `context_agent/audit_front.md`, `context_agent/endpoint.md`.
 - `infra/vps/` — infraestructura de producción existente.
 - `infra/local/` — entorno local.
-- `infra/n8n/` — plantillas de workflows de esta rama.
-- `infra/udela-site/` — compose y `.env.example` de la alternativa independiente.
+- `infra/n8n/` — workflows existentes de `main` (DeepSeek/SMTP); no se reemplazan.
+- `infra/n8n/provisoria/` — workflows de la alternativa (Gemini, `webhookId`, digest sin email); importar desde acá.
+- `infra/udela-site/` — compose y `.env.example` de la alternativa independiente; referencia para ampliar la infraestructura de `main`.

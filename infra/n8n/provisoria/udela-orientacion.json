@@ -1,0 +1,472 @@
+{
+  "active": false,
+  "connections": {
+    "Webhook Orientación": {
+      "main": [
+        [
+          {
+            "node": "Normalizar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar": {
+      "main": [
+        [
+          {
+            "node": "¿Hay brechas?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Hay brechas?": {
+      "main": [
+        [
+          {
+            "node": "Prompt Orientación",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sin brechas",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prompt Orientación": {
+      "main": [
+        [
+          {
+            "node": "Modelo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Modelo": {
+      "main": [
+        [
+          {
+            "node": "Validar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar": {
+      "main": [
+        [
+          {
+            "node": "¿Texto válido?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Texto válido?": {
+      "main": [
+        [
+          {
+            "node": "Responder Orientación",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Fallback",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fallback": {
+      "main": [
+        [
+          {
+            "node": "Responder Orientación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sin brechas": {
+      "main": [
+        [
+          {
+            "node": "Responder Orientación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Orientación": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Modelo",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "name": "Udela Conecta – Orientación de postulación",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "udela-orientacion",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook Orientación",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AzvZGgZ1GBzJhT8m",
+          "name": "Udela-Secret"
+        }
+      },
+      "id": "61b49f04-dc99-43f1-9464-ed9edf675f7b",
+      "webhookId": "61b49f04-dc99-43f1-9464-ed9edf675f7b"
+    },
+    {
+      "parameters": {
+        "content": "## Orientación de postulación\nLo llama SOLO el backend (POST /api/postulaciones/{id}/orientacion) con el header X-Udela-Secret (credencial \"Udela-Secret\").\n\nEl backend calcula la compatibilidad en Python y manda el resultado. Este workflow NO puntúa ni rankea: solo redacta una orientación breve.\n\nCon brechas -> Gemini -> Validar (≤600 caracteres, sin frases de rechazo). Si falla -> Fallback. Sin brechas -> mensaje fijo.\n\nEl backend valida otra vez y guarda fallback si algo sale mal.",
+        "height": 260,
+        "width": 460,
+        "color": 4
+      },
+      "name": "Nota",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -260
+      ],
+      "id": "7d5531a8-0f40-4bcd-9bc3-03c1a564c333"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "contrato-id",
+              "name": "contrato_id",
+              "value": "={{ Number($json.body?.contrato_id || 0) }}",
+              "type": "number"
+            },
+            {
+              "id": "email",
+              "name": "email",
+              "value": "={{ String($json.body?.email || \"\").slice(0, 255) }}",
+              "type": "string"
+            },
+            {
+              "id": "oferta",
+              "name": "oferta",
+              "value": "={{ String($json.body?.oferta || \"Oferta\").slice(0, 200) }}",
+              "type": "string"
+            },
+            {
+              "id": "coincidencia",
+              "name": "coincidencia",
+              "value": "={{ Math.max(0, Math.min(100, Number($json.body?.coincidencia || 0))) }}",
+              "type": "number"
+            },
+            {
+              "id": "compatibles",
+              "name": "compatibles",
+              "value": "={{ (Array.isArray($json.body?.compatibles) ? $json.body.compatibles : []).slice(0, 40).map(h => String(h).slice(0, 120)) }}",
+              "type": "array"
+            },
+            {
+              "id": "a-capacitar",
+              "name": "a_capacitar",
+              "value": "={{ (Array.isArray($json.body?.a_capacitar) ? $json.body.a_capacitar : []).slice(0, 40).map(h => String(h).slice(0, 120)) }}",
+              "type": "array"
+            },
+            {
+              "id": "se-aprenden",
+              "name": "se_aprenden",
+              "value": "={{ (Array.isArray($json.body?.se_aprenden) ? $json.body.se_aprenden : []).slice(0, 40).map(h => String(h).slice(0, 120)) }}",
+              "type": "array"
+            },
+            {
+              "id": "blandas",
+              "name": "blandas",
+              "value": "={{ (Array.isArray($json.body?.blandas) ? $json.body.blandas : []).slice(0, 40).map(h => String(h).slice(0, 120)) }}",
+              "type": "array"
+            },
+            {
+              "id": "tiene-brechas",
+              "name": "tiene_brechas",
+              "value": "={{ Array.isArray($json.body?.a_capacitar) && $json.body.a_capacitar.length > 0 }}",
+              "type": "boolean"
+            },
+            {
+              "id": "total-compatibles",
+              "name": "total_compatibles",
+              "value": "={{ (Array.isArray($json.body?.compatibles) ? $json.body.compatibles.length : 0) }}",
+              "type": "number"
+            },
+            {
+              "id": "total-requisitos",
+              "name": "total_requisitos",
+              "value": "={{ (Array.isArray($json.body?.compatibles) ? $json.body.compatibles.length : 0) + (Array.isArray($json.body?.a_capacitar) ? $json.body.a_capacitar.length : 0) }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Normalizar",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "id": "9fbc3d0f-b864-4461-a2d0-2cba293f5129"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "hay-brechas",
+              "leftValue": "={{ $json.tiene_brechas }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "¿Hay brechas?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        440,
+        0
+      ],
+      "id": "c36ae7e4-caf1-4160-9aec-dc927362492b"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst lista = (valores) => (Array.isArray(valores) && valores.length ? valores.join(', ') : 'ninguna');\nconst prompt = [\n  'Sos un orientador laboral de Udela Conecta. Recibís el resultado de una comparación entre el perfil declarado de un estudiante y los requisitos de una oferta.',\n  '',\n  'Datos:',\n  `- Oferta: ${d.oferta}`,\n  `- Coincidencia: ${d.coincidencia}% (${d.total_compatibles} de ${d.total_requisitos} requisitos)`,\n  `- Aptitudes compatibles: ${lista(d.compatibles)}`,\n  `- Aptitudes a capacitar: ${lista(d.a_capacitar)}`,\n  `- Se aprenden en el puesto: ${lista(d.se_aprenden)}`,\n  `- Habilidades blandas a evaluar en entrevista: ${lista(d.blandas)}`,\n  '',\n  'Escribí un texto de 3 a 4 líneas, en español rioplatense, para el postulante.',\n  '',\n  'Reglas obligatorias:',\n  '- No digas que no califica, que será rechazado o que no es apto.',\n  '- No inventes requisitos que no estén en la lista.',\n  '- No evalúes habilidades blandas.',\n  '- No prometas resultados.',\n  '- Empezá por la brecha más importante y sugerí un paso concreto.',\n  '- Aclará que es una orientación para prepararse, no una evaluación.',\n  '- Máximo 600 caracteres.',\n  '- Texto plano, sin markdown.',\n].join('\\n');\nreturn [{ json: { ...d, prompt } }];"
+      },
+      "name": "Prompt Orientación",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        -140
+      ],
+      "id": "22aa718f-1b7e-462f-868b-edc3af033460"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.prompt }}",
+        "options": {
+          "systemMessage": "Sos un orientador laboral de Udela Conecta. Tu única tarea es redactar una orientación breve y respetuosa para un estudiante, usando solo los datos que recibís. No recalcules la coincidencia ni agregues requisitos. Nunca digas que la persona no califica, que será rechazada o que no es apta. No evalúes habilidades blandas ni prometas resultados. Escribí en español rioplatense, en texto plano, sin markdown, con un máximo de 600 caracteres. Aclará que es una orientación para prepararse, no una evaluación.",
+          "maxIterations": 1
+        }
+      },
+      "name": "Modelo",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        880,
+        -140
+      ],
+      "id": "1b2efa4e-4b43-430a-9286-1ccf40df41ab"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.5-flash",
+        "options": {
+          "temperature": 0.4,
+          "maxOutputTokens": 4096
+        }
+      },
+      "name": "Gemini Orientación",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        880,
+        60
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "pPSPPwkECDHd2vKi",
+          "name": "Google Gemini account"
+        }
+      },
+      "id": "e8c56a23-3b56-4798-8c69-1ef8e6ed17e3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const entrada = $input.first().json;\nconst crudo = entrada.output;\nconst textoOriginal = (typeof crudo === 'string' ? crudo : JSON.stringify(crudo ?? '')).trim();\nconst frasesProhibidas = ['no calificas', 'rechazado', 'no sos apto', 'no cumple', 'no sirve'];\nconst normalizar = (valor) => String(valor)\n  .toLowerCase()\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '');\nconst texto = textoOriginal.replace(/\\s+/g, ' ').trim();\nconst invalido = !texto\n  || texto.length > 600\n  || frasesProhibidas.some((frase) => normalizar(texto).includes(normalizar(frase)));\nreturn [{\n  json: {\n    valido: !invalido,\n    texto,\n    modelo: 'gemini-3.5-flash',\n    a_capacitar: Array.isArray(entrada.a_capacitar) ? entrada.a_capacitar : [],\n  },\n}];"
+      },
+      "name": "Validar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        -140
+      ],
+      "id": "2bc960cb-ce45-4215-9fa6-a92694bd0beb"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "texto-valido",
+              "leftValue": "={{ $json.valido }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "name": "¿Texto válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1320,
+        -140
+      ],
+      "id": "f61fd9d6-7f1e-454c-a484-78554ec5a24e"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fallback-texto",
+              "name": "texto",
+              "value": "={{ \"Te faltan \" + (($json.a_capacitar || []).join(\", \") || \"algunos requisitos\") + \". Podés reforzarlos con cursos introductorios y proyectos pequeños. Esto es una orientación para prepararte, no una evaluación.\" }}",
+              "type": "string"
+            },
+            {
+              "id": "fallback-modelo",
+              "name": "modelo",
+              "value": "fallback",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Fallback",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1320,
+        40
+      ],
+      "id": "dbff21be-6c3b-49f1-bbe0-1fc9d9ee0f1a"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "sin-brechas-texto",
+              "name": "texto",
+              "value": "Cumplís todos los requisitos declarados de esta oferta. Podés postularte y preparar ejemplos concretos de tus proyectos para la entrevista. Esto es una orientación para prepararte, no una evaluación.",
+              "type": "string"
+            },
+            {
+              "id": "sin-brechas-modelo",
+              "name": "modelo",
+              "value": "sin-brechas",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Sin brechas",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        660,
+        140
+      ],
+      "id": "bd5b1ac5-96d2-4d51-a8a1-c96e47d6cd97"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"texto\": $json.texto, \"modelo\": $json.modelo } }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "name": "Responder Orientación",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1540,
+        -140
+      ],
+      "id": "45a0aba9-6dd8-409e-9e54-852901c3f365"
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
