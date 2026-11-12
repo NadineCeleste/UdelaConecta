@@ -61,6 +61,7 @@ htmlcov/
 .env.*
 !/infra/local/.env.local
 !/infra/vps/.env.vps.example
+!/infra/udela-site/.env.example
 
 # Secretos y backups de producción
 /infra/vps/.env.vps

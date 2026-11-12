@@ -1,8 +1,242 @@
 {
-  "name": "Udela Conecta – Chatbot",
-  "settings": {
-    "executionOrder": "v1"
+  "active": false,
+  "connections": {
+    "Webhook Chat Udela": {
+      "main": [
+        [
+          {
+            "node": "Normalizar Entrada",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalizar Entrada": {
+      "main": [
+        [
+          {
+            "node": "Elegir Modo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Elegir Modo": {
+      "main": [
+        [
+          {
+            "node": "Agente Empresa",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Agente Estudiante",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Agente Invitado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Invitado": {
+      "main": [
+        [
+          {
+            "node": "Responder Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Invitado": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Invitado",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria Invitado": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente Invitado",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ofertas Invitado": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Invitado",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Estudiante": {
+      "main": [
+        [
+          {
+            "node": "Responder Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Estudiante": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Estudiante",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria Estudiante": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente Estudiante",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ofertas Estudiante": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Estudiante",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mi Perfil Estudiante": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Estudiante",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mis Postulaciones": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Estudiante",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agente Empresa": {
+      "main": [
+        [
+          {
+            "node": "Responder Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Empresa": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Agente Empresa",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Memoria Empresa": {
+      "ai_memory": [
+        [
+          {
+            "node": "Agente Empresa",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mi Perfil Empresa": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Empresa",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mis Ofertas": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Empresa",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postulantes": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Empresa",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Candidatos": {
+      "ai_tool": [
+        [
+          {
+            "node": "Agente Empresa",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
   },
+  "name": "Udela Conecta – Chatbot",
   "nodes": [
     {
       "parameters": {
@@ -21,9 +255,12 @@
       ],
       "credentials": {
         "httpHeaderAuth": {
+          "id": "AzvZGgZ1GBzJhT8m",
           "name": "Udela-Secret"
         }
-      }
+      },
+      "id": "d86c2ab1-8053-4fbe-ba83-b3fafb590449",
+      "webhookId": "d86c2ab1-8053-4fbe-ba83-b3fafb590449"
     },
     {
       "parameters": {
@@ -81,7 +318,8 @@
       "position": [
         224,
         96
-      ]
+      ],
+      "id": "8984284a-f7c2-4416-8b0a-e490837ed6ef"
     },
     {
       "parameters": {
@@ -154,7 +392,8 @@
       "position": [
         384,
         112
-      ]
+      ],
+      "id": "f6d75e8a-358a-4f5d-a66e-1e48d240b27d"
     },
     {
       "parameters": {
@@ -171,28 +410,31 @@
       "position": [
         1056,
         -240
-      ]
+      ],
+      "id": "e4cdf4b9-1978-46ed-86eb-de9bb860322f"
     },
     {
       "parameters": {
-        "model": "deepseek-flash",
+        "modelName": "models/gemini-3.5-flash",
         "options": {
-          "maxTokens": 600,
-          "temperature": 0.4
+          "temperature": 0.4,
+          "maxOutputTokens": 1200
         }
       },
-      "name": "DeepSeek Invitado",
-      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
-      "typeVersion": 1,
+      "name": "Gemini Invitado",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
       "position": [
         976,
         -32
       ],
       "credentials": {
-        "deepSeekApi": {
-          "name": "DeepSeek account"
+        "googlePalmApi": {
+          "id": "pPSPPwkECDHd2vKi",
+          "name": "Google Gemini account"
         }
-      }
+      },
+      "id": "2f5a77e3-6590-4bb1-9fd1-d7f81ce0a1c9"
     },
     {
       "parameters": {
@@ -206,7 +448,8 @@
       "position": [
         1120,
         -16
-      ]
+      ],
+      "id": "d227d774-7da2-4327-abd9-3dcd78264c77"
     },
     {
       "parameters": {
@@ -240,7 +483,8 @@
       "position": [
         1264,
         -32
-      ]
+      ],
+      "id": "c6b79962-434c-46eb-a169-d4796d4d9708"
     },
     {
       "parameters": {
@@ -257,28 +501,31 @@
       "position": [
         1072,
         384
-      ]
+      ],
+      "id": "41c061a9-9498-409c-867f-ff16a714f14b"
     },
     {
       "parameters": {
-        "model": "deepseek-flash",
+        "modelName": "models/gemini-3.5-flash",
         "options": {
-          "maxTokens": 800,
-          "temperature": 0.4
+          "temperature": 0.4,
+          "maxOutputTokens": 1600
         }
       },
-      "name": "DeepSeek Estudiante",
-      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
-      "typeVersion": 1,
+      "name": "Gemini Estudiante",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
       "position": [
         672,
         560
       ],
       "credentials": {
-        "deepSeekApi": {
-          "name": "DeepSeek account"
+        "googlePalmApi": {
+          "id": "pPSPPwkECDHd2vKi",
+          "name": "Google Gemini account"
         }
-      }
+      },
+      "id": "c5e4e73a-7981-4a80-8b05-616bf13c8f81"
     },
     {
       "parameters": {
@@ -292,7 +539,8 @@
       "position": [
         816,
         608
-      ]
+      ],
+      "id": "0e11e5fe-4eb7-4ee7-bfd0-64188eda8aab"
     },
     {
       "parameters": {
@@ -326,7 +574,8 @@
       "position": [
         960,
         608
-      ]
+      ],
+      "id": "d627c222-ddaa-47bf-b8bf-91075bb34a10"
     },
     {
       "parameters": {
@@ -356,7 +605,8 @@
       "position": [
         1104,
         608
-      ]
+      ],
+      "id": "2fe20f37-7815-4055-8cf4-ac3c8d8e57c7"
     },
     {
       "parameters": {
@@ -386,7 +636,8 @@
       "position": [
         1248,
         608
-      ]
+      ],
+      "id": "9b387161-b40c-46e6-89c2-f1198d683809"
     },
     {
       "parameters": {
@@ -416,7 +667,8 @@
       "position": [
         1104,
         1280
-      ]
+      ],
+      "id": "be5f48b3-9b6d-4f5c-bfac-4bd7c887c954"
     },
     {
       "parameters": {
@@ -446,7 +698,8 @@
       "position": [
         1248,
         1280
-      ]
+      ],
+      "id": "e31e796f-fc2c-40bb-a402-fb4b7f0c7858"
     },
     {
       "parameters": {
@@ -485,7 +738,8 @@
       "position": [
         1392,
         1280
-      ]
+      ],
+      "id": "c260de08-3a7c-4984-b681-3b55b6328c70"
     },
     {
       "parameters": {
@@ -502,28 +756,31 @@
       "position": [
         1072,
         1040
-      ]
+      ],
+      "id": "2fca4c36-5c0d-4755-8a6e-4438bce0c00b"
     },
     {
       "parameters": {
-        "model": "deepseek-flash",
+        "modelName": "models/gemini-3.5-flash",
         "options": {
-          "maxTokens": 800,
-          "temperature": 0.4
+          "temperature": 0.4,
+          "maxOutputTokens": 1600
         }
       },
-      "name": "DeepSeek Empresa",
-      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
-      "typeVersion": 1,
+      "name": "Gemini Empresa",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.2,
       "position": [
         672,
         1232
       ],
       "credentials": {
-        "deepSeekApi": {
-          "name": "DeepSeek account"
+        "googlePalmApi": {
+          "id": "pPSPPwkECDHd2vKi",
+          "name": "Google Gemini account"
         }
-      }
+      },
+      "id": "8258d0aa-4f34-417d-8b0e-6d5654b4c301"
     },
     {
       "parameters": {
@@ -537,7 +794,8 @@
       "position": [
         816,
         1280
-      ]
+      ],
+      "id": "777389b3-081b-4c30-8a3c-6c932f137e15"
     },
     {
       "parameters": {
@@ -567,7 +825,8 @@
       "position": [
         960,
         1280
-      ]
+      ],
+      "id": "7e3e2854-917f-48aa-b6a9-6cf797fa316c"
     },
     {
       "parameters": {
@@ -583,7 +842,8 @@
       "position": [
         2016,
         144
-      ]
+      ],
+      "id": "c15c543e-51c1-452d-89df-0dc8bbb1e4a1"
     },
     {
       "parameters": {
@@ -598,244 +858,11 @@
       "position": [
         -64,
         -176
-      ]
+      ],
+      "id": "f6f6b488-4c1a-4ed7-800d-f44bc007f2ee"
     }
   ],
-  "connections": {
-    "Webhook Chat Udela": {
-      "main": [
-        [
-          {
-            "node": "Normalizar Entrada",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Normalizar Entrada": {
-      "main": [
-        [
-          {
-            "node": "Elegir Modo",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Elegir Modo": {
-      "main": [
-        [
-          {
-            "node": "Agente Empresa",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Agente Estudiante",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Agente Invitado",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Agente Invitado": {
-      "main": [
-        [
-          {
-            "node": "Responder Chat",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "DeepSeek Invitado": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Agente Invitado",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Memoria Invitado": {
-      "ai_memory": [
-        [
-          {
-            "node": "Agente Invitado",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Ofertas Invitado": {
-      "ai_tool": [
-        [
-          {
-            "node": "Agente Invitado",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Agente Estudiante": {
-      "main": [
-        [
-          {
-            "node": "Responder Chat",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "DeepSeek Estudiante": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Agente Estudiante",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Memoria Estudiante": {
-      "ai_memory": [
-        [
-          {
-            "node": "Agente Estudiante",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Ofertas Estudiante": {
-      "ai_tool": [
-        [
-          {
-            "node": "Agente Estudiante",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Mi Perfil Estudiante": {
-      "ai_tool": [
-        [
-          {
-            "node": "Agente Estudiante",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Mis Postulaciones": {
-      "ai_tool": [
-        [
-          {
-            "node": "Agente Estudiante",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Agente Empresa": {
-      "main": [
-        [
-          {
-            "node": "Responder Chat",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "DeepSeek Empresa": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "Agente Empresa",
-            "type": "ai_languageModel",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Memoria Empresa": {
-      "ai_memory": [
-        [
-          {
-            "node": "Agente Empresa",
-            "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Mi Perfil Empresa": {
-      "ai_tool": [
-        [
-          {
-            "node": "Agente Empresa",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Mis Ofertas": {
-      "ai_tool": [
-        [
-          {
-            "node": "Agente Empresa",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Postulantes": {
-      "ai_tool": [
-        [
-          {
-            "node": "Agente Empresa",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Candidatos": {
-      "ai_tool": [
-        [
-          {
-            "node": "Agente Empresa",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    }
-  },
-  "active": false
+  "settings": {
+    "executionOrder": "v1"
+  }
 }

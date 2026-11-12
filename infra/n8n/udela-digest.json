@@ -1,150 +1,5 @@
 {
-  "name": "Udela Conecta – Digest de oportunidades",
   "active": false,
-  "settings": {
-    "executionOrder": "v1"
-  },
-  "nodes": [
-    {
-      "parameters": {
-        "rule": {
-          "interval": [
-            {
-              "field": "weeks",
-              "weeksInterval": 1,
-              "triggerAtDay": [
-                1
-              ],
-              "triggerAtHour": 9,
-              "triggerAtMinute": 0
-            }
-          ]
-        }
-      },
-      "name": "Schedule",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [
-        0,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "content": "## Digest semanal de oportunidades\nCorre los lunes a las 9:00 (America/Argentina/Buenos_Aires).\n\nGET /api/automatizacion/digests con header X-Udela-Secret. El backend ya calculó la compatibilidad y devuelve solo ofertas libres con más de 60% a las que el estudiante no se postuló.\n\nEl nodo Enviar está deshabilitado por defecto: configurá la credencial SMTP \"Udela SMTP\", definí UDELA_DIGEST_FROM y habilitalo. Sin SMTP, el workflow igual se ejecuta y muestra los mensajes preparados en n8n.\n\nNo se rankean personas ni se envían datos sensibles.",
-        "height": 290,
-        "width": 460,
-        "color": 4
-      },
-      "name": "Nota",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
-      "position": [
-        0,
-        -220
-      ]
-    },
-    {
-      "parameters": {
-        "url": "={{ ($env.UDELA_BACKEND_URL || 'http://backend:3000') }}/api/automatizacion/digests",
-        "authentication": "genericCredentialType",
-        "genericAuthType": "httpHeaderAuth",
-        "options": {
-          "timeout": 15000
-        }
-      },
-      "name": "Obtener digests",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        220,
-        0
-      ],
-      "credentials": {
-        "httpHeaderAuth": {
-          "name": "Udela-Secret"
-        }
-      }
-    },
-    {
-      "parameters": {
-        "jsCode": "const respuesta = $input.first().json || {};\nconst digests = Array.isArray(respuesta.data) ? respuesta.data : [];\nconst salida = [];\nfor (const digest of digests) {\n  const ofertas = Array.isArray(digest.ofertas) ? digest.ofertas : [];\n  if (!ofertas.length) continue;\n  const nombre = String(digest.nombre || '').trim() || String(digest.email || '').split('@')[0];\n  const lineas = ofertas.slice(0, 3).map((oferta) => {\n    const faltantes = Array.isArray(oferta.faltantes) && oferta.faltantes.length\n      ? ` · A capacitar: ${oferta.faltantes.join(', ')}`\n      : '';\n    return `- ${oferta.titulo} (${oferta.coincidencia}% de coincidencia)${faltantes}`;\n  });\n  const texto = [\n    `Hola ${nombre}:`,\n    '',\n    'Estas ofertas pueden interesarte según tu perfil declarado:',\n    ...lineas,\n    '',\n    'Entrá a Udela Conecta para ver el detalle y postularte si querés. La coincidencia es una orientación, no una evaluación ni un ranking.',\n  ].join('\\n');\n  salida.push({\n    json: {\n      email: digest.email,\n      asunto: 'Oportunidades que pueden interesarte en Udela Conecta',\n      texto,\n      ofertas,\n    },\n  });\n}\nreturn salida;"
-      },
-      "name": "Preparar mensajes",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        440,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict",
-            "version": 2
-          },
-          "conditions": [
-            {
-              "id": "hay-ofertas",
-              "leftValue": "={{ ($json.ofertas || []).length > 0 }}",
-              "rightValue": "",
-              "operator": {
-                "type": "boolean",
-                "operation": "true",
-                "singleValue": true
-              }
-            }
-          ],
-          "combinator": "and"
-        },
-        "options": {}
-      },
-      "name": "¿Hay novedades?",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 2.2,
-      "position": [
-        660,
-        0
-      ]
-    },
-    {
-      "parameters": {
-        "fromEmail": "={{ $env.UDELA_DIGEST_FROM || 'no-reply@udelaconecta.local' }}",
-        "toEmail": "={{ $json.email }}",
-        "subject": "={{ $json.asunto }}",
-        "emailFormat": "text",
-        "text": "={{ $json.texto }}",
-        "options": {}
-      },
-      "name": "Enviar",
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [
-        880,
-        -80
-      ],
-      "credentials": {
-        "smtp": {
-          "name": "Udela SMTP"
-        }
-      },
-      "disabled": true
-    },
-    {
-      "parameters": {},
-      "name": "Sin novedades",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
-      "position": [
-        880,
-        80
-      ]
-    }
-  ],
   "connections": {
     "Schedule": {
       "main": [
@@ -183,7 +38,7 @@
       "main": [
         [
           {
-            "node": "Enviar",
+            "node": "Reporte interno",
             "type": "main",
             "index": 0
           }
@@ -198,8 +53,148 @@
       ]
     }
   },
-  "pinData": {},
   "meta": {
     "templateCredsSetupCompleted": false
+  },
+  "name": "Udela Conecta – Digest de oportunidades",
+  "nodes": [
+    {
+      "id": "a3412004-6366-457d-9d0d-72af41599c61",
+      "name": "Schedule",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "weeksInterval": 1,
+              "triggerAtDay": [
+                1
+              ],
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "2df3bdb6-588d-4d39-a7a7-5962fa28c18c",
+      "name": "Nota",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -220
+      ],
+      "parameters": {
+        "content": "## Digest semanal de oportunidades\nCorre los lunes a las 9:00 (America/Argentina/Buenos_Aires).\n\nGET /api/automatizacion/digests con header X-Udela-Secret. El backend ya calculó la compatibilidad y devuelve solo ofertas libres con más de 60% a las que el estudiante no se postuló.\n\n\nNo envía correos: no requiere SMTP. Los mensajes preparados quedan visibles en la ejecución de n8n, en el nodo \"Reporte interno\".\nNo se rankean personas ni se envían datos sensibles.",
+        "height": 290,
+        "width": 460,
+        "color": 4
+      }
+    },
+    {
+      "id": "88a047dd-1064-4581-ab36-77c6103271f5",
+      "name": "Obtener digests",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        0
+      ],
+      "parameters": {
+        "url": "={{ ($env.UDELA_BACKEND_URL || 'http://backend:3000') }}/api/automatizacion/digests",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {
+          "timeout": 15000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "AzvZGgZ1GBzJhT8m",
+          "name": "Udela-Secret"
+        }
+      }
+    },
+    {
+      "id": "a767d83f-7fd6-4257-9209-18c3b6960669",
+      "name": "Preparar mensajes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        0
+      ],
+      "parameters": {
+        "jsCode": "const respuesta = $input.first().json || {};\nconst digests = Array.isArray(respuesta.data) ? respuesta.data : [];\nconst salida = [];\nfor (const digest of digests) {\n  const ofertas = Array.isArray(digest.ofertas) ? digest.ofertas : [];\n  if (!ofertas.length) continue;\n  const nombre = String(digest.nombre || '').trim() || String(digest.email || '').split('@')[0];\n  const lineas = ofertas.slice(0, 3).map((oferta) => {\n    const faltantes = Array.isArray(oferta.faltantes) && oferta.faltantes.length\n      ? ` · A capacitar: ${oferta.faltantes.join(', ')}`\n      : '';\n    return `- ${oferta.titulo} (${oferta.coincidencia}% de coincidencia)${faltantes}`;\n  });\n  const texto = [\n    `Hola ${nombre}:`,\n    '',\n    'Estas ofertas pueden interesarte según tu perfil declarado:',\n    ...lineas,\n    '',\n    'Entrá a Udela Conecta para ver el detalle y postularte si querés. La coincidencia es una orientación, no una evaluación ni un ranking.',\n  ].join('\\n');\n  salida.push({\n    json: {\n      email: digest.email,\n      asunto: 'Oportunidades que pueden interesarte en Udela Conecta',\n      texto,\n      ofertas,\n    },\n  });\n}\nreturn salida;"
+      }
+    },
+    {
+      "id": "ed5874cc-ce01-4c1e-b751-f019b517cf60",
+      "name": "¿Hay novedades?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        660,
+        0
+      ],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "hay-ofertas",
+              "leftValue": "={{ ($json.ofertas || []).length > 0 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d9023e49-dbd9-4beb-be14-56d5acb455d5",
+      "name": "Sin novedades",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        880,
+        80
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "cde9e2fb-8388-4a72-b078-4192b87757b9",
+      "name": "Reporte interno",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        880,
+        -80
+      ],
+      "parameters": {}
+    }
+  ],
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
   }
 }
