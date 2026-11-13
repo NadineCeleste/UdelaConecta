@@ -22,5 +22,14 @@ COMPOSE=(docker compose -f "$RAIZ/infra/vps/docker-compose.prod.yml" --env-file 
 "${COMPOSE[@]}" exec -T postgres pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" --no-owner | gzip > "$ARCHIVO"
 "${COMPOSE[@]}" exec -T backend tar -czf - -C /data storage > "$ARCHIVO_STORAGE"
 
-find "$DESTINO" \( -name '*.sql.gz' -o -name 'storage_*.tar.gz' \) -mtime +"$DIAS" -delete
+# Workflows de n8n tal como están en el editor (credenciales no incluidas: viven cifradas en su volumen)
+ARCHIVO_N8N="$DESTINO/n8n_workflows_${FECHA}.json.gz"
+if "${COMPOSE[@]}" exec -T n8n sh -c 'n8n export:workflow --all --output=/tmp/udela-workflows.json >/dev/null 2>&1 && cat /tmp/udela-workflows.json' | gzip > "$ARCHIVO_N8N"; then
+  echo "Workflows de n8n: $ARCHIVO_N8N"
+else
+  rm -f "$ARCHIVO_N8N"
+  echo "Aviso: no se pudieron exportar los workflows de n8n (¿el servicio está detenido?)" >&2
+fi
+
+find "$DESTINO" \( -name '*.sql.gz' -o -name 'storage_*.tar.gz' -o -name 'n8n_workflows_*.json.gz' \) -mtime +"$DIAS" -delete
 echo "Backup generado: $ARCHIVO y $ARCHIVO_STORAGE"
