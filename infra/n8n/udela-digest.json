@@ -7,6 +7,21 @@
   "nodes": [
     {
       "parameters": {
+        "content": "## Digest semanal de oportunidades\nCorre los lunes a las 9:00 (America/Argentina/Buenos_Aires). Para probarlo a pedido: \"Execute workflow\" en el editor o, por CLI, n8n execute --id=<id> (entra por \"Ejecutar a mano\").\n\nConfiguración: backend_url es la URL del backend (http://backend:3000 en el compose; la URL pública en un n8n externo) y remitente es el From del mail. Es lo único que se edita al importar en otra instancia. Ningún nodo lee variables de entorno.\n\nGET {backend_url}/api/automatizacion/digests con el header X-Udela-Secret (credencial \"Udela-Secret\"). El backend ya calculó la compatibilidad: solo ofertas libres con más de 60% a las que el estudiante no se postuló, top 3.\n\nLos mensajes quedan en \"Reporte interno\" de cada ejecución. Enviar está deshabilitado: para mandar mails, crear la credencial SMTP \"Udela SMTP\", asignarla y habilitar el nodo.\n\nNo se rankean personas ni se envían datos sensibles.",
+        "height": 380,
+        "width": 520,
+        "color": 4
+      },
+      "name": "Nota",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        -420
+      ]
+    },
+    {
+      "parameters": {
         "rule": {
           "interval": [
             {
@@ -21,7 +36,7 @@
           ]
         }
       },
-      "name": "Schedule",
+      "name": "Lunes 9:00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
@@ -31,22 +46,47 @@
     },
     {
       "parameters": {
-        "content": "## Digest semanal de oportunidades\nCorre los lunes a las 9:00 (America/Argentina/Buenos_Aires).\n\nGET /api/automatizacion/digests con header X-Udela-Secret. El backend ya calculó la compatibilidad y devuelve solo ofertas libres con más de 60% a las que el estudiante no se postuló.\n\nEl nodo Enviar está deshabilitado por defecto: configurá la credencial SMTP \"Udela SMTP\", definí UDELA_DIGEST_FROM y habilitalo. Sin SMTP, el workflow igual se ejecuta y muestra los mensajes preparados en n8n.\n\nNo se rankean personas ni se envían datos sensibles.",
-        "height": 290,
-        "width": 460,
-        "color": 4
+        "inputSource": "passthrough"
       },
-      "name": "Nota",
-      "type": "n8n-nodes-base.stickyNote",
-      "typeVersion": 1,
+      "name": "Ejecutar a mano",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
       "position": [
         0,
-        -220
+        180
       ]
     },
     {
       "parameters": {
-        "url": "={{ ($env.UDELA_BACKEND_URL || 'http://backend:3000') }}/api/automatizacion/digests",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "backend-url",
+              "name": "backend_url",
+              "value": "http://backend:3000",
+              "type": "string"
+            },
+            {
+              "id": "remitente",
+              "name": "remitente",
+              "value": "no-reply@udelaconecta.local",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Configuración",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        80
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('Configuración').first().json.backend_url.replace(/\\/+$/, '') }}/api/automatizacion/digests",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "options": {
@@ -57,8 +97,8 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        220,
-        0
+        440,
+        80
       ],
       "credentials": {
         "httpHeaderAuth": {
@@ -74,8 +114,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        440,
-        0
+        660,
+        80
       ]
     },
     {
@@ -107,13 +147,23 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        660,
-        0
+        880,
+        80
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "Reporte interno",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        1100,
+        -20
       ]
     },
     {
       "parameters": {
-        "fromEmail": "={{ $env.UDELA_DIGEST_FROM || 'no-reply@udelaconecta.local' }}",
+        "fromEmail": "={{ $('Configuración').first().json.remitente }}",
         "toEmail": "={{ $json.email }}",
         "subject": "={{ $json.asunto }}",
         "emailFormat": "text",
@@ -124,8 +174,8 @@
       "type": "n8n-nodes-base.emailSend",
       "typeVersion": 2.1,
       "position": [
-        880,
-        -80
+        1320,
+        -20
       ],
       "credentials": {
         "smtp": {
@@ -140,13 +190,35 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        880,
-        80
+        1100,
+        180
       ]
     }
   ],
   "connections": {
-    "Schedule": {
+    "Lunes 9:00": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar a mano": {
+      "main": [
+        [
+          {
+            "node": "Configuración",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Configuración": {
       "main": [
         [
           {
@@ -183,7 +255,7 @@
       "main": [
         [
           {
-            "node": "Enviar",
+            "node": "Reporte interno",
             "type": "main",
             "index": 0
           }
@@ -191,6 +263,17 @@
         [
           {
             "node": "Sin novedades",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reporte interno": {
+      "main": [
+        [
+          {
+            "node": "Enviar",
             "type": "main",
             "index": 0
           }
