@@ -38,7 +38,8 @@ npm run test:back      # pytest (requiere: cd apps/backend && poetry install)
 npx nx run backend:migrate  # alembic upgrade head (también backend:seed y backend:serve; no usar "nx migrate", que actualiza Nx)
 docker compose -f infra/local/docker-compose.yml exec n8n n8n import:workflow --separate --input=/workflows  # importa los 3 workflows
 infra/vps/setup-env.sh # producción: genera infra/vps/.env.vps (DuckDNS, secretos, modo detrás de un Caddy del host)
-infra/vps/deploy.sh    # producción: git pull + build + up (también npm run vps:up / vps:down / vps:logs)
+infra/vps/deploy.sh    # producción: completa .env.vps (n8n) + git pull + build + up (también npm run vps:up / vps:down / vps:logs)
+infra/vps/n8n-import.sh # producción: importa los 3 workflows en el n8n del compose sin duplicar
 ```
 
 Stack local: front `http://localhost:4200`, API `http://localhost:3000/api/`, Swagger `http://localhost:3000/docs`, Adminer `http://localhost:8080`, n8n `http://localhost:5678`, Postgres `localhost:5432` (Postgres y Adminer solo escuchan en `127.0.0.1`). Los puertos del host se cambian con `FRONTEND_PORT`, `N8N_HOST_PORT`, `POSTGRES_HOST_PORT` y `ADMINER_PORT`. Si se cambia `package.json`, recrear el volumen de `node_modules` con `docker compose -f infra/local/docker-compose.yml down -v`.
@@ -54,7 +55,7 @@ Usuarios demo (los crea el seed cuando `AUTO_SEED=true`), contraseña `Udela1234
 - **Admin:** `navbar.ts` activa `isgests` con `user.is_admin` (columna `auth_users.is_admin`, solo se cambia desde la base). Ya no existe `environment.gests`.
 - **Login:** 5 intentos fallidos seguidos bloquean la cuenta 15 minutos (429).
 - **Privacidad:** `telefono` y `fecha_nacimiento` solo los recibe el dueño del perfil.
-- **Producción:** sin nginx. Caddy (`Dockerfile.caddy`) sirve el build de Angular y hace de proxy a `/api` y `/storage`; el servicio `duckdns` mantiene la IP del subdominio. Si el servidor ya tiene un Caddy en 80/443, el de Udela queda en `127.0.0.1:8081` y el del host termina el HTTPS. Detalle en `orquestacion.md`.
+- **Producción:** sin nginx. Caddy (`Dockerfile.caddy`) sirve el build de Angular y hace de proxy a `/api` y `/storage`; el servicio `duckdns` mantiene la IP del subdominio. n8n corre en el mismo compose con `COMPOSE_PROFILES=n8n` (red interna, editor solo en `127.0.0.1`) o se usa uno externo (`n8n.md` §8.1). Si el servidor ya tiene un Caddy en 80/443, el de Udela queda en `127.0.0.1:8081` y el del host termina el HTTPS. Detalle en `orquestacion.md`.
 - **Fin de línea:** `.gitattributes` fuerza LF en los `*.sh`; con CRLF los contenedores no arrancan.
 - **Asistente (chatbot):** widget `componentes/chatbot` (visible con y sin sesión) → `POST /api/chat` → workflow de n8n "Udela Conecta – Chatbot" (DeepSeek) con tres agentes: invitados, estudiantes y empresas. El modo y el rol los decide el backend por el JWT; el secreto del webhook (`N8N_CHAT_SECRET`, header `X-Udela-Secret`) solo lo conocen el backend y n8n. Las herramientas de los agentes de estudiante y empresa leen `GET /api/chat/datos/*` con un JWT de 5 minutos (`aud=udela-chat`) que no sirve para el resto de la API. Sin configurar, el chat responde 503. El workflow está exportado en `infra/n8n/udela-chatbot.json`. Detalle en `n8n.md`.
 - **Compatibilidad y orientación:** las ofertas guardan `requisitos` (JSONB) y cada postulación puede tener un `informe_postulacion`. El cálculo vive en `app/dominio/compatibilidad.py` (Python puro) y se ejecuta al vuelo: no se persiste el porcentaje ni hay ranking. La empresa ve el informe determinista; la orientación de IA (n8n + DeepSeek) es solo para el estudiante, con fallback si n8n/IA fallan. “Postularme” nunca se bloquea por requisitos. Migración `0004`. Detalle en `docs/ARQUITECTURA.md` y `docs/DEMO.md`.

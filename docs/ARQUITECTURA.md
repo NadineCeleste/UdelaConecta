@@ -192,7 +192,8 @@ erDiagram
 - `contrato.requisitos` es una lista JSON. No se creó una tabla de requisitos para no
   romper el contrato actual de la API y mantener el seed simple.
 - `informe_postulacion.estado` puede ser `pendiente`, `generado` o `fallback`.
-- `modelo` guarda `deepseek-chat`, `n8n`, `fallback` o `sin-brechas` según el origen.
+- `modelo` guarda `deepseek-flash`, `n8n`, `fallback` o `sin-brechas` según el origen. `estado` es `generado` solo si el texto lo escribió la IA: con `fallback` o `sin-brechas` (textos deterministas de n8n) el backend guarda `estado: "fallback"`.
+- El backend vuelve a validar el texto: no vacío, hasta 600 caracteres, sin frases de rechazo y terminado en `.`, `!`, `?` o `…` (con comillas o paréntesis opcionales). Un texto cortado por el límite de tokens no cumple lo último y se reemplaza por el fallback.
 - No se agregan columnas de edad, género, nacionalidad ni puntajes acumulados.
 
 ## 4. Seguridad y privacidad
