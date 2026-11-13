@@ -345,6 +345,32 @@ Entrá a Udela Conecta para ver el detalle y postularte si querés. La coinciden
 orientación, no una evaluación ni un ranking.
 ```
 
+### Ejecución automática
+
+El digest no necesita que nadie lo dispare: una vez **publicado**, n8n lo ejecuta solo con el disparador **Lunes 9:00**.
+
+```
+lunes 9:00 ─► n8n despierta el workflow ─► consulta al backend ─► arma los mensajes
+                                                                    │
+                       hoy: quedan en "Reporte interno" ◄───────────┤
+              con SMTP: un mail por estudiante ◄────────────────────┘
+```
+
+| Paso | Qué hacer | Dónde |
+|---|---|---|
+| 1. Importar | `infra/vps/n8n-import.sh` (n8n del compose) o *Import from File* (n8n externo) | Servidor o editor de n8n |
+| 2. Credencial | Asignar `Udela-Secret` al nodo **Obtener digests** | Editor de n8n |
+| 3. Backend | `backend_url` en **Configuración**: `http://backend:3000` en el compose, la URL pública con un n8n externo | Editor de n8n |
+| 4. Publicar | Botón **Publish**. Sin publicar, el Schedule no corre | Editor de n8n |
+| 5. Verificar | Ejecutarlo una vez a mano y revisar que **Obtener digests** responda sin error | Editor de n8n |
+
+- **Zona horaria:** el horario se interpreta en la zona de la instancia. El compose local y el del VPS fijan `GENERIC_TIMEZONE=America/Argentina/Buenos_Aires`. En un n8n externo con otra zona, ajustarla en *Settings → Timezone* del workflow.
+- **Historial:** cada ejecución, automática o manual, queda en la pestaña **Executions** del workflow, con los mensajes de ese día en **Reporte interno**.
+- **Cambiar la frecuencia:** editar el nodo **Lunes 9:00** (por ejemplo, todos los días o dos veces por semana) y volver a publicar. Conviene renombrar el nodo si cambia el día.
+- **Pausarlo:** *Unpublish* en el editor. El resto de la plataforma no depende del digest.
+- **Si el backend no responde,** la ejecución queda marcada con error en **Executions** y no se manda nada. El lunes siguiente vuelve a intentar.
+- **Estado en producción:** el digest está publicado en el n8n de la nube y corre los lunes a las 9:00 contra `https://udelaconecta.duckdns.org`. Los mensajes todavía no se envían por mail: falta la credencial SMTP (ver abajo).
+
 **Probarlo:** como empresa, crear una oferta con requisitos que un estudiante cumpla en más del 60 % (por ejemplo, para `dev@udelaconecta.edu.ar`: Angular intermedio excluyente, Python principiante deseable y Docker principiante deseable, que da 67 %), sin que ese estudiante se postule. Después ejecutar el workflow a mano y abrir **Reporte interno**: tiene que aparecer su mensaje. Si la ejecución se detiene en **Preparar mensajes** sin items, ningún estudiante tiene ofertas que cumplan (con cero mensajes el flujo no sigue, así que **Sin novedades** no llega a ejecutarse); un 403 en **Obtener digests** indica que el valor de la credencial `Udela-Secret` no coincide con `N8N_AUTOMATION_SECRET`.
 
 **Mandar mails de verdad:** crear en n8n la credencial SMTP con el nombre exacto `Udela SMTP`, asignarla al nodo **Enviar**, habilitarlo, poner en `remitente` una dirección que ese SMTP acepte como From y volver a publicar. Hay dos cosas a tener en cuenta: el workflow le escribe a todos los estudiantes con coincidencias, sin opción para darse de baja, y no registra qué ofertas ya avisó, así que si nada cambia el lunes siguiente repite las mismas.
