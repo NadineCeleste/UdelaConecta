@@ -82,7 +82,7 @@ def n8n(monkeypatch):
     estado = {
         "pedidos": [],
         "respuesta": httpx.Response(
-            200, json={"texto": "Reforzás TypeScript con un proyecto chico.", "modelo": "deepseek-chat"}
+            200, json={"texto": "Reforzás TypeScript con un proyecto chico.", "modelo": "deepseek-flash"}
         ),
     }
 
@@ -142,7 +142,7 @@ async def test_orientacion_con_n8n_guarda_generado(client, escenario, n8n):
     assert res.status_code == 200, res.text
     orientacion = res.json()["data"]
     assert orientacion["estado"] == "generado"
-    assert orientacion["modelo"] == "deepseek-chat"
+    assert orientacion["modelo"] == "deepseek-flash"
     assert orientacion["texto"] == "Reforzás TypeScript con un proyecto chico."
 
     pedido = n8n["pedidos"][0]
@@ -167,7 +167,7 @@ async def test_regenerar_actualiza_el_mismo_informe(client, escenario, n8n, sesi
         await client.post(f"/api/postulaciones/{cid}/orientacion", headers=escenario["hd"])
     ).status_code == 200
     n8n["respuesta"] = httpx.Response(
-        200, json={"texto": "Otra orientación breve.", "modelo": "deepseek-chat"}
+        200, json={"texto": "Otra orientación breve.", "modelo": "deepseek-flash"}
     )
     res = await client.post(f"/api/postulaciones/{cid}/orientacion", headers=escenario["hd"])
     assert res.status_code == 200
@@ -199,6 +199,49 @@ async def test_texto_demasiado_largo_usa_fallback(client, escenario, n8n):
     )
     assert res.status_code == 200
     assert res.json()["data"]["estado"] == "fallback"
+
+
+async def test_texto_cortado_usa_fallback(client, escenario, n8n):
+    # El modelo se quedó sin tokens a mitad de frase (finish_reason: length)
+    n8n["respuesta"] = httpx.Response(
+        200, json={"texto": "La brecha principal para la", "modelo": "deepseek-flash"}
+    )
+    res = await client.post(
+        f"/api/postulaciones/{escenario['contrato']['id']}/orientacion", headers=escenario["hd"]
+    )
+    assert res.status_code == 200
+    orientacion = res.json()["data"]
+    assert orientacion["estado"] == "fallback"
+    assert orientacion["texto"] != "La brecha principal para la"
+    assert "TypeScript" in orientacion["texto"]
+
+
+async def test_texto_que_cierra_con_comillas_o_parentesis_es_valido(client, escenario, n8n):
+    for texto in ('Reforzá TypeScript. Es "una orientación, no una evaluación."',
+                  "Reforzá TypeScript con práctica (un proyecto chico)."):
+        n8n["respuesta"] = httpx.Response(200, json={"texto": texto, "modelo": "deepseek-flash"})
+        res = await client.post(
+            f"/api/postulaciones/{escenario['contrato']['id']}/orientacion",
+            headers=escenario["hd"],
+        )
+        assert res.status_code == 200
+        assert res.json()["data"]["estado"] == "generado", texto
+        assert res.json()["data"]["texto"] == texto
+
+
+@pytest.mark.parametrize("modelo", ["fallback", "sin-brechas"])
+async def test_respuesta_sin_ia_de_n8n_queda_como_fallback(client, escenario, n8n, modelo):
+    # n8n respondió su propio texto determinista: se conserva, pero no se marca como IA
+    texto = "Te falta TypeScript. Podés reforzarlo con un curso corto. Esto es una orientación."
+    n8n["respuesta"] = httpx.Response(200, json={"texto": texto, "modelo": modelo})
+    res = await client.post(
+        f"/api/postulaciones/{escenario['contrato']['id']}/orientacion", headers=escenario["hd"]
+    )
+    assert res.status_code == 200
+    orientacion = res.json()["data"]
+    assert orientacion["estado"] == "fallback"
+    assert orientacion["modelo"] == modelo
+    assert orientacion["texto"] == texto
 
 
 async def test_estudiante_no_ve_orientacion_ajena(client, escenario, registrar_usuario):
@@ -360,7 +403,7 @@ async def test_automatizacion_guarda_orientacion_con_secreto(client, escenario, 
     assert (await client.post(url, json={"texto": "x"})).status_code == 403
     res = await client.post(
         url,
-        json={"texto": "Reforzás TypeScript con práctica.", "modelo": "deepseek-chat"},
+        json={"texto": "Reforzás TypeScript con práctica.", "modelo": "deepseek-flash"},
         headers={"X-Udela-Secret": SECRETO},
     )
     assert res.status_code == 200, res.text
@@ -372,3 +415,18 @@ async def test_automatizacion_guarda_orientacion_con_secreto(client, escenario, 
         headers={"X-Udela-Secret": SECRETO},
     )
     assert invalida.status_code == 400
+
+    cortada = await client.post(
+        url,
+        json={"texto": "La brecha principal para la", "modelo": "deepseek-flash"},
+        headers={"X-Udela-Secret": SECRETO},
+    )
+    assert cortada.status_code == 400
+
+    sin_ia = await client.post(
+        url,
+        json={"texto": "Te falta TypeScript. Esto es una orientación.", "modelo": "fallback"},
+        headers={"X-Udela-Secret": SECRETO},
+    )
+    assert sin_ia.status_code == 200, sin_ia.text
+    assert sin_ia.json()["data"]["estado"] == "fallback"

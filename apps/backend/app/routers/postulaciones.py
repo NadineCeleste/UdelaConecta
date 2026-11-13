@@ -6,6 +6,7 @@ modifica ni evalúa habilidades blandas. Si n8n no está configurado o falla, se
 fallback determinista para que la postulación y la app sigan funcionando.
 """
 
+import re
 from datetime import datetime, timezone
 
 import httpx
@@ -28,6 +29,12 @@ ESTADOS_INFORME = {"pendiente", "generado", "fallback"}
 # Frases que nunca debería devolver la IA: se comparan sin tildes ni mayúsculas.
 FRASES_RECHAZO = ("no calificas", "rechazado", "no sos apto", "no cumple", "no sirve")
 MODELO_POR_DEFECTO = "n8n"
+# Respuestas de n8n que no redactó la IA: su respaldo y el mensaje fijo cuando no hay brechas.
+# Se guardan con estado "fallback" para que el front no las muestre como "generada por IA".
+MODELOS_SIN_IA = {"fallback", "sin-brechas"}
+# Un texto completo termina en signo de cierre, opcionalmente seguido de comillas o paréntesis.
+# Si el modelo se queda sin tokens, el texto se corta a mitad de frase y no lo cumple.
+_CIERRE_DE_FRASE = re.compile(r"[.!?…][\"'»)\]]*$")
 
 # Los tests lo reemplazan por un httpx.MockTransport para no llamar a n8n.
 _transporte: httpx.AsyncBaseTransport | None = None
@@ -49,8 +56,15 @@ def _texto_orientacion_valido(texto: str) -> bool:
         return False
     if len(texto) > MAX_TEXTO_ORIENTACION:
         return False
+    if not _CIERRE_DE_FRASE.search(texto.strip()):
+        return False
     normalizado = normalizar_nombre(texto)
     return not any(frase in normalizado for frase in FRASES_RECHAZO)
+
+
+def _estado_para(modelo: str) -> str:
+    """Estado del informe según quién escribió el texto: la IA o un mensaje determinista."""
+    return "fallback" if modelo in MODELOS_SIN_IA else "generado"
 
 
 def _texto_por_defecto(resultado: dict) -> str:
@@ -86,7 +100,7 @@ async def _pedir_a_n8n(payload: dict, resultado: dict) -> tuple[str, str, str]:
         return fallback, "", "fallback"
     if not _texto_orientacion_valido(texto):
         return fallback, "", "fallback"
-    return texto, modelo, "generado"
+    return texto, modelo, _estado_para(modelo)
 
 
 async def _guardar_informe(
@@ -243,10 +257,11 @@ async def guardar_orientacion_automatizacion(
     if not _texto_orientacion_valido(texto):
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "La orientación está vacía, supera los 600 caracteres o contiene frases de rechazo",
+            "La orientación está vacía, incompleta, supera los 600 caracteres o contiene "
+            "frases de rechazo",
         )
     modelo = str(body.get("modelo") or MODELO_POR_DEFECTO).strip()
-    informe = await _guardar_informe(db, contrato.id, email, texto, modelo, "generado")
+    informe = await _guardar_informe(db, contrato.id, email, texto, modelo, _estado_para(modelo))
     return {"message": "Orientación guardada", "data": _orientacion_dict(informe)}
 
 
