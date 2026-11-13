@@ -13,6 +13,7 @@
         "responseMode": "responseNode",
         "options": {}
       },
+      "webhookId": "61b49f04-dc99-43f1-9464-ed9edf675f7b",
       "name": "Webhook Orientación",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.2,
@@ -28,7 +29,7 @@
     },
     {
       "parameters": {
-        "content": "## Orientación de postulación\nLo llama SOLO el backend (POST /api/postulaciones/{id}/orientacion) con el header X-Udela-Secret (credencial \"Udela-Secret\").\n\nEl backend calcula la compatibilidad en Python y manda el resultado. Este workflow NO puntúa ni rankea: solo redacta una orientación breve.\n\nCon brechas -> DeepSeek -> Validar (≤600 caracteres, sin frases de rechazo). Si falla -> Fallback. Sin brechas -> mensaje fijo.\n\nEl backend valida otra vez y guarda fallback si algo sale mal.",
+        "content": "## Orientación de postulación\nLo llama SOLO el backend (POST /api/postulaciones/{id}/orientacion) con el header X-Udela-Secret (credencial \"Udela-Secret\").\n\nEl backend calcula la compatibilidad en Python y manda el resultado. Este workflow NO puntúa ni rankea: solo redacta una orientación breve.\n\nCon brechas -> DeepSeek -> Validar (≤600 caracteres, sin frases de rechazo). Si el modelo falla o el texto no pasa -> Fallback. Sin brechas -> mensaje fijo.\n\nEl backend valida otra vez y guarda fallback si algo sale mal.",
         "height": 260,
         "width": 460,
         "color": 4
@@ -183,13 +184,14 @@
       "position": [
         880,
         -140
-      ]
+      ],
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "model": "deepseek-chat",
+        "model": "deepseek-flash",
         "options": {
-          "maxTokens": 400,
+          "maxTokens": 1200,
           "temperature": 0.4
         }
       },
@@ -208,7 +210,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const entrada = $input.first().json;\nconst crudo = entrada.output;\nconst textoOriginal = (typeof crudo === 'string' ? crudo : JSON.stringify(crudo ?? '')).trim();\nconst frasesProhibidas = ['no calificas', 'rechazado', 'no sos apto', 'no cumple', 'no sirve'];\nconst normalizar = (valor) => String(valor)\n  .toLowerCase()\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '');\nconst texto = textoOriginal.replace(/\\s+/g, ' ').trim();\nconst invalido = !texto\n  || texto.length > 600\n  || frasesProhibidas.some((frase) => normalizar(texto).includes(normalizar(frase)));\nreturn [{\n  json: {\n    valido: !invalido,\n    texto,\n    modelo: 'deepseek-chat',\n    a_capacitar: Array.isArray(entrada.a_capacitar) ? entrada.a_capacitar : [],\n  },\n}];"
+        "jsCode": "const entrada = $input.first().json;\nconst datos = $('Normalizar').first().json;\nconst crudo = entrada.output;\nconst textoOriginal = typeof crudo === 'string' ? crudo : '';\nconst frasesProhibidas = ['no calificas', 'rechazado', 'no sos apto', 'no cumple', 'no sirve'];\nconst normalizar = (valor) => String(valor)\n  .toLowerCase()\n  .normalize('NFD')\n  .replace(/[\\u0300-\\u036f]/g, '');\nconst texto = textoOriginal.replace(/\\s+/g, ' ').trim();\n// Un texto cortado por el límite de tokens no termina en signo de cierre\nconst cortado = texto.length < 80 || !/[.!?…][\"'»)\\]]*$/.test(texto);\nconst invalido = !texto\n  || cortado\n  || texto.length > 600\n  || frasesProhibidas.some((frase) => normalizar(texto).includes(normalizar(frase)));\nreturn [{\n  json: {\n    valido: !invalido,\n    texto,\n    modelo: 'deepseek-flash',\n    a_capacitar: Array.isArray(datos.a_capacitar) ? datos.a_capacitar : [],\n  },\n}];"
       },
       "name": "Validar",
       "type": "n8n-nodes-base.code",

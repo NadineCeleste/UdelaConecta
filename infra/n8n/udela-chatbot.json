@@ -12,6 +12,7 @@
         "responseMode": "responseNode",
         "options": {}
       },
+      "webhookId": "280f613e-13e8-4bb2-b1b0-0ba12fcd1859",
       "name": "Webhook Chat Udela",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.2,
