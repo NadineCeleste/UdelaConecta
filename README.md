@@ -24,6 +24,9 @@ Udela Conecta es un espacio propio de la universidad donde **el conocimiento que
 - **Para estudiantes y graduados:** un perfil profesional con habilidades, idiomas, disponibilidad y un **portfolio de hasta tres proyectos** con descripción, link al repositorio e imágenes. Desde ahí se exploran las ofertas publicadas y se postulan con un clic.
 - **Para empresas:** un proceso simple para llegar directo al talento de la universidad, **sin intermediarios ni comisiones**. La empresa crea su cuenta, describe su proyecto, publica ofertas (tipo de puesto, modalidad, seniority buscado, fechas), ve quién se postuló y asigna al candidato elegido.
 - **Asistente virtual:** un chat disponible en todas las pantallas. Sin sesión explica cómo funciona la plataforma y muestra las ofertas abiertas; con sesión mira tus propios datos para decirte qué te falta completar del perfil, cómo van tus postulaciones o, si sos empresa, quiénes se postularon y qué candidatos tienen las skills que buscás. También ayuda a redactar la descripción del perfil, una postulación o una oferta. Solo lee: postularse, publicar o asignar se sigue haciendo desde la web.
+- **Compatibilidad con cada oferta:** las empresas cargan requisitos estructurados y cada estudiante ve qué cumple y qué le conviene reforzar antes de postularse. Es una guía, nunca un filtro: postularse no se bloquea.
+- **Orientación de postulación con IA:** después de postularse, el estudiante puede pedir un texto breve que le sugiere por dónde empezar a prepararse. Si la IA no está disponible, recibe una orientación fija con las mismas brechas.
+- **Aviso semanal de oportunidades:** todos los lunes se arma, para cada estudiante, un resumen con hasta tres ofertas abiertas que encajan con su perfil y a las que todavía no se postuló.
 - **Orientación para el primer empleo:** la página reúne consejos para armar el CV, las preguntas más frecuentes en entrevistas junior y cómo presentar un portfolio en GitHub.
 
 ### Cómo funciona
@@ -60,7 +63,7 @@ También existe el perfil *Institución educativa*, pensado para que la universi
 | **Autenticación** | JWT propio (PyJWT) y contraseñas con bcrypt |
 | **Monorepo** | Nx 24 (`apps/frontend` y `apps/backend`), npm para JavaScript y Poetry para Python |
 | **Tests** | Karma + Jasmine (frontend), pytest + httpx (backend) |
-| **Asistente** | n8n (workflow con tres agentes de IA: invitado, estudiante y empresa) y DeepSeek como modelo; httpx desde el backend |
+| **Automatización e IA** | n8n 2.43.7 con tres workflows (asistente, orientación y digest semanal), DeepSeek (`deepseek-flash`) como modelo y httpx desde el backend |
 | **Infraestructura** | Docker Compose; en producción Caddy (HTTPS automático y archivos del front), uvicorn con varios workers y dominio en DuckDNS |
 
 ## Arquitectura
@@ -83,6 +86,15 @@ El asistente pasa siempre por el backend: el navegador manda el mensaje a `POST 
                                 └──────── GET /api/chat/datos/* ◄──────────┘ (token de 5 min, solo lectura)
 ```
 
+Los otros dos workflows siguen la misma regla: el navegador nunca habla con n8n y cada llamada lleva el secreto compartido.
+
+```
+  Orientación:  Navegador ─► POST /api/postulaciones/{id}/orientacion ─► FastAPI ─► n8n ─► DeepSeek
+                                                    (guarda el texto en informe_postulacion) ◄─┘
+
+  Digest:       n8n (lunes 9:00) ─► GET /api/automatizacion/digests ─► FastAPI ─► mensajes por estudiante
+```
+
 Caddy es el único servidor web: sirve el build de Angular y hace de proxy hacia FastAPI. Si el servidor ya tiene su propio Caddy en 80/443, ese Caddy termina el HTTPS y le pasa el tráfico al de Udela Conecta por `127.0.0.1` (ver [Despliegue](#despliegue-en-un-servidor-vps)).
 
 ```
@@ -92,10 +104,29 @@ apps/
 infra/
   local/      Docker para desarrollo (hot-reload)
   vps/        Docker para producción (Caddy + FastAPI + Postgres)
-  n8n/        workflow del asistente exportado (se importa en n8n)
+  n8n/        los tres workflows exportados: asistente, orientación y digest (sin credenciales)
 context_agent/  documentación técnica
 docs/img/       imágenes de la documentación
 ```
+
+## Workflows de n8n
+
+La parte de IA y automatización vive en [n8n](https://n8n.io) (versión 2.43.7), en tres workflows exportados en [`infra/n8n/`](infra/n8n/):
+
+| Workflow | Archivo | Cómo se dispara | Qué hace | Usa IA |
+|---|---|---|---|---|
+| **Asistente** | [`udela-chatbot.json`](infra/n8n/udela-chatbot.json) | Webhook `udela-chat`, llamado por `POST /api/chat` | Responde el chat con tres agentes (invitado, estudiante y empresa) que leen datos reales del backend | Sí, DeepSeek |
+| **Orientación** | [`udela-orientacion.json`](infra/n8n/udela-orientacion.json) | Webhook `udela-orientacion`, llamado por `POST /api/postulaciones/{id}/orientacion` | Escribe una orientación breve para el estudiante a partir de sus brechas con la oferta | Sí, DeepSeek, con respaldo fijo |
+| **Digest semanal** | [`udela-digest.json`](infra/n8n/udela-digest.json) | Todos los lunes a las 9:00, o a mano | Arma para cada estudiante un mensaje con hasta tres ofertas abiertas que encajan con su perfil | No |
+
+Lo que comparten:
+
+- **El navegador nunca llama a n8n.** El backend es el único que llama a los webhooks, y el digest es el único que llama al backend. En los dos casos viaja el header `X-Udela-Secret`, cuyo valor solo conocen el backend y n8n.
+- **El backend decide; n8n redacta.** Quién es el usuario, qué rol tiene y qué ofertas encajan lo calcula el backend. n8n recibe datos ya filtrados y nunca ve teléfonos, fechas de nacimiento ni contraseñas.
+- **Nada se rompe si n8n falla.** Sin n8n el chat avisa que no está disponible, la orientación guarda un texto de respaldo y el digest simplemente no corre. Postular, publicar y asignar siguen funcionando.
+- **Las credenciales no están en el repo.** Los JSON las nombran (`Udela-Secret`, `DeepSeek account` y, opcional, `Udela SMTP`) y cada instancia de n8n las carga en su propia pantalla de credenciales.
+
+Cómo importarlos y configurarlos: [Configuración de n8n](#configuración-de-n8n). Detalle de cada nodo, prompts y problemas frecuentes: [`context_agent/n8n.md`](context_agent/n8n.md).
 
 ## Asistente virtual (n8n)
 
@@ -198,7 +229,7 @@ Empresa                          Estudiante
    POST /api/postulaciones/{id}/orientacion
               │
               ▼
-   n8n: ¿Hay brechas? ── sí ──► DeepSeek ──► Validar (≤600, sin rechazo)
+   n8n: ¿Hay brechas? ── sí ──► DeepSeek ──► Validar (completo, ≤600, sin rechazo)
               │                                   │
               └── no ──► mensaje fijo             └── inválido ──► fallback
               ▼
@@ -235,19 +266,92 @@ Textos que deben mantenerse en la interfaz:
 - “Esto no implica rechazo.”
 - “La empresa ve este mismo resumen; la orientación es solo para vos.”
 
-### n8n: workflow de orientación
+### Workflow de orientación
 
-El workflow exportado es [`infra/n8n/udela-orientacion.json`](infra/n8n/udela-orientacion.json). La decisión obligatoria es **¿Hay brechas?**:
+Archivo: [`infra/n8n/udela-orientacion.json`](infra/n8n/udela-orientacion.json). La orientación **la pide el estudiante** con el botón *Generar orientación* del detalle de una oferta a la que ya se postuló; no se genera sola al postularse. *Regenerar* pide otra y reemplaza la anterior.
 
-- **Con brechas**: DeepSeek redacta una orientación; **Validar** rechaza texto vacío, de más de 600 caracteres o con frases de rechazo; si falla, se usa **Fallback**.
-- **Sin brechas**: un nodo Set responde un mensaje corto y positivo, sin llamar al modelo.
-- Ambos caminos responden `{ "texto": "...", "modelo": "..." }`.
+```
+Webhook Orientación ─► Normalizar ─► ¿Hay brechas?
+                                       ├─ no ─► Sin brechas (mensaje fijo, modelo "sin-brechas")
+                                       └─ sí ─► Prompt Orientación ─► Modelo (DeepSeek) ─► Validar ─► ¿Texto válido?
+                                                                                           ├─ sí ─► Responder Orientación
+                                                                                           └─ no ─► Fallback ─► Responder Orientación
+```
 
-El backend valida otra vez la respuesta y, si no es válida o n8n no está disponible, guarda `estado = "fallback"`. La postulación y el informe determinista no dependen de n8n.
+| Nodo | Qué hace |
+|---|---|
+| **Webhook Orientación** | Recibe el `POST` del backend en `/webhook/udela-orientacion`. Sin el header `X-Udela-Secret` correcto responde 403 |
+| **Normalizar** | Deja solo lo necesario: título de la oferta, porcentaje, listas de compatibles, a capacitar, se aprenden en el puesto y blandas. No llega ningún dato personal |
+| **¿Hay brechas?** | Si no le falta nada, no hace falta la IA |
+| **Sin brechas** | Responde un mensaje fijo y positivo, con `modelo: "sin-brechas"` |
+| **Prompt Orientación** | Arma el pedido: de 3 a 4 líneas en español rioplatense, empezar por la brecha más importante con un paso concreto, sin decir que no califica, sin inventar requisitos, sin evaluar habilidades blandas, sin prometer resultados y aclarando que es una orientación |
+| **Modelo + DeepSeek Orientación** | DeepSeek `deepseek-flash` con hasta 1200 tokens. Este modelo razona antes de escribir: con menos tokens el texto quedaba cortado |
+| **Validar** | Descarta el texto si está vacío, tiene menos de 80 caracteres, pasa de 600, contiene frases como "rechazado" o "no sos apto", o no termina en `.`, `!`, `?` o `…` (señal de que quedó cortado) |
+| **Fallback** | Si el texto no pasó, responde uno fijo con las aptitudes a capacitar y `modelo: "fallback"` |
+| **Responder Orientación** | Devuelve `{ "texto": "...", "modelo": "..." }` al backend |
 
-También hay un workflow de comunicación semanal ([`infra/n8n/udela-digest.json`](infra/n8n/udela-digest.json)): los lunes a las 9:00 consulta `GET /api/automatizacion/digests` y prepara un mensaje por estudiante con hasta 3 ofertas de más de 60 % de coincidencia a las que no se postuló. El nodo de envío por email está **deshabilitado por defecto** hasta configurar SMTP; sin SMTP el workflow igual se ejecuta y muestra los mensajes en n8n.
+El backend **vuelve a validar** la respuesta con las mismas reglas (salvo el mínimo de 80 caracteres). Si n8n no está configurado, tarda más de `N8N_ORIENTACION_TIMEOUT_SEGUNDOS` (30) o el texto no pasa, usa su propio texto de respaldo. Después guarda el resultado en `informe_postulacion` (uno por oferta y estudiante) con un `estado` que el front muestra como etiqueta:
 
-### Configuración local de n8n
+| Quién escribió el texto | `modelo` | `estado` | Etiqueta en la web |
+|---|---|---|---|
+| DeepSeek, y pasó las dos validaciones | `deepseek-flash` | `generado` | *Orientación generada por IA* |
+| Respaldo de n8n | `fallback` | `fallback` | *Orientación (sin IA disponible)* |
+| Mensaje fijo de n8n, sin brechas | `sin-brechas` | `fallback` | *Orientación (sin IA disponible)* |
+| Respaldo del backend (n8n caído o texto inválido) | `fallback` | `fallback` | *Orientación (sin IA disponible)* |
+
+Así nunca se muestra como "generada por IA" un texto que no escribió la IA. La empresa no ve la orientación: ve el informe determinista de cada postulante.
+
+## Digest semanal de oportunidades
+
+Archivo: [`infra/n8n/udela-digest.json`](infra/n8n/udela-digest.json). Todos los lunes a las 9:00 (hora de Buenos Aires) busca, para cada estudiante, ofertas abiertas que encajan con su perfil y a las que todavía no se postuló, y prepara un mensaje por persona. No usa IA: el cálculo es el mismo comparador determinista de la compatibilidad.
+
+```
+Lunes 9:00 (Schedule) ─┐
+Ejecutar a mano ───────┴─► Configuración ─► Obtener digests ─► Preparar mensajes ─► ¿Hay novedades?
+                                                                     ├─ sí ─► Reporte interno ─► Enviar (deshabilitado)
+                                                                     └─ no ─► Sin novedades
+```
+
+| Nodo | Qué hace |
+|---|---|
+| **Lunes 9:00** | Disparador programado (Schedule, semanal) |
+| **Ejecutar a mano** | Segundo disparador, para correrlo cuando se quiera: *Execute workflow* en el editor o `n8n execute --id=<id>` por CLI |
+| **Configuración** | Dos valores: `backend_url` (`http://backend:3000` en el repo, que es el backend dentro del compose; la URL pública en un n8n externo) y `remitente` (el From del mail). Es lo único que se edita al importarlo en otra instancia. Ningún nodo lee variables de entorno, así que funciona aunque n8n 2.x bloquee `$env` |
+| **Obtener digests** | `GET {backend_url}/api/automatizacion/digests` con la credencial `Udela-Secret` |
+| **Preparar mensajes** | Arma un item por estudiante con `email`, `asunto` y `texto` |
+| **¿Hay novedades?** | Sigue solo si al menos un estudiante tiene ofertas |
+| **Reporte interno** | Donde quedan los mensajes de cada ejecución, para revisarlos sin enviar nada |
+| **Enviar** | Nodo de mail **deshabilitado** hasta crear la credencial SMTP `Udela SMTP` |
+
+Qué ofertas entran, según el endpoint `GET /api/automatizacion/digests`:
+
+- solo ofertas **libres** (sin candidato asignado);
+- se descartan las que el estudiante ya postuló o tiene asignadas;
+- coincidencia **mayor al 60 %**, ordenadas de mayor a menor;
+- **hasta 3** por estudiante, cada una con sus aptitudes a capacitar;
+- los estudiantes sin ninguna oferta que cumpla no reciben mensaje.
+
+Ejemplo de mensaje:
+
+```
+Asunto: Oportunidades que pueden interesarte en Udela Conecta
+
+Hola Valentina:
+
+Estas ofertas pueden interesarte según tu perfil declarado:
+- Dev Angular (67% de coincidencia) · A capacitar: Docker
+
+Entrá a Udela Conecta para ver el detalle y postularte si querés. La coincidencia es una
+orientación, no una evaluación ni un ranking.
+```
+
+**Probarlo:** como empresa, crear una oferta con requisitos que un estudiante cumpla en más del 60 % (por ejemplo, para `dev@udelaconecta.edu.ar`: Angular intermedio excluyente, Python principiante deseable y Docker principiante deseable, que da 67 %), sin que ese estudiante se postule. Después ejecutar el workflow a mano y abrir **Reporte interno**: tiene que aparecer su mensaje. Si la ejecución se detiene en **Preparar mensajes** sin items, ningún estudiante tiene ofertas que cumplan (con cero mensajes el flujo no sigue, así que **Sin novedades** no llega a ejecutarse); un 403 en **Obtener digests** indica que el valor de la credencial `Udela-Secret` no coincide con `N8N_AUTOMATION_SECRET`.
+
+**Mandar mails de verdad:** crear en n8n la credencial SMTP con el nombre exacto `Udela SMTP`, asignarla al nodo **Enviar**, habilitarlo, poner en `remitente` una dirección que ese SMTP acepte como From y volver a publicar. Hay dos cosas a tener en cuenta: el workflow le escribe a todos los estudiantes con coincidencias, sin opción para darse de baja, y no registra qué ofertas ya avisó, así que si nada cambia el lunes siguiente repite las mismas.
+
+## Configuración de n8n
+
+### En el stack local
 
 El stack local ya incluye n8n en `http://localhost:5678` (servicio `n8n` de `infra/local/docker-compose.yml`). Variables relevantes en `infra/local/.env.local`:
 
@@ -277,7 +381,7 @@ También se pueden importar de a uno desde la UI de n8n (**Workflows → Import 
 4. Opcional: crear la credencial **SMTP** `Udela SMTP` y habilitar el nodo `Enviar` del digest.
 5. Para probar el digest sin esperar al lunes: "Execute workflow" en el editor, o `docker exec -e N8N_RUNNERS_BROKER_PORT=5690 udela-local-n8n n8n execute --id=<id>`.
 
-#### Usar un n8n propio en lugar del servicio local
+### Usar un n8n propio en lugar del servicio local
 
 El backend no depende del contenedor `n8n`: solo necesita la URL de cada webhook y el secreto. Si ya tenés n8n en un servidor, no hace falta levantarlo en el compose local.
 
@@ -298,7 +402,9 @@ CHAT_DATOS_URL=https://api.tu-dominio.com/api/chat/datos
 
 El compose local mantiene `http://n8n:5678/...` como valor por defecto. Si preferís no usar el contenedor local, podés bajar solo ese servicio o dejar que falle: la orientación y el chat usan fallback y el resto del núcleo sigue funcionando.
 
-Prueba rápida del webhook de orientación (con el workflow activo):
+### Prueba rápida del webhook de orientación
+
+Con el workflow publicado:
 
 ```bash
 curl -X POST http://localhost:5678/webhook/udela-orientacion \
@@ -307,7 +413,7 @@ curl -X POST http://localhost:5678/webhook/udela-orientacion \
   -d '{"contrato_id":1,"email":"dev@udelaconecta.edu.ar","oferta":"Backend Trainee","compatibles":["Python"],"a_capacitar":["SQL"],"se_aprenden":["Docker"],"blandas":["Comunicación"],"coincidencia":67}'
 ```
 
-### Verificación
+## Verificación
 
 ```bash
 # Backend (con Poetry instalado)
@@ -497,7 +603,12 @@ Y por último abrir `https://<subdominio>.duckdns.org`.
   ```
   0 3 * * * /ruta/al/repo/infra/vps/backup-db.sh 14
   ```
-- **Asistente (opcional):** importar `infra/n8n/udela-chatbot.json` en n8n, crear las credenciales `Udela-Secret` (Header Auth, header `X-Udela-Secret`) y `DeepSeek account`, y publicar el workflow. Después cargar en `infra/vps/.env.vps` `N8N_CHAT_WEBHOOK_URL`, `N8N_CHAT_SECRET` (el mismo valor de la credencial) y `CHAT_DATOS_URL` (`https://<subdominio>.duckdns.org/api/chat/datos`); `setup-env.sh` ya las pide. Sin ellas el chat muestra "no disponible" y el resto del sitio funciona igual. Guía completa en [`context_agent/n8n.md`](context_agent/n8n.md).
+- **Workflows de n8n (opcional):** sin ellos el chat muestra "no disponible", la orientación usa el texto de respaldo y el resto del sitio funciona igual.
+  - **Con el n8n del compose** (`COMPOSE_PROFILES=n8n`): `./infra/vps/n8n-import.sh` importa los tres workflows sin duplicar y muestra los pasos que siguen.
+  - **Con un n8n externo:** importar los tres `infra/n8n/udela-*.json` desde su editor y, en el digest, poner `backend_url = https://<subdominio>.duckdns.org` en el nodo `Configuración`.
+  - En los dos casos, crear las credenciales `Udela-Secret` (Header Auth, header `X-Udela-Secret`) y `DeepSeek account`, asignarlas y **publicar** los tres workflows.
+  - En `infra/vps/.env.vps` tienen que estar `N8N_CHAT_WEBHOOK_URL`, `N8N_ORIENTACION_WEBHOOK_URL`, `CHAT_DATOS_URL` (`https://<subdominio>.duckdns.org/api/chat/datos` con un n8n externo) y los secretos `N8N_CHAT_SECRET` y `N8N_AUTOMATION_SECRET`, los dos con el valor de la credencial `Udela-Secret`. `setup-env.sh` los pide y `deploy.sh` completa los que falten sin pisar los existentes.
+  - Guía completa en [`context_agent/n8n.md`](context_agent/n8n.md).
 - **Actualizar el sitio:** después de cada cambio en `main`, volver a correr `./infra/vps/deploy.sh`. Hace `git pull`, reconstruye, levanta en segundo plano, borra imágenes viejas y muestra el estado. Los contenedores se reinician solos si se caen o si se reinicia el servidor.
 
 ### Problemas frecuentes
