@@ -40,8 +40,11 @@ Tests: `poetry run pytest -v` (o `npx nx test backend`). Usan SQLite en memoria,
 | `CHAT_MENSAJES_POR_MINUTO` | 20 | Límite por usuario o IP, por worker (429) |
 | `CHAT_DATOS_URL` | vacía | URL pública de `/api/chat/datos` que se le pasa a n8n para sus herramientas (n8n tiene un respaldo con la de producción) |
 | `CHAT_TOKEN_MINUTOS` | 5 | Duración del token de solo lectura que reciben las herramientas del asistente |
+| `N8N_ORIENTACION_WEBHOOK_URL` | vacía | Webhook `udela-orientacion`. Vacía: la orientación se guarda con fallback |
+| `N8N_AUTOMATION_SECRET` | vacía | Secreto `X-Udela-Secret` de los endpoints de orientación y digests. Vacío: 503 |
+| `N8N_ORIENTACION_TIMEOUT_SEGUNDOS` | 30 | Espera máxima de la llamada a n8n |
 
-En local, las dos variables de n8n van en `infra/local/.env.chat` (opcional y fuera de git), que el compose carga si existe.
+En local, `.env.local` trae las URLs de los webhooks apuntando al servicio `n8n` del compose. Para usar un n8n propio, `infra/local/.env.chat` (opcional y fuera de git) se carga después y permite pisar `N8N_CHAT_WEBHOOK_URL`, `N8N_ORIENTACION_WEBHOOK_URL`, `N8N_CHAT_SECRET` y `N8N_AUTOMATION_SECRET`.
 
 ## Estructura
 
@@ -49,11 +52,12 @@ En local, las dos variables de n8n van en `infra/local/.env.chat` (opcional y fu
 app/
   main.py              FastAPI, CORS, routers, GET /api/health
   core/                config, database (get_db), security (JWT, bcrypt, dependencias), storage
+  dominio/             compatibilidad.py: comparador determinista en Python puro
   models/entities.py   tablas (JSONB en Postgres, JSON en SQLite)
   schemas/             requests de Pydantic y serialización/aplicación de cambios
-  routers/             auth, usuarios, proyectos, contratos, portfolio, storage, chat, chat_datos
-  seeds/seed_demo.py   datos demo idempotentes
-alembic/versions/      migraciones (0001 esquema inicial, 0002 bloqueo de login y admin, 0003 desarrollador → estudiante)
+  routers/             auth, usuarios, proyectos, contratos, postulaciones, portfolio, storage, chat, chat_datos
+  seeds/seed_demo.py   datos demo idempotentes (con requisitos en las 11 ofertas)
+alembic/versions/      migraciones (0001 inicial, 0002 login/admin, 0003 desarrollador → estudiante, 0004 requisitos e informes)
 tests/                 pytest + httpx
 ```
 
@@ -74,9 +78,19 @@ Todo `/api/*` exige `Authorization: Bearer <token>`, salvo `/api/auth/*`, `POST 
 - `telefono` y `fecha_nacimiento` solo se devuelven al dueño del perfil (`GET usuario/:email/:tabla`, `GET estudiantes`).
 - Administradores: `auth_users.is_admin` viaja en `data.user` del login. Registrarse no lo activa; se cambia desde la base, por ejemplo en Adminer: `UPDATE auth_users SET is_admin = true WHERE email = '...';`. Para destrabar una cuenta bloqueada: `UPDATE auth_users SET locked_until = NULL, failed_logins = 0 WHERE email = '...';`.
 
+## Compatibilidad y orientación
+
+- `GET /api/mis-postulaciones`: historial del estudiante con `resultado` determinista y `orientacion` (o `null`). 403 si no tiene perfil de estudiante.
+- `GET|POST /api/postulaciones/:contrato_id/orientacion`: solo el estudiante postulado. El POST genera/regenera; 400 si la oferta no tiene requisitos; si n8n falla, guarda fallback.
+- `POST /api/automatizacion/postulaciones/:contrato_id/:email/orientacion` y `GET /api/automatizacion/digests`: para n8n, con `X-Udela-Secret` (503 si `N8N_AUTOMATION_SECRET` está vacío, 403 si no coincide).
+- `GET /api/contratoslibres` agrega `mi_resultado`; `GET /api/contratos/:emailGerente` agrega `resultados_postulantes` solo al dueño y sin el texto de IA.
+- El cálculo vive en `app/dominio/compatibilidad.py`: sin LLM, sin embeddings, sin puntaje persistido. La empresa ve el mismo informe determinista; la orientación es solo para el estudiante.
+
+Los tests nuevos están en `tests/test_compatibilidad.py` (12) y `tests/test_postulaciones_informe.py` (16). La suite completa son 86 tests.
+
 ## Usuarios demo
 
-Todos con la contraseña `Udela1234!`. Hay 6 estudiantes y 4 empresas con 11 ofertas (9 libres), variadas en modalidad, seniority y skills, para probar la plataforma y el asistente:
+Todos con la contraseña `Udela1234!`. Hay 6 estudiantes y 4 empresas con 11 ofertas (9 libres), variadas en modalidad, seniority y skills, **todas con requisitos cargados**, para probar la plataforma, el comparador y el asistente:
 
 | Email | Rol | Qué tiene |
 |---|---|---|

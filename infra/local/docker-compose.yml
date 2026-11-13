@@ -1,5 +1,5 @@
 # Desarrollo local 100% en Docker:
-#   Puertos del host configurables con POSTGRES_HOST_PORT, FRONTEND_PORT y ADMINER_PORT
+#   Puertos del host configurables con POSTGRES_HOST_PORT, FRONTEND_PORT, ADMINER_PORT y N8N_HOST_PORT
 #   npm run local:up   (o: docker compose -f infra/local/docker-compose.yml --env-file infra/local/.env.local up -d --build)
 name: udela-local
 
@@ -29,7 +29,8 @@ services:
     container_name: udela-local-backend
     env_file:
       - .env.local
-      # Opcional y fuera de git: N8N_CHAT_WEBHOOK_URL y N8N_CHAT_SECRET del asistente
+      # Opcional y fuera de git: permite apuntar a otro n8n y cargar el secreto del chat.
+      # Las variables de este archivo pisan a las de .env.local.
       - path: .env.chat
         required: false
     environment:
@@ -57,6 +58,28 @@ services:
     depends_on:
       - backend
 
+  n8n:
+    image: n8nio/n8n:2.43.7
+    container_name: udela-local-n8n
+    ports:
+      # Solo desde la máquina local; la UI de n8n queda en http://localhost:5678
+      - "127.0.0.1:${N8N_HOST_PORT:-5678}:5678"
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://localhost:${N8N_HOST_PORT:-5678}/
+      GENERIC_TIMEZONE: America/Argentina/Buenos_Aires
+      TZ: America/Argentina/Buenos_Aires
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:-udela-local-n8n-key}
+      N8N_SECURE_COOKIE: "false"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ../n8n:/workflows:ro
+    depends_on:
+      - backend
+
   adminer:
     image: adminer:latest
     container_name: udela-local-adminer
@@ -71,3 +94,4 @@ volumes:
   pgdata:
   storage:
   frontend_node_modules:
+  n8n_data:

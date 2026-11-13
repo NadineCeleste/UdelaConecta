@@ -16,7 +16,7 @@ UdelaConecta/
   infra/
     local/      docker-compose.yml + Dockerfiles .dev + .env.local   (desarrollo, hot-reload)
     vps/        docker-compose.prod.yml + Caddy + scripts   (producción)
-    n8n/        udela-chatbot.json: export del workflow del asistente (sin credenciales)
+    n8n/        udela-chatbot.json, udela-orientacion.json y udela-digest.json (sin credenciales)
   context_agent/  documentación para agentes
 ```
 
@@ -94,6 +94,7 @@ El front llama a la API desde el **navegador** (`environment.ts` → `http://loc
 | `backend` | `Dockerfile.backend.dev` (python:3.13-slim + Poetry, dependencias en el sistema) | `3000` | `../../apps/backend:/app` (código), `storage:/data/storage` | Espera a que `postgres` esté *healthy*. `CORS_ORIGINS` se arma con `FRONTEND_PORT` |
 | `frontend` | `Dockerfile.frontend.dev` (node:24-alpine, usuario `node`, `npm ci` en la imagen) | `${FRONTEND_PORT:-4200}` | `../..:/workspace` (todo el repo), `frontend_node_modules:/workspace/node_modules` | `npx nx serve frontend --poll 2000`. El volumen de `node_modules` evita usar el del host |
 | `adminer` | `adminer:latest` | `127.0.0.1:${ADMINER_PORT:-8080}` | — | Servidor por defecto: `postgres` |
+| `n8n` | `n8nio/n8n:2.43.7` | `127.0.0.1:${N8N_HOST_PORT:-5678}` | `n8n_data` (base y cifrado), `../n8n:/workflows:ro` | `N8N_SECURE_COOKIE=false`, zona horaria Argentina. El digest lee la URL del backend de su nodo `Configuración`, no del entorno |
 
 Postgres y Adminer solo escuchan en `127.0.0.1` porque la contraseña de desarrollo es conocida.
 
@@ -107,7 +108,7 @@ Postgres y Adminer solo escuchan en `127.0.0.1` porque la contraseña de desarro
 
 `POSTGRES_USER/PASSWORD/DB`, `DATABASE_URL`, `JWT_SECRET_KEY` (de desarrollo, más de 32 caracteres), `STORAGE_DIR=/data/storage` (fuera de `/app` para que no aparezca dentro del código montado), `PUBLIC_STORAGE_BASE_URL`, `AUTO_SEED=true`.
 
-Para probar el asistente en local se crea `infra/local/.env.chat` (fuera de git, el compose lo carga solo si existe) con `N8N_CHAT_WEBHOOK_URL` y `N8N_CHAT_SECRET`. Sin ese archivo el chat responde "no disponible". El n8n del VPS no llega a `localhost`, así que las herramientas del asistente solo leen datos de producción. Detalle en [`n8n.md`](./n8n.md).
+n8n en local: el compose crea el servicio `n8n` con `N8N_ENCRYPTION_KEY`, `N8N_AUTOMATION_SECRET=udela-local-secret` y `N8N_CHAT_SECRET` en `.env.local`. El backend apunta a `http://n8n:5678/webhook/udela-orientacion` y `http://n8n:5678/webhook/udela-chat` mediante las variables de `.env.local`. Importar los workflows con `docker compose ... exec n8n n8n import:workflow --separate --input=/workflows`. Para usar un n8n propio (por ejemplo, el del VPS), crear `infra/local/.env.chat` (fuera de git): el compose lo carga después de `.env.local` y sus `N8N_CHAT_WEBHOOK_URL`, `N8N_ORIENTACION_WEBHOOK_URL` y secretos pisan los valores locales; en ese n8n, el `backend_url` del nodo `Configuración` del digest tiene que ser una URL pública del backend. Sin `N8N_CHAT_SECRET` el chat responde "no disponible". Detalle en [`n8n.md`](./n8n.md).
 
 Los puertos del host se cambian con variables de entorno al levantar, no en `.env.local`:
 
@@ -145,6 +146,7 @@ Internet ──► Caddy :80/:443 (HTTPS automático con DOMAIN)
                ├─ /storage/*  ──► backend:3000
                └─ resto       ──► /srv           (build de Angular, servido por el mismo Caddy)
                                        backend ──► postgres:5432 (sin puertos publicados)
+                                       backend ◄─► n8n:5678     (perfil "n8n"; editor solo en 127.0.0.1)
                       todo en la red bridge udela_vps_net
 ```
 
@@ -166,6 +168,7 @@ Internet ──► Caddy del host :80/:443 (HTTPS de todos los sitios)
 | `caddy` | `Dockerfile.caddy`, multi-stage: node:24 con `npm ci` + `nx build frontend --configuration=production` → `caddy:2-alpine` con el build en `/srv` y el `Caddyfile` incluido en la imagen (cambiarlo requiere rebuild, que `deploy.sh` ya hace) | Único punto de entrada: enruta `/api` y `/storage` al backend y sirve el front. SPA: las rutas que no son archivos vuelven a `index.html`; assets cacheados un año (404 si no existen); `index.html` con `no-cache`. Publica `CADDY_HTTP_PORT`/`CADDY_HTTPS_PORT` (80/443 por defecto). Volúmenes `caddy_data` (certificados) y `caddy_config`. `request_body max_size 6MB`, compresión zstd/gzip. Espera a `duckdns` *healthy* para pedir el certificado con el DNS ya actualizado |
 | `backend` | `Dockerfile.backend`: python:3.13-slim, `poetry install --only main` y después desinstala Poetry. Copia solo `app/`, `alembic/` y `alembic.ini`. Usuario `udela` (uid 10001) | Volumen `storage:/data/storage`. Espera a `postgres` *healthy* |
 | `postgres` | `postgres:16-alpine` | **Sin `ports`**: solo es accesible dentro de la red. Volumen `pgdata` |
+| `n8n` | `n8nio/n8n:2.43.7` (la misma que en local) | Solo con `COMPOSE_PROFILES=n8n`. Chatbot, orientación y digest (`infra/n8n` montado en `/workflows`). El backend lo llama por `http://n8n:5678` y el digest lee `http://backend:3000` del `backend_url` de su nodo `Configuración`. Editor publicado solo en `127.0.0.1:${N8N_HOST_PORT:-5678}` (túnel SSH). Volumen `n8n_data`; `N8N_ENCRYPTION_KEY` cifra sus credenciales. Ejecuciones podadas a 14 días. Detalle en [`n8n.md`](./n8n.md) §8.1 |
 
 `entrypoint.backend.sh` de producción:
 1. corre `alembic upgrade head` **una sola vez**;
@@ -174,15 +177,20 @@ Internet ──► Caddy del host :80/:443 (HTTPS de todos los sitios)
 
 ### 4.2 Variables (`infra/vps/.env.vps`, fuera de git)
 
-Lo genera `infra/vps/setup-env.sh`: pide el subdominio y el token de DuckDNS y si cargar el seed, genera la contraseña de Postgres (32 caracteres alfanuméricos, para no romper la URI) y la clave JWT (64), arma `DOMAIN` y `CORS_ORIGINS` y escribe el archivo con permisos 600. Si ya existe, pide confirmación antes de sobrescribirlo. A mano, se copia de `.env.vps.example` y se completa:
+Lo genera `infra/vps/setup-env.sh`: pide el subdominio y el token de DuckDNS, si cargar el seed y si hay un n8n externo; genera la contraseña de Postgres (32 caracteres alfanuméricos, para no romper la URI), la clave JWT (64), la clave de cifrado de n8n y el secreto compartido con n8n; arma `DOMAIN`, `CORS_ORIGINS` y las URLs de n8n, y escribe el archivo con permisos 600. Si ya existe, pide confirmación antes de sobrescribirlo. A mano, se copia de `.env.vps.example` y se completa:
 - `DUCKDNS_SUBDOMAIN` (sin `.duckdns.org`) y `DUCKDNS_TOKEN`: obligatorias.
 - `DOMAIN`: `<subdominio>.duckdns.org`; Caddy obtiene el certificado HTTPS solo. Con `:80` sirve HTTP plano.
 - `CADDY_HTTP_PORT` / `CADDY_HTTPS_PORT`: dónde se publica Caddy en el host (por defecto `80` y `443`). Si el servidor ya tiene otro proxy en 80/443, `setup-env.sh` los pone en `127.0.0.1:<puerto>` y `127.0.0.1:<puerto+1>` con `DOMAIN=:80`; el proxy del host termina el HTTPS y reenvía el dominio a `127.0.0.1:<puerto>`. El backend no depende del esquema de la request (el storage usa la ruta relativa `/storage`), así que el doble proxy no le afecta.
 - `POSTGRES_*` y `DATABASE_URL`.
 - `JWT_SECRET_KEY`: generarla con `python3 -c "import secrets; print(secrets.token_urlsafe(64))"`. **El valor de ejemplo hace que el backend no arranque.**
 - `PUBLIC_STORAGE_BASE_URL=/storage`, `WEB_CONCURRENCY`, `AUTO_SEED=false`.
-- `N8N_CHAT_WEBHOOK_URL` y `N8N_CHAT_SECRET` (opcionales): webhook de producción del asistente en n8n y el valor del header `X-Udela-Secret`. `setup-env.sh` los pide; vacíos, el chat responde "no disponible".
-- `CHAT_DATOS_URL`: `https://<subdominio>.duckdns.org/api/chat/datos`, desde donde leen las herramientas del asistente. `setup-env.sh` la completa sola.
+- `COMPOSE_PROFILES=n8n`: levanta el n8n del compose. Vacío si se usa un n8n externo.
+- `N8N_ENCRYPTION_KEY`: clave de cifrado del n8n del compose. No cambiarla después del primer arranque.
+- `N8N_CHAT_SECRET` y `N8N_AUTOMATION_SECRET`: el mismo valor, el de la credencial `Udela-Secret` de n8n (header `X-Udela-Secret`). Sin ellos, el chat responde "no disponible", la orientación queda en el fallback sin IA y el digest recibe 503.
+- `N8N_CHAT_WEBHOOK_URL`, `N8N_ORIENTACION_WEBHOOK_URL` y `CHAT_DATOS_URL`: con el n8n del compose, `http://n8n:5678/webhook/udela-chat`, `.../udela-orientacion` y `http://backend:3000/api/chat/datos`. Con un n8n externo, sus URLs públicas y `https://<subdominio>.duckdns.org/api/chat/datos`.
+- `N8N_HOST_PORT` (5678), `N8N_CHAT_TIMEOUT_SEGUNDOS` (60) y `N8N_ORIENTACION_TIMEOUT_SEGUNDOS` (30).
+
+**Actualizar un `.env.vps` anterior a la orientación:** `deploy.sh` agrega lo que falte antes de levantar, sin pisar valores ni mostrar secretos. Si no había n8n configurado, activa el del compose. Si ya apuntaba a un n8n externo, sigue con ese y deriva la URL de orientación de la del chat. Como `deploy.sh` hace `git pull` adentro, la primera vez conviene `git pull` y después `infra/vps/deploy.sh`, para correr la versión nueva del script.
 
 El Caddyfile confía en los proxies de rangos privados (`trusted_proxies static private_ranges`) para que, detrás del Caddy del host, `X-Forwarded-For` conserve la IP real del visitante; el límite de mensajes del asistente la usa.
 
@@ -193,13 +201,14 @@ El compose usa `${VAR:?mensaje}`: si falta una variable obligatoria, `docker com
 | Tarea | Comando |
 |---|---|
 | Primer deploy | `infra/vps/setup-env.sh` y `infra/vps/deploy.sh` (o `npm run vps:up` si hay Node) |
+| Workflows de n8n | `infra/vps/n8n-import.sh` y, en el editor (`ssh -L 5678:127.0.0.1:5678 usuario@servidor`), credenciales `Udela-Secret` y `DeepSeek account` y activar. Ver [`n8n.md`](./n8n.md) §8.1 |
 | Sumar el sitio al Caddy del host (solo en ese modo) | Agregar `<subdominio>.duckdns.org { reverse_proxy 127.0.0.1:8081 }` a `/etc/caddy/Caddyfile`, `caddy validate --config /etc/caddy/Caddyfile` y `systemctl reload caddy`. Hacerlo después del deploy, con el DNS ya actualizado |
 | Ver la actualización de DuckDNS | `docker logs udela-vps-duckdns`: cada línea termina en `OK` o `KO` (`KO` = subdominio o token incorrectos) |
 | Ver el certificado | Servidor vacío: `docker logs udela-vps-caddy`. Detrás del Caddy del host: `journalctl -u caddy`. Buscar `certificate obtained successfully` |
 | Hacer admin a un usuario | `docker exec -it udela-vps-db psql -U udela_prod -d udelaconecta_prod -c "update auth_users set is_admin = true where email = '…';"` |
 | Actualizar | `infra/vps/deploy.sh`: `git pull --ff-only`, `up -d --build`, `docker image prune -f` y `ps` |
 | Logs / bajar | `npm run vps:logs` / `npm run vps:down` |
-| Backup | `infra/vps/backup-db.sh [días]`: genera `pg_dump` comprimido y un `tar.gz` del volumen `storage` en `infra/vps/backups/` (fuera de git) y borra los de más de N días (por defecto 14). Para cron: `0 3 * * * /ruta/al/repo/infra/vps/backup-db.sh 14` |
+| Backup | `infra/vps/backup-db.sh [días]`: genera `pg_dump` comprimido, un `tar.gz` del volumen `storage` y, si el n8n del compose está arriba, el export de sus workflows, en `infra/vps/backups/` (fuera de git), y borra los de más de N días (por defecto 14). Para cron: `0 3 * * * /ruta/al/repo/infra/vps/backup-db.sh 14` |
 | Validar la configuración | `docker compose -f infra/vps/docker-compose.prod.yml --env-file infra/vps/.env.vps config --quiet` |
 
 ### 4.4 Problemas frecuentes
@@ -212,6 +221,8 @@ El compose usa `${VAR:?mensaje}`: si falta una variable obligatoria, `docker com
 | `exec /usr/local/bin/entrypoint.sh: no such file or directory` | Los `.sh` llegaron con CRLF (copiados desde Windows o checkout sin `.gitattributes`). El repo los fuerza a LF; clonar con git |
 | `setup-env.sh` termina sin crear `.env.vps` | Versiones anteriores al arreglo de `aleatorio()`: con `pipefail`, el SIGPIPE de `tr` cortaba el script. Actualizar el repo |
 | Un nginx del sistema toma el puerto 80 al reiniciar | No se usa: `systemctl disable --now nginx` o desinstalarlo |
+| `port is already allocated` en `udela-vps-n8n` | Otro n8n del host usa `127.0.0.1:5678`. Cambiar `N8N_HOST_PORT` o usar ese n8n como externo (`COMPOSE_PROFILES=` vacío) |
+| La orientación siempre queda en fallback o el chat da 502 en producción | Workflows sin importar o inactivos (el webhook responde 404), o la credencial `Udela-Secret` no coincide con `N8N_AUTOMATION_SECRET` (403). Ver [`n8n.md`](./n8n.md) §8.1 y §13 |
 
 ## 5. Local y producción
 
@@ -225,6 +236,7 @@ Los dos usan Docker Compose, pero no son intercambiables: `npm start` y `local:*
 | API base del front | `http://localhost:3000/api/` (`environment.ts`) | `/api/` (`environment.prod.ts`) |
 | Backend | 1 proceso, `--reload`, código montado | 4 workers, imagen inmutable, usuario no-root |
 | Postgres | Publicado en `127.0.0.1` | Sin puertos |
+| n8n | Siempre; editor en `127.0.0.1:5678` | Con `COMPOSE_PROFILES=n8n` (o uno externo); editor en `127.0.0.1:5678` por túnel SSH |
 | Entrada | Puertos directos por servicio | Solo Caddy: 80/443, o `127.0.0.1:8081` detrás del Caddy del host |
 | Dominio | `localhost` | `<subdominio>.duckdns.org`, actualizado por el servicio `duckdns` |
 | Seed | `AUTO_SEED=true` | `AUTO_SEED=false` |

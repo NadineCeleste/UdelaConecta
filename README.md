@@ -157,6 +157,171 @@ Las herramientas son pedidos `GET` de solo lectura al backend (`/api/chat/datos/
 
 El workflow exportado está en [`infra/n8n/udela-chatbot.json`](infra/n8n/udela-chatbot.json) (sin credenciales). Cómo importarlo, configurar las credenciales y resolver problemas: [`context_agent/n8n.md`](context_agent/n8n.md).
 
+## Compatibilidad y orientación para postulaciones
+
+Cuando una empresa publica una oferta puede cargar **requisitos estructurados** (habilidad, nivel mínimo, exigencia y tipo). Cuando un estudiante se postula, el backend compara su **perfil declarado** con esos requisitos usando **Python puro** y muestra un informe de tres secciones:
+
+1. **Nivel de coincidencia** (porcentaje y cantidad de requisitos compatibles).
+2. **Aptitudes compatibles**.
+3. **Aptitudes a capacitar**.
+
+El cálculo vive en [`apps/backend/app/dominio/compatibilidad.py`](apps/backend/app/dominio/compatibilidad.py) y no usa LLM, embeddings ni servicios externos. La IA solo redacta una **orientación breve** a partir de ese resultado; nunca calcula el indicador ni evalúa habilidades blandas.
+
+### Principios que respeta el flujo
+
+- La postulación **nunca se bloquea**: “Postularme” sigue disponible aunque falten requisitos.
+- No hay ranking global, puntaje acumulado ni orden por coincidencia.
+- El lenguaje es de orientación: no se muestra “no calificás” ni “rechazado”.
+- La empresa ve el **mismo informe determinista**, sin la orientación de IA; la decisión de asignar sigue siendo suya.
+- Si n8n o la IA fallan, se guarda un **fallback determinista** y el resto de la plataforma sigue funcionando.
+- No se usan datos sensibles (teléfono, fecha de nacimiento, género ni inferencias).
+
+### Recorrido
+
+```
+Empresa                          Estudiante
+  │ publica oferta con requisitos      │ completa su perfil declarado
+  ▼                                    ▼
+ Angular ── POST/PUT /api/contrato ... ──► FastAPI
+                                           │
+                                           │ dominio/compatibilidad.py (Python puro)
+                                           │ comparar(perfil, requisitos)
+                                           ▼
+                                   informe determinista
+                                           │
+              ┌────────────────────────────┴───────────────────────────┐
+              ▼                                                        ▼
+   Estudiante: checklist + 3 secciones                 Empresa: informe por postulante
+   + orientación IA (solo para él/ella)                (sin texto de IA, sin ranking)
+              │
+              ▼
+   POST /api/postulaciones/{id}/orientacion
+              │
+              ▼
+   n8n: ¿Hay brechas? ── sí ──► DeepSeek ──► Validar (≤600, sin rechazo)
+              │                                   │
+              └── no ──► mensaje fijo             └── inválido ──► fallback
+              ▼
+   Se guarda/actualiza informe_postulacion (un registro por contrato + estudiante)
+```
+
+### Endpoints nuevos
+
+| Método | Ruta | Quién | Qué devuelve |
+|---|---|---|---|
+| `GET` | `/api/contratoslibres` | Estudiante | Ofertas libres; agrega `mi_resultado` calculado al vuelo |
+| `GET` | `/api/contratos/{email_gerente}` | Empresa dueña | Sus ofertas; agrega `resultados_postulantes` con el informe de cada postulante |
+| `GET` | `/api/mis-postulaciones` | Estudiante | Contrato + `resultado` determinista + `orientacion` guardada (si existe) |
+| `GET` | `/api/postulaciones/{contrato_id}/orientacion` | Estudiante postulado | Orientación guardada o `null` |
+| `POST` | `/api/postulaciones/{contrato_id}/orientacion` | Estudiante postulado | Genera/regenera la orientación (IA o fallback) y la guarda |
+| `POST` | `/api/automatizacion/postulaciones/{id}/{email}/orientacion` | n8n | Guarda una orientación validada (`X-Udela-Secret`) |
+| `GET` | `/api/automatizacion/digests` | n8n | Oportunidades por estudiante con más de 60 % de coincidencia (`X-Udela-Secret`) |
+
+`GET /api/contratoslibres` mantiene el orden original de las ofertas. La orientación es visible solo para el estudiante dueño de la postulación: otro estudiante o un gerente recibe `403`.
+
+### Cómo usarlo en la web
+
+1. **Empresa → Nueva oferta**: cargar requisitos con nombre, nivel, exigencia (`excluyente`, `deseable`, `se aprende en el puesto`) y tipo (`técnica`, `blanda`). Si no carga ninguno, se muestra una advertencia pero puede publicar.
+2. **Estudiante → Contratos**: el detalle muestra el checklist de requisitos y el texto “Podés postularte igual”. La lista tiene un indicador compacto de coincidencia.
+3. **Estudiante → Postularme**: el historial muestra el informe de tres secciones y el botón **Generar/Regenerar orientación**.
+4. **Empresa → Postulaciones Recibidas**: cada postulante muestra su indicador; “Ver informe” abre el detalle determinista (sin el texto de IA).
+
+Textos que deben mantenerse en la interfaz:
+
+- “Este análisis se basa en tu perfil declarado.”
+- “Podés postularte igual.”
+- “No es una evaluación ni un ranking.”
+- “La orientación es una sugerencia para prepararte, no una evaluación.”
+- “Esto no implica rechazo.”
+- “La empresa ve este mismo resumen; la orientación es solo para vos.”
+
+### n8n: workflow de orientación
+
+El workflow exportado es [`infra/n8n/udela-orientacion.json`](infra/n8n/udela-orientacion.json). La decisión obligatoria es **¿Hay brechas?**:
+
+- **Con brechas**: DeepSeek redacta una orientación; **Validar** rechaza texto vacío, de más de 600 caracteres o con frases de rechazo; si falla, se usa **Fallback**.
+- **Sin brechas**: un nodo Set responde un mensaje corto y positivo, sin llamar al modelo.
+- Ambos caminos responden `{ "texto": "...", "modelo": "..." }`.
+
+El backend valida otra vez la respuesta y, si no es válida o n8n no está disponible, guarda `estado = "fallback"`. La postulación y el informe determinista no dependen de n8n.
+
+También hay un workflow de comunicación semanal ([`infra/n8n/udela-digest.json`](infra/n8n/udela-digest.json)): los lunes a las 9:00 consulta `GET /api/automatizacion/digests` y prepara un mensaje por estudiante con hasta 3 ofertas de más de 60 % de coincidencia a las que no se postuló. El nodo de envío por email está **deshabilitado por defecto** hasta configurar SMTP; sin SMTP el workflow igual se ejecuta y muestra los mensajes en n8n.
+
+### Configuración local de n8n
+
+El stack local ya incluye n8n en `http://localhost:5678` (servicio `n8n` de `infra/local/docker-compose.yml`). Variables relevantes en `infra/local/.env.local`:
+
+```dotenv
+N8N_AUTOMATION_SECRET=udela-local-secret
+N8N_ENCRYPTION_KEY=udela-local-n8n-key
+N8N_CHAT_WEBHOOK_URL=http://n8n:5678/webhook/udela-chat
+N8N_ORIENTACION_WEBHOOK_URL=http://n8n:5678/webhook/udela-orientacion
+CHAT_DATOS_URL=http://backend:3000/api/chat/datos
+```
+
+Esas URLs se pueden pisar desde `infra/local/.env.chat` para apuntar a otro n8n (ver más abajo).
+
+Importar los tres workflows (n8n 2.43 importa un directorio con `--separate`):
+
+```bash
+npm run local:up
+docker compose -f infra/local/docker-compose.yml exec n8n \
+  n8n import:workflow --separate --input=/workflows
+```
+
+También se pueden importar de a uno desde la UI de n8n (**Workflows → Import from File**). Después:
+
+1. Crear la credencial **Header Auth** `Udela-Secret` con nombre `X-Udela-Secret` y valor igual a `N8N_AUTOMATION_SECRET`.
+2. Crear/asignar la credencial **DeepSeek account** a los nodos `DeepSeek…`.
+3. Publicar los workflows (botón Publish; n8n 2.x no deja publicar con un nodo sin credencial).
+4. Opcional: crear la credencial **SMTP** `Udela SMTP` y habilitar el nodo `Enviar` del digest.
+5. Para probar el digest sin esperar al lunes: "Execute workflow" en el editor, o `docker exec -e N8N_RUNNERS_BROKER_PORT=5690 udela-local-n8n n8n execute --id=<id>`.
+
+#### Usar un n8n propio en lugar del servicio local
+
+El backend no depende del contenedor `n8n`: solo necesita la URL de cada webhook y el secreto. Si ya tenés n8n en un servidor, no hace falta levantarlo en el compose local.
+
+1. Importá los tres workflows en tu n8n y creá las credenciales con **los mismos nombres** (`Udela-Secret`, `DeepSeek account`; `Udela SMTP` es opcional). Los JSON no incluyen secretos: las credenciales se cargan en la instancia.
+2. Creá `infra/local/.env.chat` (ignorado por git). Sus variables pisan las de `.env.local`:
+
+```dotenv
+N8N_CHAT_WEBHOOK_URL=https://n8n.tu-dominio.com/webhook/udela-chat
+N8N_ORIENTACION_WEBHOOK_URL=https://n8n.tu-dominio.com/webhook/udela-orientacion
+N8N_CHAT_SECRET=el-mismo-valor-de-Udela-Secret
+N8N_AUTOMATION_SECRET=el-mismo-valor-de-Udela-Secret
+# Solo si el backend también es público (lo necesita el digest y las herramientas del chat):
+CHAT_DATOS_URL=https://api.tu-dominio.com/api/chat/datos
+```
+
+3. En el workflow de digest, poné la URL pública del backend (`https://api.tu-dominio.com`) en `backend_url` del nodo `Configuración`. Si el backend corre en tu máquina y n8n está en un servidor remoto, el digest no puede llegar a `localhost`: usá una URL pública o ejecutá el digest contra el n8n local.
+4. Publicá los workflows. Los webhooks de producción funcionan recién cuando el workflow está publicado; si no, el backend guarda el fallback.
+
+El compose local mantiene `http://n8n:5678/...` como valor por defecto. Si preferís no usar el contenedor local, podés bajar solo ese servicio o dejar que falle: la orientación y el chat usan fallback y el resto del núcleo sigue funcionando.
+
+Prueba rápida del webhook de orientación (con el workflow activo):
+
+```bash
+curl -X POST http://localhost:5678/webhook/udela-orientacion \
+  -H "Content-Type: application/json" \
+  -H "X-Udela-Secret: udela-local-secret" \
+  -d '{"contrato_id":1,"email":"dev@udelaconecta.edu.ar","oferta":"Backend Trainee","compatibles":["Python"],"a_capacitar":["SQL"],"se_aprenden":["Docker"],"blandas":["Comunicación"],"coincidencia":67}'
+```
+
+### Verificación
+
+```bash
+# Backend (con Poetry instalado)
+cd apps/backend && poetry run alembic upgrade head && poetry run pytest
+
+# Frontend
+npm run build
+
+# Stack completo
+npm run local:up   # front http://localhost:4200 · API http://localhost:3000/docs · n8n :5678
+```
+
+La migración `0004` agrega `contrato.requisitos` e `informe_postulacion`. El seed carga requisitos en las 11 ofertas demo y es idempotente. Guion de demo y casos de error: [`docs/DEMO.md`](docs/DEMO.md). Arquitectura y decisiones: [`docs/ARQUITECTURA.md`](docs/ARQUITECTURA.md) y [`docs/BITACORA_IA.md`](docs/BITACORA_IA.md).
+
 ## Instalación para uso local
 
 ### Requisitos

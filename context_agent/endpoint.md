@@ -8,6 +8,8 @@
 
 > **Asistente (2026-10-31):** se sumaron `POST /api/chat` (token opcional, puerta hacia n8n) y los endpoints de solo lectura `GET /api/chat/datos/*` que usan las herramientas del workflow, con un token propio (`aud=udela-chat`, 5 minutos). No cambian ninguna ruta existente. Ver [`n8n.md`](./n8n.md) y [`backend.md`](./backend.md).
 
+> **Compatibilidad y orientación (2026-11-11):** se sumaron `GET /api/mis-postulaciones`, `GET|POST /api/postulaciones/:contrato_id/orientacion` y dos endpoints de automatización con `X-Udela-Secret`. `GET /api/contratoslibres` agrega `mi_resultado` y `GET /api/contratos/:emailGerente` agrega `resultados_postulantes` sin cambiar el sobre. Ver la sección 10 y [`backend.md`](./backend.md).
+
 ## Estado tras implementar el backend (2026-10-29)
 
 El backend vive en `apps/backend/` (FastAPI + PostgreSQL). Mantiene las 19 rutas del inventario con los mismos sobres de respuesta.
@@ -443,3 +445,31 @@ Resultado: 19 rutas + 2 operaciones directas al bucket pasan a **18 rutas**, tod
 | E-08 | Paginación y filtros por query |
 | E-29 | Portfolio como lista de proyectos |
 | — | Especificación OpenAPI como fuente de verdad, con tipos del front generados desde ella |
+
+---
+
+## 10. Endpoints de compatibilidad y orientación (2026-11-11)
+
+Implementados en `apps/backend/app/routers/postulaciones.py` (prefijo `/api`) y en los endpoints existentes de `contratos.py`. Todos usan el sobre habitual (`message`, `count` en listados, `data`) y errores `{detail}`.
+
+| Método y ruta | Auth | Respuesta / reglas |
+|---|---|---|
+| `GET /api/mis-postulaciones` | JWT estudiante | `{count, data: [{contrato, resultado, orientacion|null}]}`; 403 si el usuario no tiene perfil de estudiante; orden `Contrato.id.desc()` |
+| `GET /api/postulaciones/:contrato_id/orientacion` | JWT estudiante postulado | `{data: {contrato_id, texto, modelo, estado, actualizado_en} \| null}`; 404 contrato inexistente, 403 si no se postuló |
+| `POST /api/postulaciones/:contrato_id/orientacion` | JWT estudiante postulado | Genera/regenera; 400 si la oferta no tiene requisitos; responde el informe guardado; `estado` `generado` o `fallback` |
+| `POST /api/automatizacion/postulaciones/:contrato_id/:email/orientacion` | `X-Udela-Secret` | Para n8n; guarda el texto validado. 503 si el secreto no está configurado, 403 si no coincide |
+| `GET /api/automatizacion/digests` | `X-Udela-Secret` | `{data: [{email, nombre, ofertas: [...]}]}`; ofertas libres no postuladas con `coincidencia > 60`, top 3 por estudiante |
+
+Cambios en endpoints existentes (no rompen el contrato anterior):
+
+- `GET /api/contratoslibres`: cada contrato puede traer `mi_resultado` (resultado determinista) cuando el token es de estudiante.
+- `GET /api/contratos/:emailGerente`: agrega `resultados_postulantes` solo si el token pertenece al gerente dueño. Cada elemento es `{email, nombre, resultado}`; **no** incluye orientación ni datos sensibles.
+- `POST /api/contrato` y `PUT /api/contrato/:id`: aceptan y sanitizan `requisitos`.
+
+Decisiones de diseño de estos endpoints:
+
+- El cálculo se hace al vuelo con `dominio.comparar`; no hay columna de puntaje.
+- La orientación se guarda en `informe_postulacion` (unique por contrato + email) y se actualiza con upsert.
+- n8n es opcional: sin URL o ante error, se guarda `texto_fallback` con `estado = "fallback"`.
+- La autorización de la orientación es por pertenencia a `contrato.postulaciones`, no por un email del body.
+- El endpoint de automatización reutiliza la misma validación de texto que el endpoint del estudiante (≤600, sin frases de rechazo).

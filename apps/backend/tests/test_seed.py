@@ -34,11 +34,21 @@ async def test_seed_completa_ofertas_nuevas_sin_tocar_las_existentes(sesiones):
         await db.commit()
 
     async with sesiones() as db:
-        # Simula una base vieja: falta una oferta y otra fue editada por el usuario
+        # Simula una base vieja: falta una oferta, otra quedó sin requisitos por la
+        # migración 0004 y una tercera fue editada por la empresa.
         borrar = await db.scalar(select(Contrato).where(Contrato.titulo == "Data Engineer Junior"))
         await db.delete(borrar)
-        editada = await db.scalar(select(Contrato).where(Contrato.titulo == "Soporte técnico y QA manual"))
-        editada.descripcion = "Cambiada por la empresa"
+        sin_requisitos = await db.scalar(
+            select(Contrato).where(Contrato.titulo == "Soporte técnico y QA manual")
+        )
+        sin_requisitos.descripcion = "Cambiada por la empresa"
+        sin_requisitos.requisitos = []
+        personalizada = await db.scalar(
+            select(Contrato).where(Contrato.titulo == "Frontend React para turnos online")
+        )
+        personalizada.requisitos = [
+            {"nombre": "Angular", "tipo": "excluyente", "exigencia": "avanzado"}
+        ]
         await db.commit()
 
     async with sesiones() as db:
@@ -47,8 +57,17 @@ async def test_seed_completa_ofertas_nuevas_sin_tocar_las_existentes(sesiones):
 
     async with sesiones() as db:
         assert await db.scalar(select(Contrato).where(Contrato.titulo == "Data Engineer Junior"))
-        editada = await db.scalar(select(Contrato).where(Contrato.titulo == "Soporte técnico y QA manual"))
-        assert editada.descripcion == "Cambiada por la empresa"
+        sin_requisitos = await db.scalar(
+            select(Contrato).where(Contrato.titulo == "Soporte técnico y QA manual")
+        )
+        assert sin_requisitos.descripcion == "Cambiada por la empresa"
+        assert sin_requisitos.requisitos
+        personalizada = await db.scalar(
+            select(Contrato).where(Contrato.titulo == "Frontend React para turnos online")
+        )
+        assert personalizada.requisitos == [
+            {"nombre": "Angular", "tipo": "excluyente", "exigencia": "avanzado"}
+        ]
 
 
 async def test_ofertas_del_seed_para_el_asistente(client, sesiones):

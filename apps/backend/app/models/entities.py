@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 
@@ -125,9 +125,35 @@ class Contrato(Base):
     end_date: Mapped[str | None] = mapped_column(String(30), default="")
     modalidad: Mapped[str | None] = mapped_column(String(60), default="remoto")
     seniority_deseado: Mapped[list] = mapped_column(JsonType, default=list)
+    # Requisitos declarados por la empresa: [{nombre, nivel_minimo, exigencia, tipo}].
+    # El indicador de compatibilidad no se guarda: se calcula al vuelo con el perfil actual.
+    requisitos: Mapped[list] = mapped_column(JsonType, default=list, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_ahora)
 
     proyecto: Mapped[Proyecto | None] = relationship("Proyecto", back_populates="contratos")
+
+
+class InformePostulacion(Base):
+    """Orientación generada para una postulación. Solo se persiste el texto de IA/fallback."""
+
+    __tablename__ = "informe_postulacion"
+    __table_args__ = (
+        UniqueConstraint("contrato_id", "estudiante_email", name="uq_informe_postulacion"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    contrato_id: Mapped[int] = mapped_column(
+        ForeignKey("contrato.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    estudiante_email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    texto: Mapped[str] = mapped_column(Text, default="")
+    modelo: Mapped[str] = mapped_column(String(60), default="")
+    # pendiente | generado | fallback
+    estado: Mapped[str] = mapped_column(String(20), default="pendiente")
+    creado_en: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_ahora)
+    actualizado_en: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_ahora, onupdate=_ahora
+    )
 
 
 class Portfolio(Base):

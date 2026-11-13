@@ -3,7 +3,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ContratoService } from '../../servicios/contrato';
-import { Contrato } from '../../models/contrato';
+import { Contrato, Requisito } from '../../models/contrato';
 import { AlertService } from '../../servicios/alertService';
 
 
@@ -38,7 +38,45 @@ export class Formcreatecontract {
     modalidad: "",
     seniority_deseado: [],
     start_date: "",
-    end_date: ""
+    end_date: "",
+    requisitos: []
+  }
+
+  nuevoRequisito: Requisito = this.requisitoVacio();
+
+  private requisitoVacio(): Requisito {
+    return { nombre: '', nivel_minimo: 'principiante', exigencia: 'deseable', tipo: 'tecnica' };
+  }
+
+  agregarRequisito(): void {
+    const nombre = (this.nuevoRequisito.nombre || '').trim();
+    if (!nombre) {
+      this.alertService.warning('Escribí el nombre de la habilidad o herramienta.');
+      return;
+    }
+    const requisitos = this.contrato.requisitos || [];
+    const repetido = requisitos.some(r => r.nombre.trim().toLowerCase() === nombre.toLowerCase());
+    if (repetido) {
+      this.alertService.warning('Ese requisito ya está en la lista.');
+      return;
+    }
+    this.contrato.requisitos = [...requisitos, { ...this.nuevoRequisito, nombre }];
+    this.nuevoRequisito = this.requisitoVacio();
+  }
+
+  quitarRequisito(indice: number): void {
+    this.contrato.requisitos = (this.contrato.requisitos || []).filter((_, i) => i !== indice);
+  }
+
+  etiquetaRequisito(requisito: Requisito): string {
+    const nivel = requisito.nivel_minimo || 'principiante';
+    const exigencia = {
+      excluyente: 'excluyente',
+      deseable: 'deseable',
+      se_aprende: 'se aprende en el puesto'
+    }[requisito.exigencia || 'deseable'];
+    const tipo = requisito.tipo === 'blanda' ? ' · blanda' : '';
+    return `${requisito.nombre} · ${nivel} · ${exigencia}${tipo}`;
   }
 
   ngOnInit(): void {

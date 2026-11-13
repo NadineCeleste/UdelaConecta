@@ -11,10 +11,17 @@ x-backend-env: &backend-env
   CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost}
   WEB_CONCURRENCY: ${WEB_CONCURRENCY:-4}
   AUTO_SEED: ${AUTO_SEED:-false}
-  # Asistente (workflow de n8n). Vacías: POST /api/chat responde 503
+  # n8n: el servicio de abajo (perfil "n8n", URLs http://n8n:5678/...) o uno externo.
+  # Sin URL o sin secreto, el chat responde 503 y la orientación usa el fallback sin IA
   N8N_CHAT_WEBHOOK_URL: ${N8N_CHAT_WEBHOOK_URL:-}
   N8N_CHAT_SECRET: ${N8N_CHAT_SECRET:-}
+  N8N_CHAT_TIMEOUT_SEGUNDOS: ${N8N_CHAT_TIMEOUT_SEGUNDOS:-60}
   CHAT_DATOS_URL: ${CHAT_DATOS_URL:-}
+  CHAT_TOKEN_MINUTOS: ${CHAT_TOKEN_MINUTOS:-5}
+  # Orientación de postulación y digest semanal (mismo header X-Udela-Secret)
+  N8N_ORIENTACION_WEBHOOK_URL: ${N8N_ORIENTACION_WEBHOOK_URL:-}
+  N8N_AUTOMATION_SECRET: ${N8N_AUTOMATION_SECRET:-}
+  N8N_ORIENTACION_TIMEOUT_SEGUNDOS: ${N8N_ORIENTACION_TIMEOUT_SEGUNDOS:-30}
 
 services:
   duckdns:
@@ -107,6 +114,42 @@ services:
     networks:
       - udela_vps_net
 
+  # Workflows del asistente, la orientación y el digest (infra/n8n). El backend lo llama por
+  # http://n8n:5678 y n8n lee el backend por http://backend:3000: nada pasa por Internet.
+  # Solo arranca con COMPOSE_PROFILES=n8n en .env.vps (si el servidor ya tiene su propio n8n, no hace falta).
+  # El editor se publica solo en 127.0.0.1; se entra con un túnel SSH (ver orquestacion.md)
+  n8n:
+    image: n8nio/n8n:2.43.7
+    profiles: ["n8n"]
+    container_name: udela-vps-n8n
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${N8N_HOST_PORT:-5678}:5678"
+    environment:
+      N8N_HOST: localhost
+      N8N_PORT: 5678
+      N8N_PROTOCOL: http
+      WEBHOOK_URL: http://n8n:5678/
+      GENERIC_TIMEZONE: America/Argentina/Buenos_Aires
+      TZ: America/Argentina/Buenos_Aires
+      # Cifra las credenciales guardadas en n8n: si se pierde, hay que volver a cargarlas.
+      # No usa ":?" porque compose lo exigiría aun con el perfil apagado; deploy.sh la genera si falta
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:-}
+      # El editor se usa por túnel SSH en http://localhost
+      N8N_SECURE_COOKIE: "false"
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      EXECUTIONS_DATA_PRUNE: "true"
+      EXECUTIONS_DATA_MAX_AGE: 336
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ../n8n:/workflows:ro
+    depends_on:
+      backend:
+        condition: service_started
+    networks:
+      - udela_vps_net
+
 networks:
   udela_vps_net:
     driver: bridge
@@ -116,3 +159,4 @@ volumes:
   storage:
   caddy_data:
   caddy_config:
+  n8n_data:

@@ -3,7 +3,7 @@ import { ActivatedRoute } from '@angular/router';
 import { ContratoCard } from '../../models/cards/contrato-card';
 import { CommonModule, ViewportScroller } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Contrato } from '../../models/contrato';
+import { Contrato, Orientacion, ResultadoCompatibilidad } from '../../models/contrato';
 import { RouterModule } from '@angular/router';
 import { ContratoDetail } from '../contrato-detail/contrato-detail';
 import { ContratoService } from '../../servicios/contrato';
@@ -35,6 +35,10 @@ export class Contratos {
     contratosAsignados: Contrato[] = [];
     contratosPendientes: Contrato[] = [];
     verContratosNoPostulados: boolean = false;
+
+    // Orientaciones ya generadas, indexadas por contrato. El resultado determinista
+    // viaja en el propio contrato (mi_resultado) y se recalcula al mejorar el perfil.
+    informesPorContrato = new Map<number, { resultado: ResultadoCompatibilidad; orientacion?: Orientacion }>();
 
     mostrandoContratoDetail = false;
     contratoAMostrarDetail: Contrato | undefined;
@@ -118,6 +122,10 @@ export class Contratos {
                     postulaciones: this.toArray(c.postulaciones as any),
                 }));
                 this.createCards(this.todosLosContratos)
+
+                if (this.rolActual === 'estudiante') {
+                    this.cargarInformes();
+                }
 
                 if (this.pendingFragment) {
 
@@ -276,6 +284,42 @@ export class Contratos {
             this.contratoAMostrarDetail = undefined;
             this.mostrandoContratoDetail = false;
         }
+    }
+
+    /** Trae las orientaciones guardadas del estudiante para mostrarlas en el detalle. */
+    cargarInformes(): void {
+        if (this.rolActual !== 'estudiante') return;
+        this._apiService.getMisPostulaciones().subscribe({
+            next: (res) => {
+                const mapa = new Map<number, { resultado: ResultadoCompatibilidad; orientacion?: Orientacion }>();
+                for (const item of res.data || []) {
+                    const id = item.contrato?.id;
+                    if (!id) continue;
+                    mapa.set(id, {
+                        resultado: item.resultado,
+                        orientacion: item.orientacion || undefined,
+                    });
+                }
+                this.informesPorContrato = mapa;
+            },
+            error: (error: any) => {
+                console.log('No se pudieron cargar los informes de postulación', error);
+            }
+        });
+    }
+
+    /** Mantiene sincronizada la orientación generada desde el panel de detalle. */
+    onOrientacionActualizada(event: { contratoId: number; orientacion: Orientacion }): void {
+        const actual = this.informesPorContrato.get(event.contratoId);
+        const resultado = actual?.resultado
+            || this.contratoAMostrarDetail?.mi_resultado
+            || this.todosLosContratos.find(c => c.id === event.contratoId)?.mi_resultado;
+        if (!resultado) return;
+        this.informesPorContrato.set(event.contratoId, {
+            resultado,
+            orientacion: event.orientacion,
+        });
+        this.informesPorContrato = new Map(this.informesPorContrato);
     }
 
     // scroll a una sección por id 
