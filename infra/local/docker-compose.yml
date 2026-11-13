@@ -59,7 +59,7 @@ services:
       - backend
 
   n8n:
-    image: n8nio/n8n:1.70.0
+    image: n8nio/n8n:2.43.7
     container_name: udela-local-n8n
     ports:
       # Solo desde la máquina local; la UI de n8n queda en http://localhost:5678
@@ -74,10 +74,6 @@ services:
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:-udela-local-n8n-key}
       N8N_SECURE_COOKIE: "false"
       N8N_DIAGNOSTICS_ENABLED: "false"
-      # El workflow de digest lee la URL del backend y el remitente desde el entorno.
-      N8N_BLOCK_ENV_ACCESS_IN_NODE: "false"
-      UDELA_BACKEND_URL: http://backend:3000
-      UDELA_DIGEST_FROM: ${UDELA_DIGEST_FROM:-no-reply@udelaconecta.local}
     volumes:
       - n8n_data:/home/node/.n8n
       - ../n8n:/workflows:ro
